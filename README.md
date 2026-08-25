@@ -1,118 +1,343 @@
 <div align="center">
-  <img src="./public/assets/banner.png" alt="Lending-Mind Protocol" width="800" />
+  <img src="./public/assets/banner.png" alt="Lending-Mind Protocol — Deterministic guardrails for AI-built software" width="800" />
 </div>
 
-<h1 align="center">Lending-Mind Protocol</h1>
+<h1 align="center">LMP</h1>
 
-<p align="center">A verifiable engineering methodology layer for AI coding agents.</p>
+<p align="center"><strong>Deterministic guardrails for AI-built software.</strong></p>
 
-Lending-Mind combines human-readable guidance, deterministic repository checks,
-privacy-preserving evidence artifacts, and human-reviewed policy evolution. It
-does not merely tell an agent how to behave; it checks the resulting repository.
+<p align="center">
+  <em>Lending-Mind is a runtime protocol, not Markdown.</em>
+</p>
 
-> MVP status: local TypeScript runtime, filesystem registry, CLI, and stdio MCP
-> server. Node 22+ is required. The existing Rust prototype remains a legacy
-> reference surface and is not required by the TypeScript runtime.
+Lending-Mind aligns AI coding agents with versioned engineering methodologies: their principles, trade-offs, implementation patterns, repository conventions, and review expectations. It compiles those profiles into agent guidance, typed context, tool boundaries, verification plans, bounded remediation loops, and reviewable evidence artifacts.
+
+> **Product promise:** LMP gives a coding agent the same engineering rules a team would apply in review, then checks the patch and explains what needs fixing.
+
+> **MVP status:** The repository includes a local TypeScript runtime, filesystem registry, CLI, and stdio MCP server. Node 22+ is required. The Rust workspace, daemon, signing, synchronization, and telemetry components are preserved as protocol-core and advanced integration surfaces; they are not required for the local first-run workflow.
 
 ## What it is
 
-| Layer | Responsibility |
-| --- | --- |
-| Mind Package | Versioned methodology, provenance, and machine-readable policies |
-| Compiler | Deterministic agent instruction bundle and visible checklist |
-| Evaluator | Dependency, TypeScript, AST, complexity, command, and artifact checks |
-| Registry | Offline immutable local installation and resolution |
-| CLI / MCP | Human and coding-agent integration surfaces |
-| Evidence | Redacted, hashed evaluation artifacts stored locally |
+LMP is a methodology and verification runtime for AI-built software. A profile contains human-readable principles and trade-offs alongside machine-readable policies, provenance, tests, exceptions, and version metadata.
 
-It is not an identity clone, model-weight training system, telemetry service,
-automatic code mutator, security-review replacement, or automatic uploader.
-Archetypes are generic; individual or organization authorship is opt-in and
-verified with provenance.
+The runtime compiles a selected profile into:
+
+- A task-scoped instruction bundle for compatible coding agents.
+- A typed context manifest separating hard constraints, repository facts, guidance, findings, and historical evidence.
+- A tool authorization and command-execution plan.
+- A deterministic and existing-tool evaluation plan.
+- A bounded remediation loop with retry limits and escalation.
+- A redacted evidence artifact and optional pull-request summary.
+
+It is designed to turn repository and team tribal knowledge into repeatable checks before human review.
+
+## What it is not
+
+LMP is not:
+
+- A person or team identity clone.
+- A claim to reproduce anyone's private reasoning or complete expertise.
+- A base-model training or model-weight update system.
+- A replacement for human review, security review, threat modeling, tests, CI, or production validation.
+- A generic replacement for TypeScript, Biome, ESLint, Semgrep, CodeQL, OPA, or test runners.
+- An automatic code mutator.
+- An automatic telemetry uploader.
+- A required Docker, daemon, OCI, or IPFS installation.
+
+Community profiles are generic archetypes. Individual or organization profiles require explicit authorization, provenance, review, and optional signing.
+
+## How it works
+
+```text
+Versioned methodology profile
+        ↓
+Profile compiler
+        ├── Agent instruction bundle
+        ├── Typed task context
+        ├── Tool authorization matrix
+        ├── Evaluation plan
+        └── Loop policy
+        ↓
+AI coding agent changes the repository
+        ↓
+LMP evaluates the change using existing tools and profile rules
+        ↓
+Agent receives concrete remediation findings
+        ↓
+Bounded correction loop or human escalation
+        ↓
+Redacted local evidence artifact
+        ↓
+Optional PR summary and human-reviewed profile proposal
+```
+
+The key invariant is:
+
+```text
+One profile → guidance + verification + evidence
+```
 
 ## Quickstart
+
+The default workflow is local, offline, advisory, and non-mutating.
 
 ```bash
 pnpm install
 pnpm --filter @lending-mind/cli build
 pnpm lmp init --install-baseline
-pnpm lmp evaluate --mind skills/baseline --workspace examples/compliant-service
+pnpm lmp evaluate
 ```
 
-The evaluator is advisory by default. Select `--mode enforced` to fail on hard
-violations, or `--mode audit` to collect evidence without running commands or
-failing for policy findings.
+The first evaluation does not run package scripts, use the network, install packages, modify source files, start Docker, or upload artifacts.
 
-## CLI
+Select a profile:
 
 ```bash
-pnpm lmp skill validate skills/typescript-minimal
-pnpm lmp skill compile skills/typescript-minimal --out /tmp/lmp-instructions.md
-pnpm lmp registry install skills/typescript-minimal
-pnpm lmp registry list
-pnpm lmp evaluate --mind skills/typescript-minimal --workspace examples/noncompliant-service --mode advisory --json
-pnpm lmp artifact list
-pnpm lmp doctor
+pnpm lmp profile use skills/typescript-minimal
+pnpm lmp evaluate --mode advisory
 ```
 
-Example summary:
+Run explicitly approved repository checks:
+
+```bash
+pnpm lmp evaluate --run-approved-checks
+```
+
+Use enforced mode only after the profile has been tuned for the repository:
+
+```bash
+pnpm lmp evaluate \
+  --mind skills/typescript-minimal \
+  --workspace examples/noncompliant-service \
+  --mode enforced \
+  --run-approved-checks
+```
+
+## Evaluation output
 
 ```text
-warning: 3 violation(s), 0 command(s) executed
-remediation: remove denied dependencies, replace eval, and add explicit tests
-artifact: .lending-mind/artifacts/2026-08-25-run.json
+LMP Evaluation — Advisory
+
+Profile: typescript-minimal@0.3.1
+Capability mode: local
+Commands: not run
+Network: disabled
+
+PASS  TypeScript configuration discovered
+PASS  Dependency policy evaluated
+WARN  3 explicit any usages found in production source
+WARN  One denied dependency is present
+INFO  Test command detected but not executed
+
+Artifact:
+.lending-mind/artifacts/2026-08-25T10-08-00Z-run.json
 ```
 
-## MCP
+Every finding includes a rule ID, severity, evidence, rationale, remediation, and blocking behavior for the current mode.
 
-The stdio server is `lending-mind-mcp` and exposes `lmp_list_minds`,
-`lmp_get_instructions`, `lmp_evaluate_workspace`, `lmp_verify_mind`, and
-`lmp_get_artifact`. Configure an MCP client with a placeholder executable path:
+## Profiles
+
+Bundled profiles include:
+
+```text
+lmp:profile:baseline@1.0.0
+lmp:profile:typescript-minimal@0.3.1
+```
+
+A profile may contain:
+
+- Principles and beliefs.
+- Technical trade-offs.
+- Decision rules.
+- Preferred and rejected patterns.
+- Repository and tool policies.
+- Source provenance and evidence tiers.
+- Exceptions and suppressions.
+- Positive, negative, and exception fixtures.
+- Version history and changelog.
+- Optional Ed25519 signature metadata.
+
+Guidance expresses methodology. Rules express observable behavior. Rules may be deterministic, verifiable, judgment-guided, or human-only. LMP does not pretend that every architectural judgment can be proven by AST analysis.
+
+Profile references are semvered and may be pinned by exact version and digest:
+
+```text
+lmp:profile:company-platform@1.4.0
+```
+
+## Agent integration
+
+Every bundled profile includes a short `SKILL.md` compatibility wrapper for compatible agent clients. It provides portable discovery and a visible completion checklist; it does not replace LMP's evaluator or profile schema.
+
+The wrapper tells the agent to:
+
+1. Inspect existing modules, tests, and configuration.
+2. Read the active profile guidance.
+3. Respect approved tools and repository boundaries.
+4. Run LMP evaluation before finishing.
+5. Fix error-level findings or document approved exceptions.
+6. Return the artifact path and validation summary.
+
+LMP also exposes compiled instructions through the CLI:
+
+```bash
+pnpm lmp agent instructions --mind skills/typescript-minimal --format markdown
+```
+
+## MCP integration
+
+The stdio server is `lending-mind-mcp`. It exposes profile listing, instruction compilation, workspace evaluation, rule explanation, and artifact retrieval.
+
+Example configuration with a placeholder executable path:
 
 ```json
 {
   "mcpServers": {
     "lending-mind": {
       "command": "<path-to-pnpm>",
-      "args": ["--dir", "<path-to-repository>", "exec", "lending-mind-mcp"]
+      "args": [
+        "--dir",
+        "<path-to-lending-mind-repository>",
+        "exec",
+        "lending-mind-mcp"
+      ]
     }
   }
 }
 ```
 
-Commands are never run through MCP unless `runCommands: true`; audit and
-offline paths refuse command execution. No MCP operation publishes or uploads.
+MCP commands are not executed unless `runCommands: true`. Offline and audit paths refuse command execution. MCP does not publish profiles or upload artifacts in the local product workflow.
 
-## Mind Package format
+## Existing tool integration
+
+LMP coordinates existing tools instead of reimplementing the entire developer-tool ecosystem.
+
+Supported or planned adapters include:
+
+- TypeScript compiler and `tsconfig.json`.
+- Biome.
+- ESLint.
+- Test commands.
+- Dependency audits.
+- Semgrep where installed and explicitly enabled.
+- OPA/Rego where an organization already uses it.
+- Git metadata.
+- Existing Rust AST validation.
+- Optional Docker sandbox.
+
+If an optional tool is unavailable, LMP records a skipped check and explains why. It never silently installs a missing tool.
+
+## Evidence artifacts
+
+Every evaluation writes a local artifact:
 
 ```text
-skills/<name>/{mind.json,guidance.md}
-skills/<name>/rules/{dependencies,complexity,typescript,commands}.json
-skills/<name>/{tests/fixtures,evidence,signatures}/
+.lending-mind/artifacts/<timestamp>-<run-id>.json
 ```
 
-`mind.json` contains a versioned ID, mode defaults, author/provenance,
-principles and trade-offs, capabilities, and rule-file references. Guidance is
-philosophical; rules are deterministic. Signatures cover canonical package
-manifests, never arbitrary executable behavior. See [docs/skill-format.md](docs/skill-format.md).
+The artifact records:
+
+- Profile ID, version, digest, and signature status.
+- Evaluation mode and capability mode.
+- Findings and remediation.
+- Tool availability and skipped checks.
+- Approved command results, if any.
+- Loop state transitions and retry count.
+- Git revision and anonymized workspace identity.
+- Privacy and redaction metadata.
+- Explicit limitations.
+
+A PR summary can be generated:
+
+```bash
+pnpm lmp artifact pr-summary <artifact-path>
+```
+
+Example summary:
+
+```text
+Profile: company-platform@1.4.0
+Hard violations: 0
+Warnings: 3
+Typecheck: passed
+Tests: passed
+Dependency diff: reviewed
+Skipped: Semgrep unavailable
+Artifact: .lending-mind/artifacts/<run-id>.json
+```
+
+A passing artifact is evidence of performed checks, not proof that the system is safe or correct.
+
+## Autonomy and remediation
+
+LMP treats prompts as guidance, not enforcement. Critical requirements are represented in multiple forms:
+
+```text
+Agent guidance
+  + typed policy
+  + tool authorization
+  + independent evaluator
+  + bounded remediation loop
+  + evidence artifact
+```
+
+The loop is bounded by profile and task policy. It can stop when:
+
+- The same finding repeats.
+- A test regression occurs.
+- A security error appears.
+- The agent attempts an unauthorized command or network action.
+- The retry budget is exhausted.
+- Human judgment is required.
+
+External actions such as upload, deployment, push, or publication require explicit approval and are not part of the default local workflow.
+
+## Profile authoring and evolution
+
+A profile can be authored from a team's existing architecture docs, runbooks, CI files, lint configuration, review guidance, and approved code examples.
+
+The Profile Evidence Pipeline produces candidates, not automatic truth:
+
+```text
+Permitted source
+  → evidence manifest
+  → candidate claim
+  → cross-source validation
+  → human review
+  → measurable rule
+  → fixtures and benchmark
+  → semvered profile release
+```
+
+Artifacts can create a human-reviewable promotion proposal, but they never automatically modify an active profile or train a base model:
+
+```bash
+pnpm lmp proposal create \
+  --profile lmp:profile:typescript-minimal@0.3.1 \
+  --artifacts <artifact-paths>
+```
 
 ## Security defaults
 
 - No network, uploads, package installation, telemetry, or source mutation by default.
-- Child processes use `shell: false`, exact allowlists, workspace cwd, timeout, truncation, and redaction.
+- Child processes use exact argument lists, `shell: false`, workspace cwd, timeouts, truncation, and redaction.
 - Artifacts hash workspace paths and exclude source, secrets, environments, and raw paths.
-- Signatures prove key possession, not policy correctness.
+- Profile packages are schema-validated before use.
+- Signatures prove possession of a signing key and package integrity, not policy correctness.
+- Remote OCI and IPFS distribution are opt-in advanced capabilities.
 - Passing validation never replaces code review, security review, tests, threat modeling, or human judgment.
 
 ## Repository map
 
 | Directory | Purpose |
 | --- | --- |
-| `packages/` | Core, schema, compiler, evaluator, registry, CLI, MCP, initializer |
-| `skills/` | Bundled baseline and TypeScript Minimal policies |
+| `packages/` | Core, schema, compiler, evaluator, registry, CLI, MCP, and initializer |
+| `skills/` | Bundled baseline and TypeScript Minimal profiles |
 | `examples/` / `test-fixtures/` | Reproducible compliant and violating workspaces |
-| `docs/` | Architecture, format, evaluation, governance, and threats |
-| `crates/` | Preserved legacy Rust prototype, not a TypeScript dependency |
+| `docs/` | Architecture, format, evaluation, governance, security, and profile evidence |
+| `crates/` | Preserved Rust protocol prototype and advanced runtime surfaces |
+| `orchestrator/` | Existing benchmark, sandbox, evaluation, and telemetry tooling |
+| `registry/` | Existing profile schema and definitions |
 
 ## Development
 
@@ -125,21 +350,29 @@ pnpm build
 pnpm validate:skills
 ```
 
-The supported runtime is Node 22+ and pnpm. The local environment used for
-some development checks may report an engine warning when it is older.
+For the preserved Rust core:
+
+```bash
+cargo fmt --check
+cargo test --workspace
+cargo clippy --workspace --all-targets -- -D warnings
+```
+
+The supported TypeScript runtime is Node 22+ and pnpm. Advanced Rust, Docker, OCI, IPFS, and external-agent checks may be optional depending on the local environment.
 
 ## Roadmap
 
-More languages, opt-in OCI distribution, a verified author program, benchmark
-suites, and a reviewable policy-promotion workflow are intentionally deferred.
-The current promotion command creates a proposal and never edits a Mind Package.
+See [ROADMAP.md](ROADMAP.md) for milestone-based delivery. Existing protocol components are preserved and classified by implementation status rather than removed. The local TypeScript workflow is the default product path; daemon, signing, sandbox, OCI, IPFS, and fleet capabilities are advanced opt-in surfaces.
 
 ## Contributing and governance
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md), [docs/governance.md](docs/governance.md),
-and [SECURITY.md](SECURITY.md) before proposing a rule or skill.
+Read:
+
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+- [docs/governance.md](docs/governance.md)
+- [docs/profile-authoring.md](docs/profile-authoring.md)
+- [SECURITY.md](SECURITY.md)
 
 ## License
 
-Released under the [MIT License](LICENSE). See [NOTICE.md](NOTICE.md) for
-attribution and third-party notices.
+Released under the [MIT License](LICENSE). See [NOTICE.md](NOTICE.md) for attribution and third-party notices.
