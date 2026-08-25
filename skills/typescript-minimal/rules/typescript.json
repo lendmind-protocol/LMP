@@ -1,0 +1,9 @@
+{
+  "strict": true,
+  "noImplicitAny": true,
+  "errorAny": true,
+  "errorEval": true,
+  "errorDynamicRequire": true,
+  "errorConsoleLog": true,
+  "requireTestFile": true
+}

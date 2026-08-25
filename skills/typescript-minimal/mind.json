@@ -1,0 +1,41 @@
+{
+  "$schema": "https://lendingmind.dev/schemas/mind-v1.json",
+  "specVersion": "1.0",
+  "id": "lmp:skill:typescript-minimal",
+  "version": "1.0.0",
+  "name": "TypeScript Minimal",
+  "description": "Minimal TypeScript implementation guidance.",
+  "modeDefaults": { "validation": "advisory", "network": "offline" },
+  "author": {
+    "kind": "community-archetype",
+    "displayName": "Lending-Mind Community",
+    "verified": false,
+    "website": null
+  },
+  "provenance": {
+    "sources": [
+      {
+        "title": "Explicit TypeScript service practices",
+        "url": "https://www.typescriptlang.org/docs/",
+        "licenseNote": "Summary only; no copied proprietary text."
+      }
+    ],
+    "attributionRequired": true
+  },
+  "philosophy": {
+    "principles": ["Prefer explicit control flow and low dependency count."],
+    "tradeoffs": ["Strictness can require more deliberate code."],
+    "decisionRules": ["Use native APIs before adding dependencies."],
+    "antiPatterns": ["Do not use eval or hidden command execution."]
+  },
+  "capabilities": {
+    "languages": ["typescript", "javascript"],
+    "requiredAgentTools": ["read_file", "write_file", "execute_command", "search"]
+  },
+  "enforcement": {
+    "dependencyPolicy": "rules/dependencies.json",
+    "complexityPolicy": "rules/complexity.json",
+    "typescriptPolicy": "rules/typescript.json",
+    "commandPolicy": "rules/commands.json"
+  }
+}

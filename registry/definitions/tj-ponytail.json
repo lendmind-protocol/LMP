@@ -1,0 +1,34 @@
+{
+  "$schema": "https://lendingmind.org",
+  "id": "lmp:skill:tj-ponytail",
+  "version": "1.0.0",
+  "meta": {
+    "author": "TJ Holowaychuk Core Minimalism Era",
+    "focus": "Zero-dependency, high-throughput, raw functional purity"
+  },
+  "target_vendor_capabilities": ["FILE_WRITE", "TERMINAL_EXECUTE", "DIRECTORY_STRUCTURE"],
+  "manifest_intercepts": {
+    "package.json": {
+      "strip_dependencies": [
+        "express", "lodash", "axios", "request", "moment", "bluebird"
+      ],
+      "inject_fields": {
+        "type": "module",
+        "engines": { "node": ">=22.0.0" }
+      }
+    },
+    "tsconfig.json": {
+      "force_compiler_options": {
+        "target": "ES2026",
+        "module": "NodeNext",
+        "strict": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true
+      }
+    }
+  },
+  "runtime_execution_policy": {
+    "verify_command": "node --experimental-strip-types --test tests/**/*.test.ts",
+    "profile_command": "node --prof .lmp_telemetry/bench.js"
+  }
+}

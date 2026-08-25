@@ -1,0 +1,6 @@
+{
+  "deny": ["lodash", "axios", "moment", "request"],
+  "allow": ["undici", "zod"],
+  "productionOnly": true,
+  "severity": "error"
+}

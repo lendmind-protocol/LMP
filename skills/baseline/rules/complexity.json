@@ -1,0 +1,1 @@
+{ "maxCyclomatic": 15, "maxFunctionLines": 100, "severity": "warning" }

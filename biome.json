@@ -1,0 +1,22 @@
+{
+  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "formatter": { "enabled": true, "indentStyle": "space", "lineWidth": 100 },
+  "organizeImports": { "enabled": true },
+  "linter": { "enabled": true, "rules": { "recommended": true } },
+  "files": {
+    "ignore": [
+      "**/dist/**",
+      "**/coverage/**",
+      "**/.lending-mind/**",
+      "**/node_modules/**",
+      "**/.omx/**",
+      "**/.turbo/**",
+      "lmp_test_bed/**",
+      "crates/**",
+      "orchestrator/**",
+      "registry/**",
+      "packages/create-lmp/**",
+      "public/**"
+    ]
+  }
+}

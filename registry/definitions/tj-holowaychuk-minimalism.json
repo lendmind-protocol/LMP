@@ -1,0 +1,33 @@
+{
+  "$schema": "https://lendingmind.org",
+  "id": "lmp:skill:tj-ponytail",
+  "target_vendor_capabilities": ["FILE_WRITE", "TERMINAL_EXECUTE", "AST_GREP"],
+  "environment_mutations": {
+    "manifest_intercepts": [
+      {
+        "file": "package.json",
+        "action": "FORCE_MINIMAL_DEPENDENCIES",
+        "forbidden_packages": ["lodash", "express", "axios"],
+        "preferred_packages": ["polka", "undici"]
+      },
+      {
+        "file": "tsconfig.json",
+        "action": "INJECT_STRICT_COMPILER_FLAGS",
+        "mutations": {
+          "compilerOptions": {
+            "strict": true,
+            "noImplicitAny": true,
+            "target": "ES2026"
+          }
+        }
+      }
+    ]
+  },
+  "runtime_execution_policy": {
+    "pre_generation_commands": [
+      "npm prune",
+      "mkdir -p .lmp_telemetry/benchmarks"
+    ],
+    "post_generation_verification": "npm run test && node .lmp_telemetry/run-profile.js"
+  }
+}

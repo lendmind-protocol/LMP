@@ -1,0 +1,68 @@
+name: Lending-Mind Protocol Benchmark Matrix Gate
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  system-evaluation-matrix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Set Up Rust Core Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Cache Rust Build Artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
+
+      - name: Build System Daemon Binary (lmpd)
+        run: cargo build --release --workspace
+
+      - name: Set Up Python Runtime
+        uses: actions/setup-python@v5
+        with:
+          python-month: '3.11'
+          cache: 'pip'
+
+      - name: Install Sandboxing Dependencies
+        run: |
+          if [ -f orchestrator/requirements.txt ]; then
+            pip install -r orchestrator/requirements.txt
+          else
+            pip install matplotlib pandas
+          fi
+
+      - name: Initialize Docker Virtualization Daemon
+        run: |
+          docker --version
+          # Verification that the core container framework is responsive
+
+      - name: Run Local Matrix Test-Bed Orchestrator
+        run: python3 orchestrator/test_bed.py
+
+      - name: Compile Performance Visualizations
+        run: python3 orchestrator/plot_metrics.py
+
+      - name: Archive Telemetry Artifacts & Metrics
+        uses: actions/upload-artifact@v4
+        with:
+          name: lmp-evaluation-telemetry-payload
+          path: |
+            lmp_test_bed/results/*.json
+            lmp_test_bed/results/*.png
+          if-no-files-found: error

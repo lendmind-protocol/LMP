@@ -1,0 +1,16 @@
+{
+  "$schema": "https://lendingmind.org",
+  "id": "lmp:style:tj-minimalism-format",
+  "naming_conventions": {
+    "functions": "camelCase",
+    "variables": "camelCase",
+    "constants": "SNAKE_UPPERCASE",
+    "enforce_single_letter_loop_counters": true
+  },
+  "syntax_formatting": {
+    "indentation": "space_2",
+    "max_line_length": 80,
+    "prefer_arrow_functions": true,
+    "require_trailing_commas": false
+  }
+}

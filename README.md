@@ -1,274 +1,145 @@
 <div align="center">
-  <img src="./public/assets/banner.png" alt="Lending-Mind Protocol banner" width="800" />
+  <img src="./public/assets/banner.png" alt="Lending-Mind Protocol" width="800" />
 </div>
 
-<div align="center">
-  <p><strong>Make AI-built software respect the architecture.</strong></p>
-  <p>A local-first Rust protocol for turning engineering principles into inspectable, repeatable validation.</p>
+<h1 align="center">Lending-Mind Protocol</h1>
 
-  <p>
-    <a href="#features">Features</a> ·
-    <a href="#how-it-works">How It Works</a> ·
-    <a href="#getting-started">Getting Started</a> ·
-    <a href="#development">Development</a> ·
-    <a href="#contributing">Contributing</a>
-  </p>
-</div>
+<p align="center">A verifiable engineering methodology layer for AI coding agents.</p>
 
----
+Lending-Mind combines human-readable guidance, deterministic repository checks,
+privacy-preserving evidence artifacts, and human-reviewed policy evolution. It
+does not merely tell an agent how to behave; it checks the resulting repository.
 
-## Overview
+> MVP status: local TypeScript runtime, filesystem registry, CLI, and stdio MCP
+> server. Node 22+ is required. The existing Rust prototype remains a legacy
+> reference surface and is not required by the TypeScript runtime.
 
-Lending-Mind Protocol (LMP) sits between an AI coding agent and its workspace.
-It loads an engineering profile, watches source changes, audits Rust syntax and
-code shape, and returns actionable feedback before architectural drift becomes
-a merge.
+## What it is
 
-LMP is designed for developers, maintainers, and agent-tool builders who want
-engineering preferences to be explicit data instead of undocumented taste.
+| Layer | Responsibility |
+| --- | --- |
+| Mind Package | Versioned methodology, provenance, and machine-readable policies |
+| Compiler | Deterministic agent instruction bundle and visible checklist |
+| Evaluator | Dependency, TypeScript, AST, complexity, command, and artifact checks |
+| Registry | Offline immutable local installation and resolution |
+| CLI / MCP | Human and coding-agent integration surfaces |
+| Evidence | Redacted, hashed evaluation artifacts stored locally |
 
-> [!WARNING]
-> LMP is pre-1.0 and local-first. The current synchronization boundary copies
-> validated local profiles; OCI/IPFS distribution is not implemented yet. Use
-> the current checkout and test results as the source of truth.
+It is not an identity clone, model-weight training system, telemetry service,
+automatic code mutator, security-review replacement, or automatic uploader.
+Archetypes are generic; individual or organization authorship is opt-in and
+verified with provenance.
 
-## Features
-
-| Feature | Description | Entry point |
-| --- | --- | --- |
-| Workspace daemon | Watches changed Rust files and reports profile violations. | `lmpd` |
-| Shared AST validation | Parses source with `syn`, checks function density, and detects configured AST risks. | `lmp-core` |
-| Engineering profiles | Stores axioms, telemetry limits, and skill rules as JSON. | `registry/definitions/` |
-| MCP adapter | Exposes recursive workspace audits over JSON-RPC stdio. | `lmp-mcp` |
-| Profile synchronization | Validates and copies a local profile into a consumer workspace. | `lmp-sync` |
-| Cryptographic signing | Signs exact profile bytes and verifies Ed25519 signatures. | `mind-signer` |
-| Benchmark harness | Compares compliant and intentionally bloated repositories. | `orchestrator/` |
-| Consumer bootstrap | Creates a local telemetry directory and baseline profile. | `packages/create-lmp/` |
-
-## Getting Started
-
-### Prerequisites
-
-- Rust stable toolchain and Cargo
-- Python 3.11 or newer for orchestration scripts
-- Node.js for the consumer bootstrapper
-- An MCP-compatible client for the JSON-RPC adapter
-
-### Installation
-
-Clone the repository and build the Rust workspace:
+## Quickstart
 
 ```bash
-git clone https://github.com/lendmind-protocol/LMP.git
-cd LMP
-cargo build --workspace
+pnpm install
+pnpm --filter @lending-mind/cli build
+pnpm lmp init --install-baseline
+pnpm lmp evaluate --mind skills/baseline --workspace examples/compliant-service
 ```
 
-### Start the workspace daemon
+The evaluator is advisory by default. Select `--mode enforced` to fail on hard
+violations, or `--mode audit` to collect evidence without running commands or
+failing for policy findings.
 
-Select a profile from `registry/definitions/` and watch a target directory:
+## CLI
 
 ```bash
-cargo run --bin lmpd -- \
-  --mind-select tj-ponytail \
-  --workspace ./crates
+pnpm lmp skill validate skills/typescript-minimal
+pnpm lmp skill compile skills/typescript-minimal --out /tmp/lmp-instructions.md
+pnpm lmp registry install skills/typescript-minimal
+pnpm lmp registry list
+pnpm lmp evaluate --mind skills/typescript-minimal --workspace examples/noncompliant-service --mode advisory --json
+pnpm lmp artifact list
+pnpm lmp doctor
 ```
 
-The daemon stays active and audits modified or newly created `.rs` files.
-
-### Sync a profile locally
-
-```bash
-cargo run --bin lmp-sync -- \
-  --mind-id tj-ponytail \
-  --output-dir ./.lmp_telemetry/minds
-```
-
-The profile is loaded through `lmp-core` before it is copied.
-
-## How It Works
-
-LMP follows a small validation loop:
+Example summary:
 
 ```text
-Engineering profile
-        │
-        ▼
-Profile loader ──────────────┐
-        │                    │
-        ▼                    ▼
-   lmpd watcher          lmp-sync copy
-        │
-        ▼
-  Changed Rust file
-        │
-        ▼
- lmp-core / syn parser
-        │
-        ▼
-  Violation feedback
+warning: 3 violation(s), 0 command(s) executed
+remediation: remove denied dependencies, replace eval, and add explicit tests
+artifact: .lending-mind/artifacts/2026-08-25-run.json
 ```
 
-1. Resolve a profile directly or with `--mind-select <alias>`.
-2. Load it into the shared `MindSchema`; optional fields receive safe defaults.
-3. Receive a source change from `notify`, or an audit request through MCP.
-4. Parse the Rust file with `syn`.
-5. Check function statement density, async naming, lock/blocking patterns, and
-   configured forbidden AST nodes.
-6. Return file-specific validation feedback.
+## MCP
 
-### Core components
-
-| Component | Responsibility |
-| --- | --- |
-| `lmp-core` | Shared profile model, AST audit, skill audit, and signature verification. |
-| `lmpd` | Long-running local filesystem watcher. |
-| `lmp-mcp` | JSON-RPC stdio adapter using the same core audit path. |
-| `lmp-sync` | Local validated profile copy boundary. |
-| `mind-signer` | Ed25519 profile signing utility. |
-| `orchestrator` | Benchmarks, metrics plots, integration scripts, and AST docs. |
-
-## Profiles
-
-Profiles live in `registry/definitions/`:
-
-| Profile | Purpose |
-| --- | --- |
-| `tj-ponytail.json` | Minimal dependency and strict TypeScript-oriented skill rules. |
-| `tj-holowaychuk-minimalism.json` | Lightweight capability and manifest mutation profile. |
-| `style.schema.json` | Naming and formatting preference schema. |
-
-Create a signed profile with:
-
-```bash
-cargo run --bin mind-signer -- \
-  --input registry/definitions/tj-ponytail.json \
-  --output-dir ./.lmp_telemetry/crypto
-```
-
-Never commit generated private keys. See [SECURITY.md](./SECURITY.md) for
-security boundaries and reporting.
-
-## MCP Integration
-
-Build the adapter as a stdio server:
-
-```bash
-cargo build --release --bin lmp-mcp
-```
-
-The `enforce_architectural_axioms` tool accepts:
+The stdio server is `lending-mind-mcp` and exposes `lmp_list_minds`,
+`lmp_get_instructions`, `lmp_evaluate_workspace`, `lmp_verify_mind`, and
+`lmp_get_artifact`. Configure an MCP client with a placeholder executable path:
 
 ```json
 {
-  "workspace_path": "/path/to/workspace",
-  "mind_alias": "tj-ponytail"
+  "mcpServers": {
+    "lending-mind": {
+      "command": "<path-to-pnpm>",
+      "args": ["--dir", "<path-to-repository>", "exec", "lending-mind-mcp"]
+    }
+  }
 }
 ```
 
-It recursively audits Rust files and returns the number checked plus every
-violation. MCP and `lmpd` call the same `lmp-core::ast::audit_source` function.
+Commands are never run through MCP unless `runCommands: true`; audit and
+offline paths refuse command execution. No MCP operation publishes or uploads.
 
-## Project Structure
+## Mind Package format
 
 ```text
-.
-├── crates/
-│   ├── lmp-core/        # Shared AST, profile, skill, and crypto logic
-│   ├── lmpd/            # Local file-watching daemon
-│   ├── lmp-mcp/         # MCP JSON-RPC stdio adapter
-│   └── lmp-sync/        # Local profile synchronization CLI
-├── orchestrator/        # Python benchmarks, metrics, and docs generation
-├── packages/create-lmp/ # Consumer-project bootstrapper
-├── registry/
-│   ├── definitions/     # Engineering mind profiles
-│   └── schemas/         # Registry schemas
-├── public/assets/       # Project media and README banner
-├── docs/                # Concept, onboarding, solution, and generated notes
-├── .github/             # Issue templates and CI/release workflows
-└── ARCHITECTURE.md      # Detailed implementation map
+skills/<name>/{mind.json,guidance.md}
+skills/<name>/rules/{dependencies,complexity,typescript,commands}.json
+skills/<name>/{tests/fixtures,evidence,signatures}/
 ```
 
-See [ARCHITECTURE.md](./ARCHITECTURE.md) for the edit guide and data-flow
-details.
+`mind.json` contains a versioned ID, mode defaults, author/provenance,
+principles and trade-offs, capabilities, and rule-file references. Guidance is
+philosophical; rules are deterministic. Signatures cover canonical package
+manifests, never arbitrary executable behavior. See [docs/skill-format.md](docs/skill-format.md).
+
+## Security defaults
+
+- No network, uploads, package installation, telemetry, or source mutation by default.
+- Child processes use `shell: false`, exact allowlists, workspace cwd, timeout, truncation, and redaction.
+- Artifacts hash workspace paths and exclude source, secrets, environments, and raw paths.
+- Signatures prove key possession, not policy correctness.
+- Passing validation never replaces code review, security review, tests, threat modeling, or human judgment.
+
+## Repository map
+
+| Directory | Purpose |
+| --- | --- |
+| `packages/` | Core, schema, compiler, evaluator, registry, CLI, MCP, initializer |
+| `skills/` | Bundled baseline and TypeScript Minimal policies |
+| `examples/` / `test-fixtures/` | Reproducible compliant and violating workspaces |
+| `docs/` | Architecture, format, evaluation, governance, and threats |
+| `crates/` | Preserved legacy Rust prototype, not a TypeScript dependency |
 
 ## Development
 
-### Run local checks
-
 ```bash
-cargo fmt --all -- --check
-cargo metadata --no-deps --format-version 1
-cargo check --workspace
-cargo test --workspace
-python3 -m compileall -q orchestrator
-node --check packages/create-lmp/bin.js
+pnpm format
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+pnpm validate:skills
 ```
 
-### Run the benchmark harness
-
-```bash
-python3 orchestrator/test_bed.py
-python3 orchestrator/plot_metrics.py
-```
-
-The test bed creates an ignored `lmp_test_bed/` directory and should report:
-
-| Scenario | Expected result |
-| --- | --- |
-| `clean-micro-service` | `COMPLIANT`, zero prohibited dependencies |
-| `bloated-node-service` | `NON_COMPLIANT_REJECTED`, three prohibited dependencies |
-
-### Current verification note
-
-Formatting, workspace metadata, Python/Node syntax, README asset checks, and the
-benchmark harness pass in the working environment. Full Cargo compilation may
-require a current stable Rust toolchain because Cargo 1.75 cannot parse the
-cached `base64ct` release that requires Edition 2024 support.
+The supported runtime is Node 22+ and pnpm. The local environment used for
+some development checks may report an engine warning when it is older.
 
 ## Roadmap
 
-- [x] Rust workspace with shared profile and AST validation
-- [x] Long-running local workspace daemon
-- [x] MCP JSON-RPC audit adapter
-- [x] Local profile synchronization command
-- [x] Ed25519 profile signing and verification primitives
-- [x] Python benchmark and telemetry workflow
-- [ ] OCI registry transport with digest verification
-- [ ] IPFS distribution adapter
-- [ ] Richer language parsers beyond Rust
-- [ ] Release artifacts built and verified on a current stable toolchain
+More languages, opt-in OCI distribution, a verified author program, benchmark
+suites, and a reviewable policy-promotion workflow are intentionally deferred.
+The current promotion command creates a proposal and never edits a Mind Package.
 
-## Contributing
+## Contributing and governance
 
-Contributions are welcome.
-
-1. Read [CONTRIBUTING.md](./CONTRIBUTING.md).
-2. Make the smallest focused change that solves the problem.
-3. Keep validation logic in `lmp-core`; do not duplicate it in adapters.
-4. Add or update a focused regression test for non-trivial behavior.
-5. Run formatting, metadata, targeted tests, and the benchmark harness.
-6. Update architecture documentation when a boundary changes.
-7. Open a pull request with clear scope and verification evidence.
-
-## Security
-
-Please do not report security vulnerabilities through public issues. Read
-[SECURITY.md](./SECURITY.md) for the private reporting process.
-
-## Code of Conduct
-
-Please read [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) before participating.
+Read [CONTRIBUTING.md](CONTRIBUTING.md), [docs/governance.md](docs/governance.md),
+and [SECURITY.md](SECURITY.md) before proposing a rule or skill.
 
 ## License
 
-Lending-Mind Protocol is licensed under the [MIT License](./LICENSE).
-
-See also: [Notices](./NOTICE.md) · [Security Policy](./SECURITY.md) ·
-[Code of Conduct](./CODE_OF_CONDUCT.md)
-
----
-
-<div align="center">
-  <sub>Built for developers who want AI assistance without architectural drift.</sub>
-</div>
+Released under the [MIT License](LICENSE). See [NOTICE.md](NOTICE.md) for
+attribution and third-party notices.

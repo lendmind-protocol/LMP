@@ -1,0 +1,1 @@
+{ "maxExportedCyclomatic": 10, "maxFunctionLines": 60, "severity": "error" }

@@ -1,0 +1,25 @@
+name: New Mind Package
+description: Propose a reviewable engineering methodology package.
+title: "mind: "
+body:
+  - type: markdown
+    attributes:
+      value: Mind packages must use generic archetypes or verified authorship and include provenance.
+  - type: input
+    id: name
+    attributes:
+      label: Name and ID
+    validations:
+      required: true
+  - type: textarea
+    id: rules
+    attributes:
+      label: Philosophy and enforceable rules
+    validations:
+      required: true
+  - type: textarea
+    id: tests
+    attributes:
+      label: Evidence and tests
+    validations:
+      required: true

@@ -1,0 +1,12 @@
+{
+  "allow": [
+    "pnpm test",
+    "pnpm lint",
+    "pnpm typecheck",
+    "npm test",
+    "npm run lint",
+    "npm run typecheck"
+  ],
+  "allowPackageScripts": false,
+  "timeoutMs": 120000
+}

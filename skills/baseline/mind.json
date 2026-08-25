@@ -1,0 +1,41 @@
+{
+  "$schema": "https://lendingmind.dev/schemas/mind-v1.json",
+  "specVersion": "1.0",
+  "id": "lmp:skill:baseline",
+  "version": "1.0.0",
+  "name": "Baseline",
+  "description": "Small, verifiable engineering defaults.",
+  "modeDefaults": { "validation": "advisory", "network": "offline" },
+  "author": {
+    "kind": "community-archetype",
+    "displayName": "Lending-Mind Community",
+    "verified": false,
+    "website": null
+  },
+  "provenance": {
+    "sources": [
+      {
+        "title": "Lending-Mind baseline methodology",
+        "url": "https://lendingmind.dev",
+        "licenseNote": "Summary only; no copied proprietary text."
+      }
+    ],
+    "attributionRequired": true
+  },
+  "philosophy": {
+    "principles": ["Prefer explicit, verifiable changes."],
+    "tradeoffs": ["Static checks are incomplete."],
+    "decisionRules": ["Run available checks before reporting completion."],
+    "antiPatterns": ["Do not mutate source during evaluation."]
+  },
+  "capabilities": {
+    "languages": ["typescript", "javascript"],
+    "requiredAgentTools": ["read_file", "write_file", "execute_command", "search"]
+  },
+  "enforcement": {
+    "dependencyPolicy": "rules/dependencies.json",
+    "complexityPolicy": "rules/complexity.json",
+    "typescriptPolicy": "rules/typescript.json",
+    "commandPolicy": "rules/commands.json"
+  }
+}

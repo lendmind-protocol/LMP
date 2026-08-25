@@ -1,0 +1,7 @@
+{
+  "strict": false,
+  "noImplicitAny": false,
+  "warnAny": true,
+  "warnConsoleLog": true,
+  "warnEmptyCatch": true
+}

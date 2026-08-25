@@ -1,0 +1,8 @@
+[workspace]
+members = [
+    "crates/lmp-core",
+    "crates/lmpd",
+    "crates/lmp-mcp",
+    "crates/lmp-sync",
+]
+resolver = "2"

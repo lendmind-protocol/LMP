@@ -1,0 +1,16 @@
+{
+  "name": "@lending-mind/create-lending-mind",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": { "create-lending-mind": "dist/bin.js" },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run src",
+    "lint": "biome check src"
+  },
+  "dependencies": {
+    "@lending-mind/core": "workspace:*",
+    "@lending-mind/skill-schema": "workspace:*"
+  }
+}

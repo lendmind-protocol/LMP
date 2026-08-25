@@ -1,9 +1,3 @@
 {
-  "recommendations": [
-    "rust-lang.rust-analyzer",       # High-fidelity code completion & macros evaluation
-    "ms-azuretools.vscode-docker",    # Sandbox image tracking and inspect loops
-    "ms-python.python",               # Testing runner scripts parsing and verification
-    "tamasfe.even-better-toml",       # Formatting for complex Cargo multi-crate workspaces
-    "ms-vscode.live-server"           # Realtime visualization of node telemetry pipelines
-  ]
+  "recommendations": ["biomejs.biome", "vitest.explorer", "dbaeumer.vscode-eslint"]
 }
