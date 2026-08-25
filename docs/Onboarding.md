@@ -1,92 +1,362 @@
-We will implement both systems simultaneously to complete the deployment platform: an automated Markdown Documentation Generation Script (orchestrator/gen_docs.py) that extracts your Rust AST rules and formats them into a static documentation web layout, paired with a comprehensive GitHub Pull Request Template (.github/PULL_REQUEST_TEMPLATE.md) to manage incoming expert mind submissions.
-------------------------------
-## ⚙️ 1. Automated Markdown Documentation Generator (orchestrator/gen_docs.py)
-This Python automation script parses your systems-level Rust source files (ast.rs), extracts structural rule definitions and architectural axioms via token matching, and automatically outputs a clean, unified documentation site asset.
+# Lending-Mind Onboarding
 
-#!/usr/bin/env python3import osimport re
-class LMPDocsGenerator:
-    def __init__(self, src_file: str = "crates/lmp-core/src/ast.rs", output_md: str = "docs/ast-axioms.md"):
-        self.src_file = os.path.abspath(src_file)
-        self.output_md = os.path.abspath(output_md)
-        os.makedirs(os.path.dirname(self.output_md), exist_ok=True)
+## Goal
 
-    def extract_and_compile_docs(self) -> None:
-        """Parses the Rust AST module for custom string violations and compiles a documentation grid."""
-        print(f"📖 Scanning Rust core systems source tree: {self.src_file}")
-        if not os.path.exists(self.src_file):
-            print("⚠️ Source file not found. Generating a standard placeholder documentation file.")
-            self._write_fallback_docs()
-            return
+A new user should receive value from Lending-Mind without learning the protocol internals.
 
-        with open(self.src_file, "r") as f:
-            content = f.read()
+The first-run experience must be:
 
-        # Regular expression to extract explicit validation errors inside the compiler visitor logic
-        violation_patterns = re.findall(r'"([A-Z_]+_VIOLATION|[A-Z_]+_RISK):\s*([^"]+)"', content)
+- Local.
+- Offline.
+- Advisory.
+- Non-mutating.
+- No Docker.
+- No daemon.
+- No OCI.
+- No IPFS.
+- No signatures.
+- No MCP.
+- No network.
+- No uploads.
+- No package installation.
+- No automatic Git hooks.
 
-        markdown_output = [
-            "# Lending-Mind Protocol (LMP) AST Enforcement Registry 🛡️\n",
-            "This document is generated automatically by the core compiler source analysis tools. It profiles every structural code rule evaluated by the local validation daemon (`lmpd`).\n",
-            "| Rule Code Class | Automated Evaluation Violation / Prevention Constraint Guard |",
-            "| :--- | :--- |"
-        ]
+The user should understand LMP in one sentence:
 
-        for code, description in violation_patterns:
-            markdown_output.append(f"| `{code}` | {description.strip()} |")
+> LMP gives a coding agent the same engineering rules a team would apply in review, then checks the patch and explains what needs fixing.
 
-        with open(self.output_md, "w") as f:
-            f.write("\n".join(markdown_output))
-        
-        print(f"✨ Static protocol documentation site asset generated successfully: {self.output_md}")
+## First-run workflow
 
-    def _write_fallback_docs(self) -> None:
-        fallback_content = (
-            "# Lending-Mind Protocol (LMP) AST Enforcement Registry 🛡️\n\n"
-            "| Rule Code Class | Automated Evaluation Violation / Prevention Constraint Guard |\n"
-            "| :--- | :--- |\n"
-            "| `CRITICAL_AXIOM_VIOLATION` | Function names async execution but lacks the literal async keyword modifier. |\n"
-            "| `THREAD_RACE_RISK` | Blocking routine invoked while thread holds an exclusive resource access lock. |\n"
-        )
-        with open(self.output_md, "w") as f:
-            f.write(fallback_content)
-if __name__ == "__main__":
-    generator = LMPDocsGenerator()
-    generator.extract_and_compile_docs()
+### 1. Install or invoke the CLI
 
-------------------------------
-## 📋 2. GitHub Pull Request Template (.github/PULL_REQUEST_TEMPLATE.md)
-This template manages incoming pull requests from the community. It forces developers to confirm that their submissions pass AST syntax checks, have been evaluated inside the local sandbox, and carry authentic cryptographic signatures before a maintainer reviews the code.
-
-<!-- Provide a clear, universal overview of your contribution below -->### 📝 Overview of Changes* **Target Mind Profile**: (e.g., `registry/definitions/supabase-core.json`)
-* **Type of Contribution**: [ ] New Expert Mind Matrix | [ ] Rust Core AST Rule Update | [ ] Bug Fix
-### 🛡️ Mandatory Verification ChecklistBefore submitting this pull request for core triage review, you must complete and check all the following engineering requirements:
-
-- [ ] **Local Integration Run**: My submission executes successfully using the automated testing suite (`python3 orchestrator/test_bed.py`).
-- [ ] **Cryptographic Signing**: The mind json matrix has been sealed and carries a valid signature file generated via the workspace utility bin (`cargo run --bin mind-signer`).
-- [ ] **No Regression Indicators**: The historical performance logger (`orchestrator/evaluation_suite.py`) verifies that this update does not regress global processing latencies or quality benchmarks.
-- [ ] **Documentation Sync**: I have run the static extraction utility (`python3 orchestrator/gen_docs.py`) to align the markdown API references with my core changes.
-### 📊 Local Benchmarking Telemetry SnippetPaste the raw JSON block output or console dashboard snippet from your local `test_bed.py` evaluation run below to verify conformance:```json
-// Paste metrics payload here
+```bash
+pnpm install
+pnpm --filter @lending-mind/cli build
 ```
 
-------------------------------
-## 🚀 Launch-Ready System Validation Flow
-To run your complete document updates and verify the system locally, run these quick commands in your console:
+Or use the packaged initializer when available:
 
-# 1. Update the automated markdown documentation maps
-python3 orchestrator/gen_docs.py
-# 2. Verify files are perfectly updated and structured inside your tree
-cat docs/ast-axioms.md
+```bash
+npx @lending-mind/create-lending-mind
+```
 
-## Expected Generated File View
+### 2. Initialize the repository
 
-# Lending-Mind Protocol (LMP) AST Enforcement Registry 🛡️
-This document is generated automatically by the core compiler source analysis tools. It profiles every structural code rule evaluated by the local validation daemon (`lmpd`).
+```bash
+pnpm lmp init --install-baseline
+```
 
-| Rule Code Class | Automated Evaluation Violation / Prevention Constraint Guard |
-| :--- | :--- |
-| `CRITICAL_AXIOM_VIOLATION` | Function names async execution but lacks the literal async keyword modifier. |
-| `THREAD_RACE_RISK` | Blocking routine invoked while thread holds an exclusive resource access lock. |
+Expected behavior:
 
-Your open-source framework is now 100% complete and fully production-grade. The community has explicit issue templates to submit proposals, a rigorous pull request gate to protect code quality, a localized testing sandbox, an automated multi-architecture release pipeline, and a self-updating documentation engine. You are fully equipped to launch on Hacker News and capture major developer traction based purely on the technical depth of your execution!
-The entire Lending-Mind Protocol platform specification and toolchain are complete, verified, secure, and ready for global public release.
+- Creates `.lending-mind/config.json`.
+- Installs or references the baseline profile.
+- Creates `.lending-mind/artifacts/`.
+- Does not overwrite existing configuration without `--force`.
+- Does not install Git hooks unless `--install-hooks` is explicitly passed.
+- Does not modify source files.
+- Does not run package scripts.
+- Does not use the network.
+
+Example output:
+
+```text
+✓ Lending-Mind initialized
+
+Profile: baseline@1.0.0
+Mode: advisory
+Network: disabled
+Commands: disabled
+Uploads: disabled
+
+Next:
+  lmp evaluate
+  lmp agent instructions
+```
+
+### 3. Run the first evaluation
+
+```bash
+pnpm lmp evaluate
+```
+
+Expected behavior:
+
+- Resolves the active profile.
+- Inspects repository configuration.
+- Detects available tools.
+- Evaluates safe static checks.
+- Records skipped checks.
+- Writes a local redacted artifact.
+- Prints a readable summary.
+
+Example output:
+
+```text
+LMP Evaluation — Advisory
+
+Profile: baseline@1.0.0
+Capability mode: local
+Commands: not run
+Network: disabled
+
+PASS  Repository configuration discovered
+WARN  TypeScript strict mode is disabled
+WARN  3 explicit any usages found in production source
+WARN  Source files exist but no test files were found
+INFO  Detected available checks: pnpm lint, pnpm typecheck, pnpm test
+
+Artifact:
+.lending-mind/artifacts/2026-08-25T10-08-00Z-run.json
+```
+
+### 4. Select a profile
+
+```bash
+pnpm lmp profile list
+pnpm lmp profile use skills/typescript-minimal
+```
+
+Expected output:
+
+```text
+Profile selected: typescript-minimal@0.3.1
+
+Default mode remains: advisory
+
+This profile will check:
+- TypeScript strict mode
+- Explicit any
+- eval and dynamic require
+- Dependency policy
+- Test presence
+- Complexity threshold
+
+This profile will not:
+- Modify code
+- Run commands unless requested
+- Upload artifacts
+- Require Docker or a daemon
+```
+
+### 5. Evaluate with the selected profile
+
+```bash
+pnpm lmp evaluate --mind skills/typescript-minimal --mode advisory
+```
+
+Expected behavior:
+
+- Uses the selected profile.
+- Runs only safe static checks.
+- Does not run package scripts.
+- Does not modify files.
+- Writes an artifact.
+
+### 6. Run approved checks explicitly
+
+```bash
+pnpm lmp evaluate \
+  --mind skills/typescript-minimal \
+  --mode advisory \
+  --run-approved-checks
+```
+
+Expected behavior:
+
+- Runs only allowlisted package scripts.
+- Uses `shell: false`.
+- Uses workspace cwd.
+- Applies timeout and output truncation.
+- Redacts secrets and environment values.
+- Records command results in the artifact.
+
+### 7. Use enforced mode only after tuning
+
+```bash
+pnpm lmp evaluate \
+  --mind skills/typescript-minimal \
+  --mode enforced \
+  --run-approved-checks
+```
+
+Expected behavior:
+
+- Error-severity findings produce a non-zero exit code.
+- Warnings remain visible.
+- Skipped checks remain visible.
+- Artifact records blocking behavior.
+
+## Agent onboarding
+
+Every bundled profile includes a `SKILL.md` compatibility wrapper.
+
+The wrapper tells the agent to:
+
+1. Inspect existing modules, tests, and configuration.
+2. Read the active profile guidance.
+3. Respect approved tools and repository boundaries.
+4. Run LMP evaluation before finishing.
+5. Fix error-level findings or document approved exceptions.
+6. Return the artifact path and validation summary.
+
+The wrapper does not replace the profile schema or evaluator.
+
+## MCP onboarding
+
+The stdio server is `lending-mind-mcp`.
+
+Example configuration with a placeholder executable path:
+
+```json
+{
+  "mcpServers": {
+    "lending-mind": {
+      "command": "<path-to-pnpm>",
+      "args": [
+        "--dir",
+        "<path-to-lending-mind-repository>",
+        "exec",
+        "lending-mind-mcp"
+      ]
+    }
+  }
+}
+```
+
+MCP behavior:
+
+- Commands are not executed unless `runCommands: true`.
+- Offline and audit paths refuse command execution.
+- MCP does not publish profiles or upload artifacts in the local product workflow.
+- MCP tool inputs are validated.
+- MCP responses include structured data and readable text.
+
+## Team onboarding
+
+### Week 1: Observe only
+
+```bash
+pnpm lmp evaluate --mode audit
+```
+
+Purpose:
+
+- Discover existing patterns.
+- Measure warning volume.
+- Identify noisy rules.
+- Create baselines.
+- Avoid blocking anyone.
+
+### Week 2–3: Advisory mode
+
+```bash
+pnpm lmp evaluate --mode advisory
+```
+
+Purpose:
+
+- Agents receive remediation feedback.
+- Teams tune rule severity.
+- Reviewers compare LMP findings with actual PR feedback.
+- Exceptions and suppressions are reviewed.
+
+### Week 4+: Enforced mode
+
+```bash
+pnpm lmp evaluate \
+  --profile lmp:profile:company-platform@1.4.0 \
+  --mode enforced \
+  --run-approved-checks
+```
+
+Only enforce rules that are:
+
+- Clear and measurable.
+- Low false-positive.
+- Well remediated.
+- Covered by fixtures.
+- Accepted by the owning team.
+
+## Advanced onboarding
+
+Advanced capabilities are opt-in.
+
+### Connected mode
+
+```bash
+pnpm lmp daemon start --workspace .
+pnpm lmp mcp serve
+```
+
+Benefits:
+
+- Continuous local auditing.
+- Dynamic profile instructions.
+- Editor and agent integrations.
+- Local synchronization.
+
+Still default:
+
+- No upload.
+- No network without explicit configuration.
+
+### Attested mode
+
+```bash
+pnpm lmp profile verify lmp:profile:company-platform@1.4.0
+pnpm lmp evaluate --mode enforced --sign-artifact
+```
+
+Benefits:
+
+- Profile signature verification.
+- Artifact signing.
+- Optional OCI distribution.
+- Optional sandbox execution.
+
+Remote sync requires explicit destination and approval:
+
+```bash
+pnpm lmp registry sync \
+  --destination registry.example.com/lmp \
+  --allow-upload
+```
+
+Before upload, LMP must show:
+
+```text
+You are about to upload:
+- Profile metadata: yes
+- Evaluation artifact: yes
+- Raw source code: no
+- Raw workspace paths: no
+- Redacted command output: yes
+- Destination: registry.example.com/lmp
+
+Continue? [y/N]
+```
+
+## What onboarding must not do
+
+Onboarding must not:
+
+- Install Docker.
+- Start a daemon.
+- Require OCI or IPFS.
+- Require signatures.
+- Require MCP.
+- Use the network.
+- Upload telemetry.
+- Modify source files.
+- Install packages.
+- Overwrite configuration.
+- Install Git hooks without explicit approval.
+- Run arbitrary profile-supplied commands.
+
+## Success condition
+
+A new user should be able to say:
+
+> “LMP found the same issue my reviewer usually finds, explained it clearly, the agent fixed it, and the PR now shows exactly what was checked.”
+
+If onboarding requires advanced infrastructure before that outcome, the product has failed its first-run test.
