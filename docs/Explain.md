@@ -326,18 +326,22 @@ Static / dynamic / semantic evaluation
 ```
 - Level 4 — Behavioral loop (Future Hardening Delivery)
 <p>Agent planning, tool usage, validation sequence, remediation.</p>
+
 ```
 Deviation detected
   ↓
 ```
 - Level 5 — Evidence memory (Future Hardening Delivery)
 <p>Artifacts, successful patterns, failures, exceptions, reviewer outcomes.</p>
+
 ```
 Critique and remediation
   ↓
 ```
+
 - Level 6 — High-fidelity Mind (The Main Vision)
 <p>Verified author or organization contributes source material, reviews behavior, signs releases, and continuously calibrates the Mind.</p>
+
 ```
 Artifact stored
   ↓
