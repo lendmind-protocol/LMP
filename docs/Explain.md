@@ -12,7 +12,7 @@ Think of a default AI agent like a highly skilled rental car driver. They know h
 
 But if you put that driver on a dangerous, icy mountain road, they are going to crash because they don't have the experience of a local mountain driver.
 
-- A traditional prompt or markdown file is like shouting out the window: _"Hey, please be careful on the ice!"_The driver hears you, but they still don't know how to navigate the curves.
+- A traditional prompt or markdown file is like shouting out the window: "_Hey, please be careful on the ice!_"The driver hears you, but they still don't know how to navigate the curves.
 
 - **Lending-Mind** is like downloading the exact driving habits, muscle memory, and historical experience of a veteran mountain driver and injecting it directly into the driver's head. Suddenly, they shift gears differently, they brake early, and they respect the environment.
 
@@ -295,3 +295,55 @@ func HandleMetricsDownload(w http.ResponseWriter, r *http.Request) {
   </tr>
 </table>
 
+# Development Status
+
+- Level 1 — Style (**current state MVP**)
+<p>Naming, formatting, dependency preference.</p>
+
+```
+Mind selection
+  ↓
+Context alignment
+  ↓
+```
+- Level 2 — Rules (Next Milestone)
+<p>AST checks, complexity, required tests, banned patterns.</p>
+
+```
+Plan shaped by Mind
+  ↓
+Tool use shaped by Mind
+  ↓
+```
+- Level 3 — Methodology (Future Hardening Delivery)
+<p>Architecture boundaries, decision trees, trade-offs, review logic.</p>
+
+```
+Code generated under Mind
+  ↓
+Static / dynamic / semantic evaluation
+  ↓
+```
+- Level 4 — Behavioral loop (Future Hardening Delivery)
+<p>Agent planning, tool usage, validation sequence, remediation.</p>
+```
+Deviation detected
+  ↓
+```
+- Level 5 — Evidence memory (Future Hardening Delivery)
+<p>Artifacts, successful patterns, failures, exceptions, reviewer outcomes.</p>
+```
+Critique and remediation
+  ↓
+```
+- Level 6 — High-fidelity Mind (The Main Vision)
+<p>Verified author or organization contributes source material, reviews behavior, signs releases, and continuously calibrates the Mind.</p>
+```
+Artifact stored
+  ↓
+Mind calibration proposal
+```
+
+<p>An executable engineering cognition layer for AI agents. LMP Minds package the decision-making systems of experienced engineers and teams: their philosophy, trade-offs, architectural boundaries, implementation archetypes, tool behavior, review standards, and verified outcomes.
+
+The LMP runtime synchronizes that Mind across the agent’s prompt, context, tools, execution loop, validation, artifacts, and optional multi-agent workflow. It detects when code deviates from the Mind, forces a critique/remediation cycle within the configured harness, and uses verified artifacts to evolve future versions of the Mind.</p>
