@@ -15,6 +15,7 @@
       "**/.source/**",
       "**/target/**",
       "lmp-test-results/**",
+      ".lmp-real-world-work/**",
       "lmp_test_bed/**",
       "crates/**",
       "orchestrator/**",
