@@ -201,12 +201,7 @@ async function readWorkspaceShape(directory: string) {
 
 async function executableOnPath(executable: string, directory: string) {
   const local = join(directory, "node_modules", ".bin", executable);
-  if (
-    await access(local)
-      .then(() => true)
-      .catch(() => false)
-  )
-    return local;
+  if (await isUsableExecutable(local)) return local;
   const search = process.platform === "win32" ? "where" : "which";
   return await new Promise<string | null>((resolve) => {
     const child = spawn(search, [executable], {
@@ -218,11 +213,23 @@ async function executableOnPath(executable: string, directory: string) {
     child.stdout.on("data", (chunk: Buffer) => {
       output += chunk.toString();
     });
-    child.on("close", (code) =>
-      resolve(code === 0 ? output.trim().split(/\r?\n/)[0] || null : null),
-    );
+    child.on("close", async (code) => {
+      const candidate = code === 0 ? output.trim().split(/\r?\n/)[0] || null : null;
+      resolve(candidate && (await isUsableExecutable(candidate)) ? candidate : null);
+    });
     child.on("error", () => resolve(null));
   });
+}
+
+async function isUsableExecutable(candidate: string): Promise<boolean> {
+  return await stat(candidate)
+    .then((value) => {
+      if (!value.isFile()) return false;
+      // Windows does not use POSIX executable mode bits; CreateProcess performs
+      // the final format check when the explicitly authorized plan is spawned.
+      return process.platform === "win32" || (value.mode & 0o111) !== 0;
+    })
+    .catch(() => false);
 }
 
 export async function detectToolAdapters(directory: string): Promise<ToolDetection[]> {

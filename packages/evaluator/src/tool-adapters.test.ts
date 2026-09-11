@@ -36,6 +36,26 @@ describe("tool adapters", () => {
     expect(plan.plans[0]).toMatchObject({ adapterId: "typescript", command: ["tsc", "--noEmit"] });
   });
 
+  it("skips a workspace tool that exists but is not executable", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "lmp-adapters-non-executable-"));
+    await writeFile(join(directory, "biome.json"), "{}\n");
+    const executableDirectory = join(directory, "node_modules", ".bin");
+    await mkdir(executableDirectory, { recursive: true });
+    await writeFile(join(executableDirectory, "biome"), "#!/bin/sh\nexit 0\n", { mode: 0o644 });
+    const previousPath = process.env.PATH;
+    process.env.PATH = "/usr/bin:/bin";
+    try {
+      const plan = await planToolAdapters(directory);
+      expect(plan.plans).toHaveLength(0);
+      expect(plan.skipped.find((tool) => tool.adapterId === "biome")).toMatchObject({
+        configured: true,
+        installed: false,
+      });
+    } finally {
+      process.env.PATH = previousPath;
+    }
+  });
+
   it("requires explicit authorization and normalizes the result", async () => {
     const result = await executeToolPlan(
       {
