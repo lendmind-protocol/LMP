@@ -393,7 +393,11 @@ def readiness(args: argparse.Namespace) -> dict[str, object]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--benchmark", default="lmp-test-results/real-world/real-world-benchmark.json")
+    parser.add_argument(
+        "--benchmark",
+        default="lmp-test-results/real-world-clean-current/real-world-benchmark.json",
+        help="clean retained benchmark artifact; CI may override this with its run output",
+    )
     parser.add_argument("--qualification", default="lmp-test-results/qualification-result.json")
     parser.add_argument("--registry", default="registry/registry.json")
     parser.add_argument("--public-registry", default="apps/docs/public/registry.json")

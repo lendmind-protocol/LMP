@@ -70,7 +70,7 @@ collecting separate green-looking outputs by hand:
 ```bash
 python3 orchestrator/release_readiness.py \
   --qualification lmp-test-results/qualification-result.json \
-  --benchmark lmp-test-results/real-world/real-world-benchmark.json \
+  --benchmark lmp-test-results/real-world-clean-current/real-world-benchmark.json \
   --registry registry/registry.json \
   --deployment https://your-deployed-host.example \
   --expected-registry registry/registry.json \
