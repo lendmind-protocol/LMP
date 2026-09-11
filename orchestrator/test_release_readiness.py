@@ -32,8 +32,11 @@ class ReleaseReadinessTests(unittest.TestCase):
         self.assertIn("registryRelease", report["checks"])
         self.assertEqual(report["checks"]["registryCopyParity"]["status"], "blocked")
         self.assertIn("registryManifestParity", report["checks"])
-        self.assertEqual(report["checks"]["workingTree"]["status"], "blocked")
-        self.assertEqual(report["checks"]["workingTree"]["boundary"], "local")
+        # The repository is expected to be clean in normal release verification;
+        # the report must remain blocked because the supplied evidence is absent,
+        # not because this regression test dirties the checkout.
+        self.assertEqual(report["checks"]["workingTree"]["status"], "pass")
+        self.assertEqual(report["checks"]["workingTree"]["changedPathCount"], 0)
         self.assertEqual(report["checks"]["staticDeployment"]["status"], "blocked")
         self.assertEqual(report["checks"]["staticDeployment"]["boundary"], "external")
         self.assertEqual(report["checks"]["humanAdoptionPilot"]["status"], "blocked")
