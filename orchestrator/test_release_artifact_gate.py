@@ -151,6 +151,11 @@ class ReleaseArtifactGateTests(unittest.TestCase):
         self.assertIn("python orchestrator/package_release_artifact.py", workflow)
         self.assertIn('path: dist/lmp-${{ matrix.target }}.tar.gz', workflow)
         self.assertIn('find "$idle_workspace" -mindepth 1 -delete', workflow)
+        self.assertGreaterEqual(
+            workflow.count("fetch-depth: 0"),
+            2,
+            "verify and aggregate release jobs must fetch origin/main for source verification",
+        )
 
     def test_accepts_the_complete_release_matrix_including_windows_suffixes(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
