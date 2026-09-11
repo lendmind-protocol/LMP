@@ -6,10 +6,10 @@ from pathlib import Path
 
 try:
     from . import mind_crawler
-    from .mind_crawler import fetch_github_profile_sources, github_repository_implementation_sources, github_repository_observation, github_source_mappings, harvest, parse_github_profile_url, parse_github_repository_url, parse_rss_feed, parse_transcript_payload, source_from_mapping, youtube_video_id
+    from .mind_crawler import fetch_github_profile_sources, github_pull_request_mappings, github_repository_implementation_sources, github_repository_observation, github_source_mappings, harvest, parse_github_profile_url, parse_github_repository_url, parse_rss_feed, parse_transcript_payload, source_from_mapping, youtube_video_id
 except ImportError:
     import mind_crawler
-    from mind_crawler import fetch_github_profile_sources, github_repository_implementation_sources, github_repository_observation, github_source_mappings, harvest, parse_github_profile_url, parse_github_repository_url, parse_rss_feed, parse_transcript_payload, source_from_mapping, youtube_video_id
+    from mind_crawler import fetch_github_profile_sources, github_pull_request_mappings, github_repository_implementation_sources, github_repository_observation, github_source_mappings, harvest, parse_github_profile_url, parse_github_repository_url, parse_rss_feed, parse_transcript_payload, source_from_mapping, youtube_video_id
 
 
 FIXTURE = Path(__file__).parent / "fixtures" / "mind-harvester" / "contradictory-footprint.json"
@@ -136,6 +136,22 @@ class MindCrawlerTests(unittest.TestCase):
         self.assertTrue(all(record["url"].startswith("https://github.com/") for record in records))
         artifact = harvest("github-style", records)
         self.assertEqual({source["sourceType"] for source in artifact["sources"]}, {"repository", "review"})
+
+    def test_closed_pull_requests_are_explicit_critique_sources(self):
+        records = github_pull_request_mappings("https://github.com/example/project", [{
+            "number": 12,
+            "title": "Reject broad abstraction",
+            "body": "Keep the boundary small.",
+            "html_url": "https://github.com/example/project/pull/12",
+            "updated_at": "2026-09-12T00:00:00Z",
+            "closed_at": "2026-09-12T00:00:00Z",
+            "state": "closed",
+        }])
+        self.assertEqual(len(records), 1)
+        self.assertEqual(records[0]["layer"], "critique")
+        self.assertEqual(records[0]["sourceType"], "pull-request")
+        artifact = harvest("github-style", records)
+        self.assertEqual(artifact["sources"][0]["sourceType"], "pull-request")
 
     def test_github_repository_url_is_public_and_canonical(self):
         self.assertEqual(parse_github_repository_url("https://github.com/example/project.git"), ("example", "project"))

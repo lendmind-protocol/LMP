@@ -28,6 +28,7 @@ FETCH_TIMEOUT_SECONDS = 10
 MAX_FEED_ITEMS = 20
 MAX_GITHUB_COMMITS = 10
 MAX_GITHUB_CRITIQUES = 20
+MAX_GITHUB_PULL_REQUESTS = 20
 MAX_GITHUB_REPOSITORIES = 10
 MAX_GITHUB_MANIFESTS = 8
 MAX_GITHUB_SOURCE_FILES = 24
@@ -243,14 +244,53 @@ def github_source_mappings(repository_url: str, commits: list[dict[str, Any]], c
     return records
 
 
+def github_pull_request_mappings(repository_url: str, pull_requests: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Normalize closed pull-request records as explicit critique evidence.
+
+    The issues endpoint can contain pull requests, but it does not make that
+    stream explicit in a source manifest. Keeping closed PRs separate lets a
+    reviewer distinguish implementation history from decisions that were
+    accepted or rejected during review.
+    """
+    owner, repo = parse_github_repository_url(repository_url)
+    records: list[dict[str, Any]] = []
+    for pull_request in pull_requests[:MAX_GITHUB_PULL_REQUESTS]:
+        number = str(pull_request.get("number") or "")
+        title = str(pull_request.get("title") or "")
+        body = str(pull_request.get("body") or "")
+        reference = str(pull_request.get("html_url") or f"https://github.com/{owner}/{repo}/pull/{number}")
+        if not number or not title or not reference.startswith("https://github.com/"):
+            continue
+        records.append({
+            "id": stable_id("github-pull-request", repository_url + "\0" + number),
+            "layer": "critique",
+            "title": f"{owner}/{repo} closed pull request {number}: {title}",
+            "url": reference,
+            "sourceType": "pull-request",
+            "rights": "public-documentation",
+            "allowedUse": "analysis-only; attribution required",
+            "evidenceTier": "primary",
+            "content": " ".join(part for part in (title, body) if part),
+            "metadata": {
+                "publisher": "github.com",
+                "revision": str(pull_request.get("updated_at") or ""),
+                "publishedAt": pull_request.get("closed_at"),
+                "state": str(pull_request.get("state") or "closed"),
+            },
+        })
+    return records
+
+
 def fetch_github_sources(repository_url: str) -> list[dict[str, Any]]:
     owner, repo = parse_github_repository_url(repository_url)
     api_base = f"https://api.github.com/repos/{owner}/{repo}"
     commits = json.loads(fetch_public(f"{api_base}/commits?per_page={MAX_GITHUB_COMMITS}")[1].decode("utf-8"))
     critiques = json.loads(fetch_public(f"{api_base}/issues?state=closed&per_page={MAX_GITHUB_CRITIQUES}")[1].decode("utf-8"))
-    if not isinstance(commits, list) or not isinstance(critiques, list):
+    pull_requests = json.loads(fetch_public(f"{api_base}/pulls?state=closed&sort=updated&direction=desc&per_page={MAX_GITHUB_PULL_REQUESTS}")[1].decode("utf-8"))
+    if not isinstance(commits, list) or not isinstance(critiques, list) or not isinstance(pull_requests, list):
         raise ValueError(f"GitHub API returned an unexpected response for {repository_url}")
     records = github_source_mappings(repository_url, commits, critiques)
+    records.extend(github_pull_request_mappings(repository_url, pull_requests))
     repository = json.loads(fetch_public(api_base)[1].decode("utf-8"))
     if isinstance(repository, dict):
         records.extend(github_repository_implementation_sources(repository))
