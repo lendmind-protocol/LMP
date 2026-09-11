@@ -1,5 +1,5 @@
 {
-  "$schema": "https://lendingmind.org",
+  "$schema": "https://lmp-six.vercel.app/schema/style-v1.json",
   "id": "lmp:style:tj-minimalism-format",
   "naming_conventions": {
     "functions": "camelCase",

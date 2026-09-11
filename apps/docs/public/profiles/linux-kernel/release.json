@@ -1,0 +1,11 @@
+{
+  "packageId": "lmp:mind:linux-kernel",
+  "version": "1.0.0",
+  "changelog": ["Initial defensive systems community archetype release."],
+  "limitations": ["The archetype is community-curated and is not an endorsement or simulation of a named individual."],
+  "review": {
+    "status": "unreviewed",
+    "reviewers": [],
+    "notes": "Independent provenance and profile review is required before public release claims."
+  }
+}

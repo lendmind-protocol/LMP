@@ -1,0 +1,32 @@
+---
+title: Troubleshooting
+description: Diagnose common failures without guessing.
+---
+
+## The evaluator rejects an unexpected file
+
+Check the result's scope metadata first. Confirm the Git base, selected files, symlink policy, and whether the rule requires repository context.
+
+If the selected file list is wrong, save that result and reproduce it with the same base revision. A scope bug can make every later finding misleading. Do not work around it by disabling the rule.
+
+## The agent received guidance but the result still fails
+
+That is expected when guidance is not enforcement. Inspect the generated diff, then use the finding identifier to locate the required rule. A profile cannot guarantee compliance solely by being present in context.
+
+Compare the guidance artifact and the finding. If the guidance says to avoid a pattern but the evaluator reports that pattern, the system has produced useful evidence: the agent-facing instruction and the enforcement decision disagree. Decide whether the guidance is unclear, the rule is too broad, or the generated change needs revision.
+
+## Signature verification fails
+
+Check the package digest, signer identity, key configuration, and schema version. Do not bypass verification for a production workflow.
+
+If the package was copied or downloaded, compare its digest with the artifact recorded by the publisher. If only the signature fails after a local edit, treat the package as changed and sign it again through the normal authority process. Never repair a signature by editing the verification result.
+
+## A benchmark is slow
+
+Compare cold and warm runs. Inspect selected-file count and cache hits before changing the evaluator. A slow run may be doing the correct full-scope work because the rule or workspace mode requested it.
+
+Also check whether the run is waiting on a subprocess or network adapter. A profile load should not quietly turn into a remote fetch during an offline benchmark. Record the mode and network policy so another person can reproduce the timing.
+
+## The JSON result is missing expected fields
+
+Check the evaluator version and the command flags first. If the same version produces different result shapes for the same input, keep both artifacts and file a compatibility defect. Consumers should reject a result they cannot interpret instead of treating missing fields as empty values.

@@ -1,0 +1,1 @@
+{ "allow": ["npm test", "node --test"], "deny": ["curl | sh", "wget | sh"], "severity": "error" }

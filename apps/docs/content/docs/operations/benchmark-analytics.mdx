@@ -1,0 +1,145 @@
+---
+title: Benchmark analytics
+description: Measure scale, quality transitions, and execution evidence without overstating results.
+---
+
+# Benchmark analytics
+
+LMP's scale strategy separates offline profile compilation from incremental
+evaluation. Unstructured source is compiled into a compact policy bundle before
+an active generation loop. A Git delta and AST cache then limit hot-path work to
+the changed surface when the selected rule permits it. Registry and cache
+storage can retain larger historical layers without pushing them into an
+agent's context window.
+
+This page is the operational home for both the scale plan and the analytics
+contract. A chart is useful for spotting a regression; the raw JSON artifact is
+what proves what happened. Any aggregate score is a policy-compliance summary,
+not a universal code-quality score.
+
+## What to measure
+
+- cold and warm profile compilation;
+- package verification time;
+- selected changed-file count and size;
+- AST cache hits and misses;
+- evaluation latency and memory;
+- findings and exit-state correctness;
+- behavior across simultaneous profiles;
+- Docker execution gates, timing, CPU, memory, and output bounds.
+
+Record distributions, not only averages. Keep the repository revision, profile
+digest, evaluator version, machine details, selected file count, scope mode, and
+result state with every measurement. If a result directory is absent, that is a
+measurement gap—not a zero and not a success.
+
+## Qualification matrix
+
+| Case | What it tells you |
+| --- | --- |
+| Empty delta | No-op work is handled without inventing findings |
+| One changed source file | Ordinary incremental evaluation is correct |
+| Source file plus manifest | Context expands only for a stated reason |
+| Cold profile load | Compilation and verification are bounded |
+| Warm profile load | Caches reduce repeated work without bypassing integrity |
+| Invalid signature | Activation stops before evaluation |
+| Failing then fixed fixture | Findings and transitions are correct |
+| Multiple profiles | Identity and results remain separated |
+| Selected-path Docker mount | The required sandbox sees only requested paths |
+
+Run a brownfield qualification with isolated clones at pinned revisions. Apply
+a known change, run both the expected failing and corrected candidates, and
+retain provenance and generated artifacts with the report.
+
+## Real-OSS benchmark
+
+The executable benchmark creates paired baseline and guided candidates across
+eight public repositories and eight task classes: 64 scenarios in total. The
+Rust evaluator runs both candidates in enforced, changed-only mode. Each
+scenario records the public URL, resolved revision, task, cited source, baseline
+result, guided result, ordinary compiler-control result, rule IDs, and privacy
+metadata. Repository-owned lint, test, and CI commands are discovered for
+context but are not executed against untrusted repositories.
+
+| Repository | Scenario count |
+| --- | ---: |
+| Express | 8 |
+| Hono | 8 |
+| create-t3-app | 8 |
+| Supabase | 8 |
+| codex-security | 8 |
+| Microsoft TypeScript | 8 |
+| Swagger UI | 8 |
+| Cal.com | 8 |
+
+The task matrix covers API behavior, dependency choice, input validation,
+security boundaries, regression testing, performance judgment, CLI workflow,
+and architecture/refactoring. The benchmark must preserve the source used to
+justify each scenario; a profile claim without provenance is not a verified
+philosophy claim.
+
+Run it from the repository root:
+
+```bash
+cargo build --workspace
+python3 orchestrator/real_world_benchmark.py \
+  --lmp target/debug/lmp \
+  --output ./lmp-test-results
+```
+
+The complete technical benchmark condition is `status: "complete"`, exactly
+64 scenarios (the gate rejects any other count), all 128 paired Docker sandbox gates passing,
+all 128 ordinary compiler-control checks passing, `allTransitionsPassed: true`, and every source verification entry marked
+`verified: true`. A partial, failed, or blocked run is never described as a
+completed benchmark. The current technical evidence meets that condition in
+`lmp-test-results/real-world-current-final-20260912/real-world-benchmark.json`: 64/64
+scenarios and transitions, 128/128 Docker gates, 128/128 ordinary compiler
+controls, and 15/15 verified provenance sources. That artifact is marked dirty because the checkout contains ongoing
+implementation changes, so it is complete technical evidence but not yet a
+release-clean artifact. A release claim still requires a final clean revision
+and independent review.
+
+## Dashboard and raw evidence
+
+<BenchmarkDashboard />
+
+The dashboard is a view over the executable result; it is not an independent
+source of truth. Keep the raw `real-world-benchmark.json` beside the report so
+another person can inspect scenario provenance, profile digest, selected files,
+Docker gates, and baseline-to-guided transitions.
+
+```bash
+python3 orchestrator/real_world_benchmark.py --output ./lmp-test-results
+```
+
+For a release gate, also run the runtime qualification suite and the Python
+tests. Docker must be available and the required image must exist. If either is
+missing, report the benchmark as blocked.
+
+CI then runs `python3 orchestrator/benchmark_artifact_gate.py` against the raw
+JSON. That gate rejects incomplete scenario counts, missing Docker transitions,
+missing commit/profile/tool metadata, dirty release checkouts, missing timing,
+or malformed reviewer annotations.
+
+Each benchmark artifact records the repository revision and dirty state, the
+profile digest, tool and platform versions, ordinary-control observations,
+total and per-scenario timing, and an explicit `reviewerAnnotations` array. An empty annotation array is honest
+evidence that no independent review has been recorded; it is not a substitute
+for that review. The artifact also retains source revisions and Docker gate
+results for every scenario.
+
+## Interpreting an improvement
+
+The meaningful comparison is not “the guided output looks better.” Compare the
+same task, repository revision, agent or model host, active profile, and
+evaluation scope. Then inspect:
+
+1. whether the baseline produced the expected policy finding;
+2. whether the guided candidate removed that finding without hiding it;
+3. whether the corrected candidate passed the same rule set;
+4. whether execution telemetry actually ran when claimed;
+5. whether the artifact preserves enough evidence to rerun the decision.
+
+The benchmark proves the implemented transitions for the tested candidates. It
+does not prove that every model output improves, that one Mind is universally
+correct, or that static checks replace human architecture review.

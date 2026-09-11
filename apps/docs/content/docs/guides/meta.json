@@ -1,0 +1,13 @@
+{
+  "title": "Guides",
+  "description": "Task-oriented implementation guides.",
+  "pages": [
+    "mcp-integration",
+    "author-a-mind",
+    "mind-harvesting",
+    "installation",
+    "release",
+    "ci",
+    "playground"
+  ]
+}

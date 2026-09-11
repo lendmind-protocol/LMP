@@ -1,7 +1,12 @@
 import { access, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { MindPackage } from "@lending-mind/core";
-import { CanonicalMindPackageSchema } from "./schema.js";
+import type { MindPackage } from "@lending-mind/sdk";
+import {
+  CanonicalMindPackageSchema,
+  EvidenceManifestSchema,
+  ReleaseMetadataSchema,
+  RuleContractManifestSchema,
+} from "./schema.js";
 
 export interface ValidationDiagnostic {
   path: string;
@@ -48,11 +53,10 @@ export async function validateMindPackage(directory: string): Promise<Validation
     const diagnostics: ValidationDiagnostic[] = [];
     if (result.data.$schema) {
       for (const required of [
+        "SKILL.md",
         "guidance.md",
         ...Object.values(result.data.enforcement ?? {}),
         "evidence/README.md",
-        "signatures/manifest.sig",
-        "signatures/public-key.pem",
       ]) {
         try {
           await access(join(directory, required));
@@ -62,6 +66,43 @@ export async function validateMindPackage(directory: string): Promise<Validation
             message: "declared package file is missing",
           });
         }
+      }
+      try {
+        const evidence = JSON.parse(await readFile(join(directory, "evidence.json"), "utf8"));
+        EvidenceManifestSchema.parse(evidence);
+      } catch (error) {
+        diagnostics.push({
+          path: join(directory, "evidence.json"),
+          message: error instanceof Error ? error.message : "invalid evidence manifest",
+        });
+      }
+      try {
+        const release = JSON.parse(await readFile(join(directory, "release.json"), "utf8"));
+        const parsedRelease = ReleaseMetadataSchema.parse(release);
+        if (parsedRelease.packageId !== result.data.id)
+          throw new Error(`release metadata packageId must match ${result.data.id}`);
+        if (parsedRelease.version !== result.data.version)
+          throw new Error(`release metadata version must match ${result.data.version}`);
+      } catch (error) {
+        diagnostics.push({
+          path: join(directory, "release.json"),
+          message: error instanceof Error ? error.message : "invalid release metadata",
+        });
+      }
+      try {
+        const contracts = RuleContractManifestSchema.parse(
+          JSON.parse(await readFile(join(directory, "rules/manifest.json"), "utf8")),
+        );
+        const policyFiles = new Set(Object.values(result.data.enforcement ?? {}));
+        const declaredPolicyFiles = new Set(contracts.rules.map((rule) => rule.policyFile));
+        for (const policyFile of policyFiles)
+          if (!declaredPolicyFiles.has(policyFile))
+            throw new Error(`rule contract manifest does not cover ${policyFile}`);
+      } catch (error) {
+        diagnostics.push({
+          path: join(directory, "rules/manifest.json"),
+          message: error instanceof Error ? error.message : "invalid rule contract manifest",
+        });
       }
     }
     return { valid: diagnostics.length === 0, package: result.data as MindPackage, diagnostics };

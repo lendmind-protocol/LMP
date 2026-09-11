@@ -1,1 +1,24 @@
-{ "status": "placeholder", "tests": [], "notes": "Replace with signed evaluation evidence." }
+{
+  "status": "verified-fixtures",
+  "tests": [
+    {
+      "id": "typescript-clean",
+      "kind": "positive",
+      "description": "Typed source using explicit control flow and no prohibited dependency passes.",
+      "expected": "pass"
+    },
+    {
+      "id": "typescript-any-eval",
+      "kind": "negative",
+      "description": "Explicit any or dynamic evaluation produces a rule finding.",
+      "expected": "needs_revision"
+    },
+    {
+      "id": "typescript-command-denied",
+      "kind": "exception",
+      "description": "A command not explicitly allowlisted is rejected before execution.",
+      "expected": "blocked"
+    }
+  ],
+  "notes": "Fixtures describe observable policy behavior, not an endorsement by the TypeScript project."
+}

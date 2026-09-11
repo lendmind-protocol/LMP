@@ -1,0 +1,119 @@
+name: Lending-Mind Registry Verification Bot
+
+on:
+  pull_request_target:
+    branches: [main]
+    paths:
+      - "registry/definitions/**"
+      - "registry/registry.json"
+      - "apps/docs/public/registry.json"
+      - "orchestrator/registry_gate.py"
+      - "crates/lmp-core/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+
+# The workflow is trusted from the base branch. PR files are treated as data
+# and are never checked out as the executable workspace of a write-token job.
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: registry-bot-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate signed registry packages
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout trusted base
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
+
+      - name: Fetch pull request commit as inert data
+        if: ${{ github.event_name == 'pull_request_target' }}
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.clone_url }}
+        run: git fetch --no-tags --depth=1 "$HEAD_REPO" "$HEAD_SHA"
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@1.98.1
+        with:
+          toolchain: 1.98.1
+
+      - name: Cache Rust dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-registry-bot-${{ hashFiles('**/Cargo.lock', '**/Cargo.toml') }}
+
+      - name: Build trusted validator
+        run: cargo build --bin lmp
+
+      - name: Verify changed package signatures and schemas
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python3 orchestrator/registry_gate.py --base "$BASE_SHA" --head "$HEAD_SHA" --lmp target/debug/lmp | tee registry-gate.json
+
+      - name: Enforce canonical registry index parity
+        run: cmp --silent registry/registry.json apps/docs/public/registry.json
+
+      - name: Verify local registry manifest metadata
+        run: python3 orchestrator/registry_manifest_gate.py registry/registry.json --lmp target/debug/lmp
+
+      # Immutable IPFS/OCI CIDs are an external release gate. They are not a
+      # prerequisite for validating a signed contribution in this repository.
+      # The release workflow remains responsible for rejecting a public index
+      # that has not been pinned and independently retrieved.
+
+      - name: Run Rust and orchestration regression gates
+        run: |
+          cargo test --workspace
+          python3 -m compileall -q orchestrator
+          python3 orchestrator/test_bed.py
+
+      - name: Publish validation summary
+        if: always() && github.event_name == 'pull_request_target'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ -f registry-gate.json ]; then
+            summary="$(cat registry-gate.json)"
+          else
+            summary="Registry gate did not produce a result. Inspect the failed job logs."
+          fi
+          gh pr comment "$PR_NUMBER" --body "### LMP registry verification\n\n```json\n$summary\n```\n\nThe Rust validator, detached Ed25519 signature gate, regression suite, and orchestration checks must all pass before merge."
+
+      - name: Mark rejected contribution
+        if: failure() && github.event_name == 'pull_request_target'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: gh pr edit "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --add-label "lmp:invalid" || true
+
+  auto-merge:
+    name: Enable squash auto-merge
+    needs: validate
+    if: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Enable repository-controlled auto-merge
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: gh pr merge "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --auto --squash --delete-branch=false --match-head-commit "$HEAD_SHA"

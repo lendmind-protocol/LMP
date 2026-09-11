@@ -8,14 +8,142 @@ export const RuleDefinitionSchema = z
   })
   .passthrough();
 
+export const RuleClassificationSchema = z.enum([
+  "deterministic",
+  "verifiable",
+  "judgment-guided",
+  "human-only",
+]);
+
+export const RuleContractSchema = z
+  .object({
+    id: z.string().min(1),
+    policyFile: z.string().min(1),
+    severity: z.enum(["info", "warning", "error"]),
+    classification: RuleClassificationSchema,
+    rationale: z.string().min(1),
+    assertion: z.string().min(1),
+    scope: z.array(z.string().min(1)).min(1),
+    remediation: z.string().min(1),
+    limitations: z.array(z.string().min(1)).min(1),
+    evidence: z
+      .object({
+        classification: z.enum([
+          "explicit-statement",
+          "repeated-code-pattern",
+          "review-pattern",
+          "inferred-hypothesis",
+          "unsupported",
+          "verified-fixture",
+        ]),
+        sourceId: z.string().min(1),
+      })
+      .strict(),
+  })
+  .strict();
+
+export const RuleContractManifestSchema = z
+  .object({
+    schemaVersion: z.literal("1.0"),
+    rules: z.array(RuleContractSchema).min(1),
+  })
+  .strict()
+  .superRefine((value, ctx) => {
+    const ids = new Set<string>();
+    for (const rule of value.rules) {
+      if (ids.has(rule.id))
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["rules"],
+          message: `duplicate rule contract id: ${rule.id}`,
+        });
+      ids.add(rule.id);
+    }
+  });
+
 export const RuleResultSchema = z
   .object({
     ruleId: z.string().min(1),
     passed: z.boolean(),
     message: z.string().optional(),
+    rationale: z.string().min(1).optional(),
     severity: z.enum(["info", "warning", "error"]).optional(),
     evidence: z.unknown().optional(),
+    file: z.string().optional(),
+    line: z.number().int().positive().optional(),
+    column: z.number().int().positive().optional(),
+    remediation: z.string().optional(),
+    limitations: z.array(z.string()).optional(),
   })
+  .strict();
+
+export const EvidenceFixtureSchema = z
+  .object({
+    id: z.string().min(1),
+    kind: z.enum(["positive", "negative", "exception"]),
+    description: z.string().min(1),
+    expected: z.enum(["pass", "needs_revision", "blocked"]),
+  })
+  .strict();
+
+export const EvidenceManifestSchema = z
+  .object({
+    status: z.literal("verified-fixtures"),
+    tests: z.array(EvidenceFixtureSchema).min(3),
+    notes: z.string().min(1),
+  })
+  .strict()
+  .superRefine((value, ctx) => {
+    const ids = new Set<string>();
+    for (const fixture of value.tests) {
+      if (ids.has(fixture.id))
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["tests"],
+          message: `duplicate evidence fixture id: ${fixture.id}`,
+        });
+      ids.add(fixture.id);
+    }
+    for (const kind of ["positive", "negative", "exception"] as const)
+      if (!value.tests.some((fixture) => fixture.kind === kind))
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["tests"],
+          message: `at least one ${kind} fixture is required`,
+        });
+  });
+
+export const ReleaseMetadataSchema = z
+  .object({
+    packageId: z.string().min(1),
+    version: z.string().min(1),
+    changelog: z.array(z.string().min(1)).min(1),
+    limitations: z.array(z.string().min(1)).min(1),
+    review: z
+      .object({
+        status: z.enum([
+          "unreviewed",
+          "community-reviewed",
+          "maintainer-reviewed",
+          "externally-reviewed",
+        ]),
+        reviewers: z.array(
+          z
+            .object({
+              name: z.string().min(1),
+              role: z.string().min(1),
+              evidence: z.string().min(1),
+            })
+            .strict(),
+        ),
+        notes: z.string().min(1),
+      })
+      .strict(),
+  })
+  .strict();
+
+const SkippedCheckSchema = z
+  .object({ checkId: z.string().min(1), reason: z.string().min(1) })
   .strict();
 
 export const MindPackageSchema = z
@@ -44,7 +172,25 @@ export const MindPackageSchema = z
     provenance: z
       .object({
         sources: z.array(
-          z.object({ title: z.string(), url: z.string().url(), licenseNote: z.string() }),
+          z.object({
+            title: z.string(),
+            url: z.string().url(),
+            licenseNote: z.string(),
+            evidenceTier: z.enum(["primary", "secondary", "derived"]),
+            rights: z.enum(["public-documentation", "author-provided", "licensed", "unknown"]),
+            sourceType: z.enum([
+              "documentation",
+              "repository",
+              "blog",
+              "talk",
+              "review",
+              "derived",
+            ]),
+            accessMethod: z.enum(["public-http", "author-provided", "local-repository"]),
+            contentDigest: z.string().regex(/^sha256:[0-9a-f]{64}$/),
+            retentionPolicy: z.string().min(1),
+            allowedUse: z.string().min(1),
+          }),
         ),
         attributionRequired: z.boolean(),
       })
@@ -64,6 +210,13 @@ export const MindPackageSchema = z
     metadata: z.record(z.unknown()).optional(),
   })
   .passthrough();
+
+const SemanticVersionSchema = z
+  .string()
+  .regex(
+    /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/,
+    "version must use semantic versioning (x.y.z)",
+  );
 
 export const CanonicalMindPackageSchema = MindPackageSchema.superRefine((value, ctx) => {
   if (!value.$schema) return;
@@ -89,25 +242,139 @@ export const CanonicalMindPackageSchema = MindPackageSchema.superRefine((value, 
       path: ["specVersion"],
       message: "specVersion must be 1.0",
     });
+  const version = SemanticVersionSchema.safeParse(value.version);
+  if (!version.success)
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["version"],
+      message: "canonical mind package versions must use semantic versioning (x.y.z)",
+    });
   if (value.author?.kind === "community-archetype" && value.author.verified)
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["author", "verified"],
       message: "community archetypes are not verified authorship",
     });
+  if (!/^lmp:mind:[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value.id))
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["id"],
+      message: "canonical mind package IDs must use the lmp:mind:<kebab-case> form",
+    });
+  if (value.author?.verified && value.author.kind !== "official-maintainer")
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["author", "kind"],
+      message: "verified authorship requires the official-maintainer author kind",
+    });
 });
 
 export const EvaluationArtifactSchema = z
   .object({
-    id: z.string().min(1),
-    packageId: z.string().min(1),
-    packageVersion: z.string().min(1),
-    digest: z.string().regex(/^sha256:[0-9a-f]{64}$/),
+    artifactVersion: z.string().min(1),
+    runId: z.string().min(1),
     createdAt: z.string().datetime(),
-    results: z.array(RuleResultSchema),
-    metadata: z.record(z.unknown()).optional(),
+    workspace: z
+      .object({
+        pathHash: z.string().regex(/^sha256:[0-9a-f]{64}$/),
+        gitHead: z.string().nullable(),
+        dirty: z.boolean(),
+        scope: z
+          .object({
+            changedOnly: z.boolean(),
+            source: z.string(),
+            checkedFiles: z.number().int().nonnegative(),
+            fallbackReason: z.string().nullable().optional(),
+          })
+          .optional(),
+      })
+      .strict(),
+    mind: z
+      .object({
+        id: z.string().min(1),
+        version: z.string().min(1),
+        contentDigest: z.string().regex(/^sha256:[0-9a-f]{64}$/),
+        signatureStatus: z.enum(["unsigned", "verified", "invalid"]),
+        layers: z.array(z.unknown()).optional(),
+      })
+      .strict(),
+    mode: z.enum(["advisory", "enforced", "audit"]),
+    state: z.enum(["pass", "needs_revision", "blocked", "evaluation_error"]),
+    summary: z
+      .object({
+        status: z.enum(["pass", "warning", "fail", "blocked", "error"]),
+        score: z.number().optional(),
+        hardViolationCount: z.number().int().nonnegative(),
+        warningCount: z.number().int().nonnegative(),
+        informationalCount: z.number().int().nonnegative(),
+      })
+      .strict(),
+    checks: z.array(z.unknown()),
+    skippedChecks: z.array(SkippedCheckSchema),
+    analysis: z
+      .object({
+        languages: z.array(z.string()),
+        parsers: z.array(z.string()),
+        versions: z.array(z.string()),
+        checkedFiles: z.number().int().nonnegative(),
+      })
+      .strict()
+      .optional(),
+    loopTransitions: z.array(z.unknown()),
+    commands: z.array(z.unknown()),
+    limitations: z.array(z.string()),
+    environment: z.record(z.unknown()),
+    privacy: z
+      .object({
+        sourceCodeIncluded: z.boolean(),
+        rawPathsIncluded: z.boolean(),
+        networkUsed: z.boolean(),
+      })
+      .strict(),
+    artifactPath: z.string().optional(),
   })
   .strict();
+
+export const PromotionProposalSchema = z
+  .object({
+    proposalId: z.string().min(1),
+    profileId: z.string().min(1),
+    profileVersion: z.string().min(1),
+    selectedArtifacts: z.array(z.string().min(1)).min(1),
+    candidateChanges: z.array(z.unknown()),
+    rationale: z.string().min(1),
+    expectedBenefit: z.string().min(1),
+    falsePositiveRisk: z.string().min(1),
+    requiredVersionBump: z.enum(["patch", "minor", "major"]),
+    requiredTests: z.array(z.string()),
+    benchmarkPlan: z.array(z.string()),
+    approver: z.string().nullable(),
+    status: z.enum(["draft", "under-review", "accepted", "rejected", "superseded"]),
+    createdAt: z.string().datetime(),
+    decisionReason: z.string().min(1).optional(),
+  })
+  .strict()
+  .superRefine((value, ctx) => {
+    const requiresDecision = ["accepted", "rejected", "superseded"].includes(value.status);
+    if (requiresDecision && !value.approver?.trim())
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["approver"],
+        message: `${value.status} proposals require an approver`,
+      });
+    if (requiresDecision && !value.decisionReason?.trim())
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["decisionReason"],
+        message: `${value.status} proposals require a decision reason`,
+      });
+    if (["draft", "under-review"].includes(value.status) && value.approver !== null)
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["approver"],
+        message: `${value.status} proposals cannot have an approver before a decision`,
+      });
+  });
 
 export const RegistryReferenceSchema = z
   .object({

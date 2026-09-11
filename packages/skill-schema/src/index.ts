@@ -6,4 +6,4 @@ export type {
   EvaluationArtifact,
   RegistryReference,
   PromotionRecord,
-} from "@lending-mind/core";
+} from "@lending-mind/sdk";

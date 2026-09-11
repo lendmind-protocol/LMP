@@ -1,9 +1,9 @@
+use anyhow::Result;
 use std::collections::HashSet;
 use syn::{
     visit::{self, Visit},
     ExprMethodCall, ItemFn,
 };
-use anyhow::Result;
 
 pub struct ConcurrencyAuditEngine {
     pub violations_found: Vec<String>,
@@ -16,6 +16,12 @@ impl ConcurrencyAuditEngine {
             violations_found: Vec::new(),
             lock_trackers: HashSet::new(),
         }
+    }
+}
+
+impl Default for ConcurrencyAuditEngine {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -49,13 +55,11 @@ impl<'ast> Visit<'ast> for ConcurrencyAuditEngine {
         }
 
         // Catch instances where locks are held over long network or sync I/O boundaries
-        if method_name == "sleep" || method_name == "join" {
-            if !self.lock_trackers.is_empty() {
-                self.violations_found.push(format!(
-                    "THREAD_RACE_RISK: Blocking routine `{}` invoked while thread holds an exclusive resource access lock!",
-                    method_name
-                ));
-            }
+        if (method_name == "sleep" || method_name == "join") && !self.lock_trackers.is_empty() {
+            self.violations_found.push(format!(
+                "THREAD_RACE_RISK: Blocking routine `{}` invoked while thread holds an exclusive resource access lock!",
+                method_name
+            ));
         }
 
         visit::visit_expr_method_call(self, node);
@@ -82,7 +86,9 @@ pub fn audit_source(
             }
         }
         if matches!(item, syn::Item::Macro(_))
-            && forbidden_ast_nodes.iter().any(|node| node == "MacroDefinition")
+            && forbidden_ast_nodes
+                .iter()
+                .any(|node| node == "MacroDefinition")
         {
             engine
                 .violations_found
@@ -97,13 +103,35 @@ pub fn audit_source(
 #[cfg(test)]
 mod tests {
     use super::audit_source;
+    use std::panic::{catch_unwind, AssertUnwindSafe};
 
     #[test]
     fn reports_function_density_and_async_naming_violations() {
         let source = "fn async_worker() { let a = 1; let b = 2; }";
         let violations = audit_source(source, 1, &[]).unwrap();
         assert_eq!(violations.len(), 2);
-        assert!(violations.iter().any(|item| item.contains("FUNCTION_COMPLEXITY")));
-        assert!(violations.iter().any(|item| item.contains("CRITICAL_AXIOM")));
+        assert!(violations
+            .iter()
+            .any(|item| item.contains("FUNCTION_COMPLEXITY")));
+        assert!(violations
+            .iter()
+            .any(|item| item.contains("CRITICAL_AXIOM")));
+    }
+
+    #[test]
+    fn malformed_rust_returns_a_structured_error_without_panicking() {
+        for source in ["fn broken(", "fn broken() { let = ; }"] {
+            let result = catch_unwind(AssertUnwindSafe(|| audit_source(source, 10, &[])));
+            assert!(
+                result.is_ok(),
+                "parser panicked for malformed source: {source}"
+            );
+
+            let error = result.unwrap().expect_err("malformed source was accepted");
+            assert!(
+                error.downcast_ref::<syn::Error>().is_some(),
+                "expected a syn::Error, got: {error:#}"
+            );
+        }
     }
 }

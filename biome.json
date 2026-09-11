@@ -11,11 +11,16 @@
       "**/node_modules/**",
       "**/.omx/**",
       "**/.turbo/**",
+      "**/.next/**",
+      "**/.source/**",
+      "**/target/**",
+      "lmp-test-results/**",
       "lmp_test_bed/**",
       "crates/**",
       "orchestrator/**",
       "registry/**",
       "packages/create-lmp/**",
+      "test-fixtures/oss/**",
       "public/**"
     ]
   }

@@ -1,181 +1,146 @@
-import { createHash } from "node:crypto";
-import { readFile, readdir } from "node:fs/promises";
-import { relative, resolve } from "node:path";
-import { type MindPackage, sha256, verifyMindPackage } from "@lending-mind/core";
-import { evaluate as evaluateWorkspace } from "@lending-mind/evaluator";
-import { MindPackageSchema, validateMindPackage } from "@lending-mind/skill-schema";
+import { type ChildProcessWithoutNullStreams, spawn } from "node:child_process";
+import { access } from "node:fs/promises";
+import { resolve } from "node:path";
 
+/** Compatibility transport only; Rust lmp-mcp owns MCP semantics. */
 type Request = { jsonrpc?: unknown; id?: unknown; method?: unknown; params?: unknown };
-const tools = [
-  {
-    name: "lmp_list_minds",
-    description: "List locally installed minds.",
-    inputSchema: {
-      type: "object",
-      properties: { includeLocalWorkspace: { type: "boolean" } },
-      required: ["includeLocalWorkspace"],
-      additionalProperties: false,
-    },
-  },
-  {
-    name: "lmp_get_instructions",
-    description: "Get deterministic mind instructions.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        mind: { type: "string" },
-        workspace: { type: "string" },
-        format: { enum: ["markdown", "json"] },
-      },
-      required: ["mind", "workspace", "format"],
-      additionalProperties: false,
-    },
-  },
-  {
-    name: "lmp_evaluate_workspace",
-    description: "Evaluate a workspace without commands by default.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        mind: { type: "string" },
-        workspace: { type: "string" },
-        mode: { enum: ["advisory", "enforced", "audit"] },
-        runCommands: { type: "boolean" },
-      },
-      required: ["mind", "workspace", "mode", "runCommands"],
-      additionalProperties: false,
-    },
-  },
-  {
-    name: "lmp_verify_mind",
-    description: "Validate a mind package.",
-    inputSchema: {
-      type: "object",
-      properties: { packagePath: { type: "string" } },
-      required: ["packagePath"],
-      additionalProperties: false,
-    },
-  },
-  {
-    name: "lmp_get_artifact",
-    description: "Read an evaluation artifact.",
-    inputSchema: {
-      type: "object",
-      properties: { artifactPath: { type: "string" } },
-      required: ["artifactPath"],
-      additionalProperties: false,
-    },
-  },
-];
-const error = (id: unknown, code: number, message: string, data?: unknown) => ({
+type Response = { jsonrpc: "2.0"; id: unknown; result?: unknown; error?: unknown };
+const error = (id: unknown, code: number, message: string): Response => ({
   jsonrpc: "2.0",
   id,
-  error: { code, message, ...(data === undefined ? {} : { data }) },
+  error: { code, message },
 });
-const result = (id: unknown, value: unknown) => ({ jsonrpc: "2.0", id, result: value });
-function safePath(value: unknown): string {
-  if (typeof value !== "string" || !value) throw new InputError("path is required");
-  const candidate = resolve(value);
-  const roots = [
-    resolve(process.cwd()),
-    resolve(process.env.LMP_REGISTRY ?? ".lending-mind/registry"),
-  ];
-  if (
-    !roots.some((root) => {
-      const remainder = relative(root, candidate);
-      return remainder === "" || (!remainder.startsWith("..") && !remainder.startsWith("/"));
-    })
-  )
-    throw new InputError("path must be inside the configured workspace or registry root");
-  return candidate;
-}
-const instruction = (mind: MindPackage, format: string) =>
-  format === "json"
-    ? JSON.stringify({
-        mind: mind.id,
-        version: mind.version,
-        checklist: [
-          "Follow the mind package guidance.",
-          "Run the relevant checks before reporting completion.",
-        ],
-      })
-    : `# ${mind.name ?? mind.id}\n\n- Follow the mind package guidance.\n- Run the relevant checks before reporting completion.`;
-async function mind(input: string) {
-  const value = JSON.parse(await readFile(safePath(input), "utf8"));
-  return MindPackageSchema.parse(value) as MindPackage;
-}
-async function call(name: string, args: Record<string, unknown>) {
-  if (name === "lmp_verify_mind") {
-    const packagePath = safePath(args.packagePath);
-    const v = await validateMindPackage(packagePath);
-    const verification = v.package
-      ? await verifyMindPackage(packagePath)
-      : { signatureStatus: "invalid" };
-    return {
-      digest: v.package ? sha256(v.package as unknown as Parameters<typeof sha256>[0]) : null,
-      signatureStatus: verification.signatureStatus,
-      diagnostics: v.diagnostics.map((d) => ({
-        code: "INVALID",
-        message: d.message,
-        file: d.path,
-      })),
-    };
+
+async function rustServer(): Promise<string> {
+  const candidates = [
+    process.env.LMP_MCP_BIN,
+    resolve(process.cwd(), "target/debug/lmp-mcp"),
+    resolve(process.cwd(), "../../target/debug/lmp-mcp"),
+    resolve(process.cwd(), "target/release/lmp-mcp"),
+    resolve(process.cwd(), "../../target/release/lmp-mcp"),
+  ].filter((value): value is string => Boolean(value));
+  for (const candidate of candidates) {
+    try {
+      await access(candidate);
+      return candidate;
+    } catch {
+      /* try the next Rust build */
+    }
   }
-  if (name === "lmp_get_artifact")
-    return JSON.parse(await readFile(safePath(args.artifactPath), "utf8"));
-  if (name === "lmp_list_minds") {
-    const minds = ["skills/baseline/mind.json", "skills/typescript-minimal/mind.json"];
-    if (args.includeLocalWorkspace) minds.push(".lending-mind/mind.json");
-    return { minds };
+  throw new Error("Rust MCP server not found; build the workspace or set LMP_MCP_BIN");
+}
+
+type PendingResponse = {
+  resolve: (response: Response) => void;
+  reject: (error: Error) => void;
+};
+
+class DuplicateRequestIdError extends Error {
+  readonly code = -32600;
+
+  constructor() {
+    super("A request with this id is already in flight");
+    this.name = "DuplicateRequestIdError";
   }
-  if (typeof args.mind !== "string" || typeof args.workspace !== "string")
-    throw new InputError("mind and workspace are required");
-  const loaded = await mind(args.mind);
-  if (name === "lmp_get_instructions")
-    return { content: instruction(loaded, String(args.format)), format: args.format };
-  if (name === "lmp_evaluate_workspace") {
-    if (args.runCommands && args.mode === "audit")
-      throw new InputError("audit never runs commands");
-    const workspace = safePath(args.workspace);
-    const report = await evaluateWorkspace({
-      directory: workspace,
-      packageDirectory: safePath(args.mind),
-      mode: args.mode as "advisory" | "enforced" | "audit",
-      runCommands: Boolean(args.runCommands),
-      commands: [],
+}
+
+class RustMcpSession {
+  private readonly child: ChildProcessWithoutNullStreams;
+  private buffer = "";
+  private readonly pending = new Map<string, PendingResponse>();
+  private closed = false;
+
+  private constructor(child: ChildProcessWithoutNullStreams) {
+    this.child = child;
+    child.stdout.on("data", (chunk) => this.consume(chunk.toString()));
+    child.stderr.resume();
+    child.on("error", (errorValue) => this.fail(errorValue));
+    child.on("close", (code) =>
+      this.fail(new Error(`Rust MCP exited with code ${code ?? "unknown"}`)),
+    );
+  }
+
+  static async create() {
+    const binary = await rustServer();
+    return new RustMcpSession(spawn(binary, [], { cwd: process.cwd(), shell: false }));
+  }
+
+  request(request: Request): Promise<Response> {
+    if (this.closed) return Promise.reject(new Error("Rust MCP session is closed"));
+    const key = JSON.stringify(request.id);
+    if (this.pending.has(key)) return Promise.reject(new DuplicateRequestIdError());
+    return new Promise((resolveResponse, reject) => {
+      this.pending.set(key, { resolve: resolveResponse, reject });
+      this.child.stdin.write(`${JSON.stringify(request)}\n`, (errorValue) => {
+        if (errorValue) {
+          this.pending.delete(key);
+          reject(errorValue);
+        }
+      });
     });
-    return {
-      artifact: report.artifact,
-      summary: (report.artifact as { summary: unknown }).summary,
-    };
   }
-  throw new InputError("Unknown tool");
+
+  notify(request: Request) {
+    if (this.closed) return;
+    this.child.stdin.write(`${JSON.stringify(request)}\n`);
+  }
+
+  close() {
+    if (this.closed) return;
+    this.closed = true;
+    this.child.stdin.end();
+    this.child.kill();
+    this.fail(new Error("Rust MCP session closed"));
+  }
+
+  private consume(chunk: string) {
+    this.buffer += chunk;
+    let newline = this.buffer.indexOf("\n");
+    while (newline >= 0) {
+      const line = this.buffer.slice(0, newline).trim();
+      this.buffer = this.buffer.slice(newline + 1);
+      if (line) {
+        try {
+          const response = JSON.parse(line) as Response;
+          const key = JSON.stringify(response.id);
+          this.pending.get(key)?.resolve(response);
+          this.pending.delete(key);
+        } catch {
+          this.fail(new Error("Rust MCP returned invalid JSON"));
+        }
+      }
+      newline = this.buffer.indexOf("\n");
+    }
+  }
+
+  private fail(errorValue: Error) {
+    if (this.closed && this.pending.size === 0) return;
+    this.closed = true;
+    for (const { reject } of this.pending.values()) reject(errorValue);
+    this.pending.clear();
+  }
 }
-class InputError extends Error {}
-export async function handle(request: Request) {
+
+let sharedSession: Promise<RustMcpSession> | undefined;
+async function getSharedSession() {
+  sharedSession ??= RustMcpSession.create().catch((errorValue) => {
+    sharedSession = undefined;
+    throw errorValue;
+  });
+  return sharedSession;
+}
+
+export async function handle(request: Request, session?: RustMcpSession): Promise<Response> {
   if (request.jsonrpc !== "2.0" || request.id === undefined || typeof request.method !== "string")
     return error(request.id, -32600, "Invalid Request");
-  if (request.method === "initialize")
-    return result(request.id, {
-      protocolVersion: "2025-06-18",
-      capabilities: { tools: {} },
-      serverInfo: { name: "lending-mind-mcp", version: "0.1.0" },
-    });
-  if (request.method === "tools/list") return result(request.id, { tools });
-  if (request.method !== "tools/call") return error(request.id, -32601, "Method not found");
-  const params = request.params as { name?: unknown; arguments?: unknown } | undefined;
-  const tool = tools.find((candidate) => candidate.name === params?.name);
-  if (!tool) return error(request.id, -32601, "Method not found");
-  if (!params?.arguments || typeof params.arguments !== "object")
-    return error(request.id, -32602, "Invalid tool input", {
-      issues: ["arguments must be an object"],
-    });
   try {
-    return result(request.id, await call(tool.name, params.arguments as Record<string, unknown>));
-  } catch (e) {
-    return error(request.id, -32602, "Invalid tool input", {
-      issues: [e instanceof Error ? e.message : String(e)],
-    });
+    return await (session ?? (await getSharedSession())).request(request);
+  } catch (errorValue) {
+    return error(
+      request.id,
+      errorValue instanceof DuplicateRequestIdError ? errorValue.code : -32000,
+      errorValue instanceof Error ? errorValue.message : String(errorValue),
+    );
   }
 }
 
@@ -183,22 +148,37 @@ export async function serve(
   input: NodeJS.ReadableStream = process.stdin,
   output: NodeJS.WritableStream = process.stdout,
 ) {
+  const session = await RustMcpSession.create();
   let buffer = "";
-  for await (const chunk of input) {
-    buffer += String(chunk);
-    let newline = buffer.indexOf("\n");
-    while (newline >= 0) {
-      const line = buffer.slice(0, newline).trim();
-      buffer = buffer.slice(newline + 1);
-      if (!line) continue;
-      let response: Awaited<ReturnType<typeof handle>>;
-      try {
-        response = await handle(JSON.parse(line));
-      } catch {
-        response = error(null, -32600, "Invalid Request");
+  try {
+    for await (const chunk of input) {
+      buffer += String(chunk);
+      let newline = buffer.indexOf("\n");
+      while (newline >= 0) {
+        const line = buffer.slice(0, newline).trim();
+        buffer = buffer.slice(newline + 1);
+        if (line) {
+          try {
+            const request = JSON.parse(line) as Request;
+            if (
+              request.jsonrpc === "2.0" &&
+              request.id === undefined &&
+              typeof request.method === "string"
+            ) {
+              session.notify(request);
+              newline = buffer.indexOf("\n");
+              continue;
+            }
+            const response = await handle(request, session);
+            output.write(`${JSON.stringify(response)}\n`);
+          } catch {
+            output.write(`${JSON.stringify(error(null, -32600, "Invalid Request"))}\n`);
+          }
+        }
+        newline = buffer.indexOf("\n");
       }
-      output.write(`${JSON.stringify(response)}\n`);
-      newline = buffer.indexOf("\n");
     }
+  } finally {
+    session.close();
   }
 }

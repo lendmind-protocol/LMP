@@ -1,0 +1,24 @@
+{
+  "status": "verified-fixtures",
+  "tests": [
+    {
+      "id": "linux-defensive-clean",
+      "kind": "positive",
+      "description": "Explicit error handling and bounded function complexity satisfy the profile.",
+      "expected": "pass"
+    },
+    {
+      "id": "linux-complexity",
+      "kind": "negative",
+      "description": "A function exceeding the configured complexity budget produces a finding.",
+      "expected": "needs_revision"
+    },
+    {
+      "id": "linux-language-boundary",
+      "kind": "exception",
+      "description": "Unsupported syntax is reported as an evaluation boundary instead of silently passing.",
+      "expected": "blocked"
+    }
+  ],
+  "notes": "This is a community archetype derived from public documentation; it is not Linux project endorsement."
+}

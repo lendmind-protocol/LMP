@@ -1,0 +1,135 @@
+---
+title: Proof matrix and real-world demos
+description: The executable evidence used to verify the LMP workflow and its limits.
+---
+
+# Proof matrix and real-world demos
+
+This reference page is the catalog of LMP's proof work. It distinguishes
+runtime qualification, real-OSS paired scenarios, and richer repository demos.
+A scenario listed here is implemented in an executable runner; it does not mean
+the latest run passed. A release claim must link to the generated JSON artifact
+for the exact commit, profile, and machine that produced it.
+
+## Evidence lanes
+
+| Evidence lane | Coverage | What it proves | Source of truth |
+| --- | ---: | --- | --- |
+| Runtime qualification | 38 required checks, including Docker and bounded fleet decisions | Core protocol behavior, failure handling, and disagreement blocking | `orchestrator/qualification_suite.py` |
+| Real-OSS benchmark | 64 paired scenarios | Eight repositories × eight task classes and baseline-to-guided transitions | `orchestrator/real_world_benchmark.py` |
+| Internal Mind demo | 3 paired repository demos | Onboarding, explicit trade-offs, and Mind-level evidence | `orchestrator/internal_demo.py` |
+| Human adoption pilot | 5+ independent people required for release | Whether a developer can adopt and explain the workflow | `docs/release-pilot.md` |
+
+Docker coverage is mandatory. If the daemon or `lmp-sandbox:local` image is
+unavailable, the result is `blocked`, not `complete`. The runner writes the
+status and scenario count to JSON instead of silently treating an unavailable
+gate as success.
+
+## Runtime qualification matrix
+
+### Policy and source behavior
+
+| Scenario | Expected evidence |
+| --- | --- |
+| Clean production-style source | `pass` |
+| Prohibited dependency | `needs_revision` |
+| TypeScript `any`, `eval`, console output, or dynamic `require` | Rule-specific finding |
+| Invalid and valid Rust syntax | Syntax finding only for invalid input |
+| Mixed Rust and TypeScript workspace | Both supported files checked |
+| Empty or documentation-only workspace | Explicit pass and zero source files where appropriate |
+| Generated and dependency directories | Excluded from scope |
+
+### Package, artifacts, and integrity
+
+| Scenario | Expected evidence |
+| --- | --- |
+| Invalid Mind signature | Evaluation blocked with non-zero exit |
+| Missing policy layer | Package validation fails |
+| Artifact persistence | JSON artifact and privacy metadata exist |
+| Content-addressed layers | Every compiled layer has a digest |
+| Binary profile cache | Cache entry is created |
+| Deterministic compilation | Repeated content digest is identical |
+
+### Scope, delivery, and scale
+
+| Scenario | Expected evidence |
+| --- | --- |
+| Modified and untracked Git files | Selected and checked |
+| Unchanged committed violation | Outside changed-only scope and disclosed |
+| Non-Git fallback | Artifact discloses fallback |
+| Oversized source or symlink | Finding or no traversal as specified |
+| Advisory and audit modes | Mode preserved in result |
+| MCP initialize, tool listing, invalid JSON-RPC | Handshake, declarations, and protocol error |
+| Daemon watches changed workspace | `lmpd` observes and evaluates change |
+| 5,000-file brownfield scan | Bounded runner checks generated files |
+| 32 profile definitions | Profile digests remain isolated |
+| Docker selected-path mount | Only requested paths visible in sandbox |
+
+Run the complete local qualification:
+
+```bash
+cargo build --workspace
+docker build -t lmp-sandbox:local orchestrator
+python3 orchestrator/qualification_suite.py \
+  --output ./lmp-test-results/qualification-result.json
+python3 -m unittest discover -s orchestrator -p 'test_*.py'
+```
+
+## Real-OSS proof matrix
+
+The benchmark uses shallow, sparse checkouts at revisions resolved during the
+run. Every repository receives two isolated candidates: a baseline containing
+the deliberate quality regression and a guided candidate implementing the
+selected trade-off. The Rust evaluator runs both in enforced changed-only mode.
+
+| Repository | Public source | Scenarios |
+| --- | --- | ---: |
+| Express | `expressjs/express` | 8 |
+| Hono | `honojs/hono` | 8 |
+| create-t3-app | `t3-oss/create-t3-app` | 8 |
+| Supabase | `supabase/supabase` | 8 |
+| codex-security | `openai/codex-security` | 8 |
+| Microsoft TypeScript | `microsoft/TypeScript` | 8 |
+| Swagger UI | `swagger-api/swagger-ui` | 8 |
+| Cal.com | `calcom/cal.com` | 8 |
+
+The eight task classes are API behavior, dependency choice, input validation,
+security boundary, regression testing, performance judgment, CLI workflow, and
+architecture/refactoring. Each is paired with a cited public source describing
+the relevant method, philosophy, or trade-off. The citation is evidence of
+provenance, not a claim that the profile represents private reasoning or that
+the source author endorses LMP.
+
+## Internal repository demos
+
+The internal demo applies the onboarding and Mind workflow to three pinned
+public repositories:
+
+| Repository | Demonstrated decision | Guided trade-off |
+| --- | --- | --- |
+| `t3-oss/create-t3-app` | Product and TypeScript workflow | Small typed implementation instead of a new dependency |
+| `supabase/supabase` | Production monorepo boundary | Preserve existing dependency and ownership boundaries |
+| `openai/codex-security` | Security-oriented behavior | Explicit validation and no hidden execution |
+
+```bash
+cargo build --workspace --target-dir /tmp/lmp-internal-demo-target
+python3 orchestrator/internal_demo.py \
+  --lmp /tmp/lmp-internal-demo-target/debug/lmp \
+  --output ./lmp-internal-oss-matrix
+```
+
+A successful run requires all three baseline-to-guided transitions to pass.
+The report preserves the Mind digest, checked-file count, selected and rejected
+options, source revision, and privacy fields.
+
+## What the evidence proves
+
+The demos prove that the implemented LMP loop can load a selected profile,
+inspect a bounded workspace, produce deterministic findings, and record an
+explainable transition for tested candidates. They do not prove that every
+model output improves, that a Mind is universally correct, that an external
+author endorses a profile, or that static evaluation replaces human review.
+
+The independent human pilot remains a separate release requirement. It tests
+whether people can install, understand, remediate, and integrate LMP without
+maintainer intervention.

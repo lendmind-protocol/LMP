@@ -1,0 +1,19 @@
+{
+  "name": "create-lmp",
+  "version": "0.1.0",
+  "repository": { "type": "git", "url": "https://github.com/lendmind-protocol/LMP.git", "directory": "packages/create-lmp" },
+  "homepage": "https://lmp-six.vercel.app/docs/getting-started",
+  "type": "module",
+  "description": "Initialize Lending-Mind Protocol in a workspace.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "node --test bin.test.js"
+  },
+  "files": ["bin.js", "README.md", "profiles"],
+  "bin": {
+    "create-lmp": "bin.js"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

@@ -1,0 +1,90 @@
+---
+title: Versioning and release notes
+description: Understand the current LMP version, release state, and compatibility rules.
+---
+
+<Badge variant="outline">v0.1.0 · pre-release</Badge>
+
+This page is the version-control notice for the LMP documentation and runtime.
+The current repository package line is **0.1.0**. It is a pre-release
+development state, not a claim that a stable public release has been published.
+The checkout currently has no Git release tag, so treat the commit you are
+using as the exact source of truth.
+
+## Current release state
+
+| Field | Current value |
+| --- | --- |
+| LMP workspace and package line | `0.1.0` |
+| Release channel | Pre-release / qualification in progress |
+| Git release tag | None recorded in this checkout |
+| Compatibility promise | Not stable yet; pin the commit when reproducibility matters |
+| Release evidence | [Release readiness](/docs/operations/release-readiness) |
+
+The version badge at the top of this page is intentionally explicit. When a
+release is published, it must be changed together with the package manifests,
+release tag, and release notes. Do not infer “stable” from a passing local
+build.
+
+## What is being versioned?
+
+LMP has several versioned layers with different compatibility boundaries:
+
+- **Runtime and workspace packages**: the Rust workspace and the published
+  JavaScript-facing packages currently use the `0.1.0` development line.
+- **Mind Packages**: each profile has its own version, such as `1.0.0`, and
+  must be identified by its Mind ID, version, digest, and signature. A Mind
+  Package version is not the LMP runtime version.
+- **Artifacts and results**: evaluation artifacts record the evaluator version,
+  profile identity, profile digest, source revision, and selected scope so a
+  decision can be reproduced later.
+- **Documentation**: the docs describe the behavior of the checked-out source;
+  they do not replace a release tag or immutable package artifact.
+
+## Versioning policy
+
+LMP follows semantic versioning for public runtime and package interfaces:
+
+- **Patch** releases fix defects without intentionally changing supported
+  behavior or public contracts.
+- **Minor** releases add backward-compatible commands, fields, rules, or
+  integrations. New optional result fields are allowed in this category.
+- **Major** releases change a public command, schema, evaluator decision,
+  signature contract, or other behavior that existing consumers must adapt to.
+
+Changes to Mind schema semantics, evaluator behavior, artifact formats,
+cryptographic verification, sandbox permissions, remote synchronization, or
+agent integration contracts require release review. A release must identify
+which claims were tested, which were simulated, and which remain unproven.
+
+## Release notes
+
+### v0.1.0 — pre-release development line
+
+This line contains the initial integrated protocol foundation:
+
+- Rust workspace and evaluator/daemon surfaces;
+- signed Mind Package loading and verification;
+- the unified onboarding wrapper and generated workspace contract;
+- changed-file evaluation and machine-readable evidence artifacts;
+- local MCP adapter and documentation portal foundations.
+
+This release line still requires qualification evidence and an independent
+human adoption pilot before it should be described as stable or generally
+production-ready. See [release readiness](/docs/operations/release-readiness)
+for the required evidence boundary.
+
+## How to identify an exact version
+
+For a reproducible run, record all of the following with the result artifact:
+
+1. the LMP Git commit or release tag;
+2. the runtime/package version;
+3. the Mind ID and Mind Package version;
+4. the profile digest and signature status;
+5. the operating system, Rust, Node.js, and Python versions when applicable;
+6. the evaluator command, selected scope, and generated result.
+
+When installing a published release, use the release tag and matching package
+versions. When working from source, pin the commit and do not report the run as
+a published release merely because the workspace builds successfully.

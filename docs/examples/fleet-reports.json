@@ -1,0 +1,20 @@
+[
+  {
+    "role_id": "architect",
+    "decision": "pass",
+    "evidence": [{ "key": "scope", "value": "changed-files-only", "source": "architect" }],
+    "retries": 0,
+    "handoffs": 1,
+    "commands": 1,
+    "elapsed_ms": 25
+  },
+  {
+    "role_id": "verifier",
+    "decision": "pass",
+    "evidence": [{ "key": "verification", "value": "passed", "source": "verifier" }],
+    "retries": 0,
+    "handoffs": 0,
+    "commands": 1,
+    "elapsed_ms": 30
+  }
+]

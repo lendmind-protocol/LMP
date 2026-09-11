@@ -1,0 +1,25 @@
+{
+  "version": "1.0.0",
+  "roles": [
+    {
+      "id": "architect",
+      "purpose": "define the change boundary",
+      "max_retries": 1,
+      "max_handoffs": 2
+    },
+    {
+      "id": "verifier",
+      "purpose": "check the evidence and policy result",
+      "max_retries": 1,
+      "max_handoffs": 1
+    }
+  ],
+  "edges": [{ "from": "architect", "to": "verifier" }],
+  "budgets": {
+    "max_roles": 16,
+    "max_handoffs": 32,
+    "max_retries": 32,
+    "max_commands": 128,
+    "max_elapsed_ms": 300000
+  }
+}

@@ -1,0 +1,189 @@
+---
+title: Mind Vault
+description: Browse reusable profiles, schema contracts, guardrails, and provenance.
+---
+
+# Mind Vault
+
+The registry is the protocol's catalog of reusable engineering stances. The
+portal shows three different states so discovery cannot be confused with
+installation:
+
+- **Public registry** means the profile is present in the checked-in static
+  index and has a locally verifiable package signature. External IPFS/OCI
+  distribution can still be pending.
+- **Bundled locally** means onboarding can install the profile from the npm
+  package, but it is not currently listed in the public static registry.
+- **Catalog proposal** means a source-backed idea is shown for community
+  discovery only; it cannot be selected from the public sync index yet.
+
+The catalog spans Rust, C, TypeScript, JavaScript, Go, SQL, React, CSS, HCL,
+and Node.js. A profile's name is not proof of authorship; signature state,
+availability, and source provenance must be inspected separately.
+
+The public catalog standard is maintained in [`registry/README.md`](https://github.com/lendmind-protocol/LMP/tree/main/registry). It defines package layout, contribution flow, trust language, and the `lmp-sync` ingestion contract.
+
+<MindVault />
+
+## What a card means
+
+- **Axiom matrix** is the positive direction the profile asks a generator to follow.
+- **Negative-space guardrails** are patterns or dependencies the profile rejects.
+- **Availability** distinguishes a bundled package that can be selected locally from a catalog proposal that still needs implementation and review.
+- **Verification status** reports what the checked-in package actually contains. A source-backed interpretation is not an external endorsement.
+- **Source references** point to the auditable provenance catalog. They describe inspiration or method; they do not imply endorsement.
+
+## Mind package schema
+
+The schema is the boundary between source material and executable policy. At
+minimum, a package needs an identity, version, source records, guidance, rules,
+and integrity metadata. Released field names are part of the contract: a
+producer validates before signing, and a consumer rejects a package it cannot
+interpret instead of silently applying a nearby meaning.
+
+```json
+{
+  "schema_version": "1",
+  "id": "example.profile",
+  "version": "0.1.0",
+  "sources": [],
+  "guidance": [],
+  "rules": [],
+  "integrity": { "digest": "...", "signature": "..." }
+}
+```
+
+This is the contract shape, not a complete production package. A useful
+package also needs source attribution that satisfies the source license,
+guidance and rules with concrete semantics, and fixtures or tests that
+demonstrate its decisions. Empty arrays can be schema-valid while still being
+useless as policy.
+
+### Review order
+
+1. Confirm identity and version match the workflow selection.
+2. Read source records and provenance before interpreting rules.
+3. Compare each rule with its scope and severity.
+4. Inspect fixtures or evidence for the claimed trade-offs.
+5. Verify the digest and signature over the exact artifact activated locally.
+
+Unknown fields follow the package schema-version policy. They must not be
+silently reinterpreted when semantics change between versions. A schema-valid
+package is not automatically a trustworthy package; integrity, provenance,
+tests, and review remain separate checks.
+
+### Release metadata and review state
+
+Canonical packages also include a `release.json` file. It binds the package ID
+and version to a changelog, explicit limitations, and a review record. This is
+deliberately separate from the signed policy payload: it explains what the
+release says about itself, while the policy signature proves the exact bytes
+that the verifier activated.
+
+```json
+{
+  "packageId": "lmp:mind:example",
+  "version": "1.0.0",
+  "changelog": ["Initial release"],
+  "limitations": ["Requires project tests and human review"],
+  "review": {
+    "status": "unreviewed",
+    "reviewers": [],
+    "notes": "Independent review is still required."
+  }
+}
+```
+
+The validator rejects missing or malformed metadata and checks that its package
+ID and version match `mind.json`. `unreviewed` is an honest availability state,
+not an endorsement. A promoted version updates this metadata and must be
+re-signed before it can be treated as a verified release.
+
+## Package layers and ingestion
+
+Large source material is compiled into content-addressed layers before an agent
+generation loop. The active runtime loads the compact verified policy bundle;
+historical source blocks remain available through registry or cache storage.
+`lmp-sync` should preserve the package ID, version, digest, signature status,
+and source records when it retrieves a profile.
+
+## Serverless distribution
+
+The public Mind Vault does not require a custom backend. The static
+[`registry.json`](https://lmp-six.vercel.app/registry.json) index maps a Mind
+identifier and version to a manifest URL, content digest, signature metadata,
+and optional IPFS CID. An entry may also carry `packageFiles`, a list of
+relative paths with static URLs and SHA-256 digests for the complete package.
+When that list is present, the local Rust adapter fetches and verifies every
+file, validates the complete package, and installs it atomically. Without it,
+the adapter preserves the original manifest-only compatibility behavior; that
+mode is not a complete enforcement package.
+Static synchronization also requires an out-of-band `--trusted-public-key`
+value (or the equivalent release configuration). The public key carried by a
+remote index is metadata, not a trust root; it must match the operator's
+pinned key before any profile bytes are accepted. If the manifest URL fails,
+the client tries each configured IPFS gateway in order and applies the same
+digest and signature checks to every response. Repeat `--ipfs-gateway` to
+configure fallbacks; each template must contain `{cid}` and use HTTPS (with
+loopback HTTP reserved for local tests).
+
+```text
+local lmp-sync → static registry.json → manifest or IPFS CID
+              → optional packageFiles → per-file digest/signature verification
+              → complete package validation → immutable install
+```
+
+The static host is not a trust authority and cannot turn an unsigned profile
+into a verified one. Static synchronization rejects entries missing a digest,
+detached signature, public key, or matching operator trust anchor. The checked-in public entries currently have
+local signature, digest, and key evidence; the release gate still blocks public
+distribution until immutable transport references are supplied. The frontend
+is therefore a discovery and presentation layer, while the local Rust verifier
+remains the security boundary.
+
+The portal currently carries digest-preserving copies of the bundled `mind.json`
+payloads under `/profiles/<profile>/mind.json`. These are static presentation
+and local-preview assets; they do not replace the registry's HTTPS manifest
+URLs or prove that an external deployment or IPFS pin is available. A complete
+static package deployment must publish the additional files listed by
+`packageFiles`; the local sync integration test exercises that contract. The
+static asset test verifies that each manifest copy matches the registry digest
+and package identity, so a stale frontend payload fails before it can be treated
+as release evidence.
+
+## OCI distribution adapter
+
+The TypeScript registry package also provides an OCI Distribution API adapter for
+private registries and enterprise mirrors. It publishes each package file as a
+content-addressed OCI layer, records the package ID and version in the OCI
+config blob, and verifies every blob digest before writing it locally.
+
+The endpoint is intentionally supplied by the operator. LMP does not ship a
+default registry host or imply that a placeholder domain is reachable.
+
+```ts
+import { OciRegistryClient } from "@lending-mind/internal-registry";
+
+const registry = new OciRegistryClient({
+  registry: process.env.LMP_OCI_REGISTRY_URL,
+  repository: "lending-mind/minds",
+  token: process.env.LMP_OCI_TOKEN,
+});
+
+await registry.pull("1.0.0", ".lending-mind/registry/tj-ponytail");
+const verified = await registry.verify("1.0.0");
+```
+
+The adapter is locally tested against a mock OCI Distribution endpoint. That
+proves the upload, tag listing, manifest resolution, blob digest checks, safe
+path extraction, schema validation, and signature verification paths. It does
+not prove access to a production registry, credentials, retention policy, or
+public availability; those remain deployment-specific gates. Current canonical
+LMP profiles use the detached `signatures/manifest.sig` and
+`signatures/public-key.hex` files; the verifier checks the signed `mind.json`
+bytes before accepting the pulled package. Legacy PEM metadata is supported only
+for compatibility fixtures.
+
+For the complete 38-scenario qualification suite, 64-scenario real-OSS benchmark, and
+three internal repository demonstrations, see [Proof matrix and real-world
+demos](/docs/reference/proof-matrix).

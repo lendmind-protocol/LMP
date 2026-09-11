@@ -2,10 +2,10 @@
 
 ## Verification
 
-- [ ] `pnpm lint`
-- [ ] `pnpm typecheck`
-- [ ] `pnpm test`
-- [ ] `pnpm build`
+- [ ] `cargo fmt --all -- --check`
+- [ ] `cargo check --workspace`
+- [ ] `cargo test --workspace`
+- [ ] Python benchmark/syntax checks (when applicable)
 - [ ] Security/privacy behavior reviewed
 
 ## Checklist

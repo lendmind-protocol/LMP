@@ -1,0 +1,27 @@
+---
+title: Security model
+description: Protect profile integrity, workspace boundaries, and evidence.
+---
+
+The security boundary includes package signatures, source provenance, filesystem scope, subprocess execution, and artifact handling.
+
+The main security question is not whether a profile is called a "Mind." It is whether the host can tell what it is loading, who signed it, which files it may inspect, and where its outputs go. Keep those boundaries explicit even when the source material is public.
+
+## Operating rules
+
+- Verify signatures before activating a profile.
+- Keep untrusted source material separate from executable policy.
+- Treat workspace paths and symlinks as hostile input.
+- Run optional sandboxed analysis with least privilege.
+- Never put secrets into guidance, findings, or telemetry.
+- Record enough metadata to reproduce a decision without recording private prompts.
+
+Security controls should be tested as rejection cases. A security document that describes a control without a failing fixture is a design intention, not proof.
+
+## Evidence to keep
+
+For a security-sensitive run, retain the package digest, signer or verification result, schema version, workspace path policy, selected files, subprocess configuration, and artifact destination. Redact secrets before storing or exporting results. Do not include the contents of private prompts merely because they were available to an agent host.
+
+## What signatures do and do not prove
+
+A valid signature tells you that the verified bytes match the signed bytes and that the signature corresponds to the configured key. It does not tell you that the policy is wise, complete, or suitable for every repository. Review provenance and rule fixtures separately.

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://lmp-six.vercel.app/schema/mind-v1.json",
+  "specVersion": "1.0",
+  "id": "lmp:mind:tj-holowaychuk-minimalism",
+  "version": "1.0.0",
+  "name": "TJ Holowaychuk Minimalism",
+  "description": "A community archetype for minimal Node.js dependency and runtime choices.",
+  "modeDefaults": { "validation": "advisory", "network": "offline" },
+  "author": { "kind": "community-archetype", "displayName": "Lending-Mind Community", "verified": false, "website": null },
+  "provenance": { "sources": [{ "title": "Node.js security best practices", "url": "https://nodejs.org/en/learn/getting-started/security-best-practices", "licenseNote": "Public documentation reference; no external endorsement claimed.", "evidenceTier": "primary", "rights": "public-documentation" }], "attributionRequired": true },
+  "philosophy": { "principles": ["Prefer small direct handlers and explicit runtime boundaries."], "tradeoffs": ["Minimal dependencies reduce footprint but require deliberate integration work."], "decisionRules": ["Use native APIs before adding a framework dependency."], "antiPatterns": ["lodash", "express", "axios", "eval"] },
+  "capabilities": { "languages": ["typescript", "javascript", "node"], "requiredAgentTools": ["read_file", "write_file", "execute_command", "search"] },
+  "enforcement": { "dependencyPolicy": "rules/dependencies.json", "complexityPolicy": "rules/complexity.json", "typescriptPolicy": "rules/typescript.json", "commandPolicy": "rules/commands.json" }
+}

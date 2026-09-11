@@ -1,0 +1,12 @@
+---
+title: Explore the protocol loop
+description: Use the browser preview to understand profile selection, findings, and telemetry.
+---
+
+# Explore the protocol loop
+
+The playground is an explanatory browser widget. It helps you see how a selected Mind changes the visible constraints and how a candidate can move from a clean result to a finding. Its numbers are deterministic previews, not measurements from the Rust evaluator.
+
+<ProtocolPlayground />
+
+For production evidence, run the CLI or MCP tool. The artifact contains the actual package digest, checked-file scope, findings, and privacy metadata. The browser widget intentionally cannot replace that evidence because it has no access to your workspace or local daemon.

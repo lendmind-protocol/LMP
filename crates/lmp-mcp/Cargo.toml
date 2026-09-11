@@ -2,6 +2,8 @@
 name = "lmp-mcp"
 version = "0.1.0"
 edition = "2021"
+repository = "https://github.com/lendmind-protocol/LMP"
+homepage = "https://lmp-six.vercel.app/docs/guides/mcp-integration"
 
 [dependencies]
 anyhow = "1.0"

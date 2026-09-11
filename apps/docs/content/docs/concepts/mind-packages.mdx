@@ -1,0 +1,43 @@
+---
+title: Mind packages
+description: How source, guidance, rules, signatures, and provenance fit together.
+---
+
+A Mind package is a versioned policy artifact. It is not a model checkpoint and it is not a raw archive of everything a person has written.
+
+Think of it as the compiled form of an engineering point of view. It can say what a team values, where that preference came from, what the agent should do, and which parts can be checked by a machine. The package should be small enough to load during a run and rich enough to explain its own decisions.
+
+## Package layers
+
+| Layer | Purpose | Loaded during evaluation? |
+| --- | --- | --- |
+| Identity | Names the profile, version, and publisher | Yes |
+| Guidance | Gives an agent explicit, bounded instructions | Yes |
+| Rules | Defines deterministic checks and severities | Yes |
+| Provenance | Records the source and its interpretation | Metadata and audit |
+| Signature | Detects tampering and authenticates the signer | Before use |
+| History blocks | Preserves larger source material by content address | On demand |
+
+The active evaluation path should load the compact compiled policy. Historical material belongs in the registry/cache layer and should not be injected wholesale into an agent context.
+
+## Provenance is part of the contract
+
+Each preference should be traceable to a source class such as a method, implementation, security practice, code review guide, or engineering blog. The package should state what was observed, what was inferred, and what became enforceable.
+
+An honest provenance record separates these claims:
+
+- "This source recommends explicit boundary errors." This is an observation.
+- "We interpret that recommendation as a preference for typed errors." This is an interpretation.
+- "The evaluator rejects an untyped fallback in `src/boundary.rs`." This is an enforcement rule.
+
+The source does not become an endorsement of LMP just because it appears in a package. Cite the source, preserve its license or attribution requirements, and describe the interpretation you made.
+
+## Compilation is explicit
+
+The Mind compiler normalizes source records, validates the schema, computes a content digest, and emits a deterministic bundle. Compilation failures are preferable to silently accepting an incomplete or ambiguous profile.
+
+Compilation is also where you catch a mismatch between a philosophy and a rule. A preference such as "keep modules small" needs a measurable definition before it can be required. If no such definition is appropriate, keep it as guidance or an advisory finding. Do not give it a precise-looking threshold only because the schema has a number field.
+
+## Loading at runtime
+
+The active path should load the compiled identity, guidance, rules, and integrity metadata. Large source histories can remain content addressed in a registry or cache. They can be retrieved when a person audits a decision, but they should not be copied into every agent context by default.

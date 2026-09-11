@@ -1,0 +1,90 @@
+---
+title: Author a Mind package
+description: Turn documented engineering judgment into a reviewable policy artifact.
+---
+
+Start with sources you can identify and cite. Useful source classes include public engineering blogs, method documents, code repositories, review guides, and security practices. Do not imply that a source endorses LMP unless it explicitly does.
+
+The purpose of authoring is not to imitate a person's private thoughts. It is to capture observable engineering choices: what they prefer, when they make an exception, what trade-off they accept, and which examples support the interpretation. A strong package lets a reviewer disagree with the interpretation without having to guess how it was made.
+
+## Authoring sequence
+
+1. Record the source URL, revision/date, and source class.
+2. Summarize the observable philosophy without copying private reasoning.
+3. State the trade-off: what the preference optimizes and what it gives up.
+4. Write agent guidance as an explicit action with a bounded scope.
+5. Write a deterministic rule only where a machine can evaluate the claim.
+6. Add positive and negative fixtures.
+7. Compile, sign, and review the generated package.
+
+Keep the source record close to the preference that it supports. One large bibliography at the end of a package makes review difficult. A reviewer should be able to move from a rule to its rationale, then from the rationale to a test fixture.
+
+## A useful preference record
+
+```json
+{
+  "$schema": "https://lmp-six.vercel.app/schema/mind-v1.json",
+  "specVersion": "1.0",
+  "id": "lmp:mind:example",
+  "version": "1.0.0",
+  "name": "Example Engineering Mind",
+  "description": "A small, explicit policy profile.",
+  "modeDefaults": { "validation": "advisory", "network": "offline" },
+  "author": { "kind": "community", "displayName": "Example Maintainer", "verified": false, "website": null },
+  "provenance": {
+    "sources": [{
+      "title": "Public engineering guide",
+      "url": "https://example.com/engineering/errors",
+      "licenseNote": "Summary only; no copied proprietary text.",
+      "evidenceTier": "primary",
+      "rights": "public-documentation",
+      "sourceType": "documentation",
+      "accessMethod": "public-http",
+      "contentDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "retentionPolicy": "metadata-only",
+      "allowedUse": "summarize-public-guidance"
+    }],
+    "attributionRequired": true
+  },
+  "philosophy": {
+    "principles": ["Make failure states visible at the boundary."],
+    "tradeoffs": ["More explicit code in exchange for easier diagnosis."],
+    "decisionRules": ["Return typed errors from the boundary."],
+    "antiPatterns": ["Do not hide failures behind an untyped fallback."]
+  },
+  "capabilities": { "languages": ["rust"], "requiredAgentTools": ["read_file", "write_file", "execute_command", "search"] },
+  "enforcement": {
+    "dependencyPolicy": "rules/dependencies.json",
+    "complexityPolicy": "rules/complexity.json",
+    "typescriptPolicy": "rules/typescript.json",
+    "commandPolicy": "rules/commands.json"
+  }
+}
+```
+
+The example is illustrative. A package is not ready for publication until its rule is implemented and its fixtures demonstrate both outcomes.
+
+## Source to rule example
+
+Suppose a public engineering guide recommends returning errors with enough context to diagnose the failing boundary. A useful package record could contain:
+
+```text
+Source observation: boundary errors should preserve operation and cause.
+Trade-off: error values become more explicit and slightly more verbose.
+Agent guidance: name the operation and preserve the underlying error.
+Required rule: reject a boundary return that discards the original error.
+Passing fixture: the wrapper adds context and keeps the cause.
+Failing fixture: the wrapper returns a generic string and drops the cause.
+```
+
+The first two lines explain the philosophy. The next line guides generation. The rule and fixtures show what the evaluator can actually prove.
+
+## Review questions
+
+Before signing a package, ask:
+
+- Can a reader identify the source for each important preference?
+- Does the guidance tell an agent what to do, not only what to admire?
+- Does every required rule have a positive and negative fixture?
+- Is the scope narrow enough that an unrelated repository is not rejected?
+- Does the package say what it does not cover?

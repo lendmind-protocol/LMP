@@ -1,0 +1,11 @@
+{
+  "packageId": "lmp:mind:tj-ponytail",
+  "version": "1.0.0",
+  "changelog": ["Initial dependency-minimalism community archetype release."],
+  "limitations": ["The archetype is community-curated and is not an endorsement or simulation of a named individual."],
+  "review": {
+    "status": "unreviewed",
+    "reviewers": [],
+    "notes": "Independent provenance and profile review is required before public release claims."
+  }
+}

@@ -1,0 +1,299 @@
+{
+  "schemaVersion": "1",
+  "generatedFrom": "registry/definitions + packages/create-lmp/profiles",
+  "generatedAt": "2026-09-12T00:00:00Z",
+  "entries": [
+    {
+      "id": "lmp:mind:tj-ponytail",
+      "version": "1.0.0",
+      "manifestUrl": "https://lmp-six.vercel.app/profiles/tj-ponytail/mind.json",
+      "sourceUrl": "https://github.com/lendmind-protocol/LMP/tree/main/registry/definitions/tj-ponytail",
+      "digest": "ce345ec5ac1ee9e1142fab827f55835b830e75228dc5b025b037ad3c9d42c7af",
+      "signatureStatus": "verified",
+      "signature": "0x3e42ef735ecf072dd2a46d10b41b853bfd605b849c56870387f6e7ea7ec36ed6927c1ed1119478755aad67b2495b937cce6695e11e5d9f084e650cc0b6ec8607",
+      "publicKey": "0xc740e18ab980ad66bc2c93dea168336da1941d3ea0d135c659313e4210626fdd",
+      "ipfsCid": null,
+      "packageFiles": [
+        {
+          "path": "evidence.json",
+          "url": "https://lmp-six.vercel.app/profiles/tj-ponytail/evidence.json",
+          "digest": "98eee0efc96a965612e34b943c77e46a12eb539965641ff7bcc0dbd50fd8781f"
+        },
+        {
+          "path": "evidence/README.md",
+          "url": "https://lmp-six.vercel.app/profiles/tj-ponytail/evidence/README.md",
+          "digest": "f24e0f1d8ed719940082074a683de4882ea71620a40e84b65f981aba39b8b53f"
+        },
+        {
+          "path": "guidance.md",
+          "url": "https://lmp-six.vercel.app/profiles/tj-ponytail/guidance.md",
+          "digest": "6d14c06835de95da4dd37f8424a8db05f94edbcb392429635990e18138364549"
+        },
+        {
+          "path": "release.json",
+          "url": "https://lmp-six.vercel.app/profiles/tj-ponytail/release.json",
+          "digest": "445763bafb4202ae8d5fdc8b13744cc57156ad7004a6f1826ccd1a26958d66fd"
+        },
+        {
+          "path": "rules/commands.json",
+          "url": "https://lmp-six.vercel.app/profiles/tj-ponytail/rules/commands.json",
+          "digest": "788dda5b76f8ac775a948d58c30cc3117d7c22ecb4c93a6ebb6d0cd182267544"
+        },
+        {
+          "path": "rules/complexity.json",
+          "url": "https://lmp-six.vercel.app/profiles/tj-ponytail/rules/complexity.json",
+          "digest": "87ee0a170e594353b9468f8d3627810eb18cf8e6bec18d037eca850c5573b957"
+        },
+        {
+          "path": "rules/dependencies.json",
+          "url": "https://lmp-six.vercel.app/profiles/tj-ponytail/rules/dependencies.json",
+          "digest": "5f89ff4d72a862d728c1286a9eab61d693aaf69a7d9555a555c624d578516d65"
+        },
+        {
+          "path": "rules/manifest.json",
+          "url": "https://lmp-six.vercel.app/profiles/tj-ponytail/rules/manifest.json",
+          "digest": "510656e137e77acd9e54342133d30db9eb490bc3620606e69297cf498a184410"
+        },
+        {
+          "path": "rules/typescript.json",
+          "url": "https://lmp-six.vercel.app/profiles/tj-ponytail/rules/typescript.json",
+          "digest": "ed2cadc4ae55e5e7967f5f774cb1624b4553a10c694259ae4379fcf443abffd5"
+        },
+        {
+          "path": "signatures/manifest.sig",
+          "url": "https://lmp-six.vercel.app/profiles/tj-ponytail/signatures/manifest.sig",
+          "digest": "6d553b30e365585e4ae1a9d12a34a37424fb22caec8e30d7a55f9a99dfec4c44"
+        },
+        {
+          "path": "signatures/public-key.hex",
+          "url": "https://lmp-six.vercel.app/profiles/tj-ponytail/signatures/public-key.hex",
+          "digest": "746232a3ea8c87e2dca72b4257a30f9a782911288b7713a06daa6fca2ff879bb"
+        },
+        {
+          "path": "SKILL.md",
+          "url": "https://lmp-six.vercel.app/profiles/tj-ponytail/SKILL.md",
+          "digest": "bd83a7fb2791405c2d11240c8137025d495be73653097b6649a06807eae4675c"
+        }
+      ]
+    },
+    {
+      "id": "lmp:mind:tj-holowaychuk-minimalism",
+      "version": "1.0.0",
+      "manifestUrl": "https://lmp-six.vercel.app/profiles/tj-holowaychuk-minimalism/mind.json",
+      "sourceUrl": "https://github.com/lendmind-protocol/LMP/tree/main/registry/definitions/tj-holowaychuk-minimalism",
+      "digest": "6d65f917fdb9a27df7a09e463ce6d56a622ffaf51c56ebf7b570acd01da1afd3",
+      "signatureStatus": "verified",
+      "signature": "0x5044d431cfb0b957248fedf533711fa546757532e16017af1c98aacf9ab5c341ec40dd5ed3024819951a07fbe91f41ae08fb7d6fe8ebc5e3b17148c13fea3301",
+      "publicKey": "0xfe0e1cf06843073285bc25ce79175a15ade5a82d18f7564bc2d5b48f15e2aac6",
+      "ipfsCid": null,
+      "packageFiles": [
+        {
+          "path": "evidence.json",
+          "url": "https://lmp-six.vercel.app/profiles/tj-holowaychuk-minimalism/evidence.json",
+          "digest": "376e69b3f0a80b9961316d42611f74a9672c02f398b6e4b03ce675238d630b09"
+        },
+        {
+          "path": "evidence/README.md",
+          "url": "https://lmp-six.vercel.app/profiles/tj-holowaychuk-minimalism/evidence/README.md",
+          "digest": "60c9e800464e4983ba09739eeb7c73d98cfafa6bef7d041bacde445f9c560c8c"
+        },
+        {
+          "path": "guidance.md",
+          "url": "https://lmp-six.vercel.app/profiles/tj-holowaychuk-minimalism/guidance.md",
+          "digest": "1153687d3911fce27115206a8580c35db4209a16f3f793ad1de7f88e1e5aec08"
+        },
+        {
+          "path": "release.json",
+          "url": "https://lmp-six.vercel.app/profiles/tj-holowaychuk-minimalism/release.json",
+          "digest": "d088a8c7f07c398fd869ae6ddc8e85df7df6f190a6024c308fa32574f2fda762"
+        },
+        {
+          "path": "rules/commands.json",
+          "url": "https://lmp-six.vercel.app/profiles/tj-holowaychuk-minimalism/rules/commands.json",
+          "digest": "788dda5b76f8ac775a948d58c30cc3117d7c22ecb4c93a6ebb6d0cd182267544"
+        },
+        {
+          "path": "rules/complexity.json",
+          "url": "https://lmp-six.vercel.app/profiles/tj-holowaychuk-minimalism/rules/complexity.json",
+          "digest": "87ee0a170e594353b9468f8d3627810eb18cf8e6bec18d037eca850c5573b957"
+        },
+        {
+          "path": "rules/dependencies.json",
+          "url": "https://lmp-six.vercel.app/profiles/tj-holowaychuk-minimalism/rules/dependencies.json",
+          "digest": "48862042b5a67d82b7916f64d6d58005beb6b5205b08983ce4a57247417688ce"
+        },
+        {
+          "path": "rules/manifest.json",
+          "url": "https://lmp-six.vercel.app/profiles/tj-holowaychuk-minimalism/rules/manifest.json",
+          "digest": "510656e137e77acd9e54342133d30db9eb490bc3620606e69297cf498a184410"
+        },
+        {
+          "path": "rules/typescript.json",
+          "url": "https://lmp-six.vercel.app/profiles/tj-holowaychuk-minimalism/rules/typescript.json",
+          "digest": "ed2cadc4ae55e5e7967f5f774cb1624b4553a10c694259ae4379fcf443abffd5"
+        },
+        {
+          "path": "signatures/manifest.sig",
+          "url": "https://lmp-six.vercel.app/profiles/tj-holowaychuk-minimalism/signatures/manifest.sig",
+          "digest": "8fecdfe1ee93a1f528feb206337de3caec2b42b0c33adb7d8ecd649d25205674"
+        },
+        {
+          "path": "signatures/public-key.hex",
+          "url": "https://lmp-six.vercel.app/profiles/tj-holowaychuk-minimalism/signatures/public-key.hex",
+          "digest": "6b81b95db7083db71ff148ebd6e9ebd67a71e63418344d5b139c718f64b02809"
+        },
+        {
+          "path": "SKILL.md",
+          "url": "https://lmp-six.vercel.app/profiles/tj-holowaychuk-minimalism/SKILL.md",
+          "digest": "e8d0de4eb776e5491f35d972fa8b05101ade473352a3c805c8a1e6fd6ab0ae2d"
+        }
+      ]
+    },
+    {
+      "id": "lmp:mind:supabase-core",
+      "version": "1.0.0",
+      "manifestUrl": "https://lmp-six.vercel.app/profiles/supabase-core/mind.json",
+      "sourceUrl": "https://github.com/lendmind-protocol/LMP/tree/main/packages/create-lmp/profiles/supabase-core",
+      "digest": "a703afe4fcc7599c3df5c6605638b6beda5a079193748567796527db37fae5b0",
+      "signatureStatus": "verified",
+      "signature": "0x756f7cfbd4d88e8756cf4ba59f6a5531dfc828820dc1e2b34550bc8ff7c6162b8d1e3cfd4b150c96b26c08bccdd980ca35d0eab79b46b0cf818a01cb4b62be0d",
+      "publicKey": "0x0f2ba447bb36364ed2ba0cc5ea99c667c04f91a5974e541e8185e1a5cf6e050c",
+      "ipfsCid": null,
+      "packageFiles": [
+        {
+          "path": "evidence.json",
+          "url": "https://lmp-six.vercel.app/profiles/supabase-core/evidence.json",
+          "digest": "9acac7749c3aead9c8e24e4664102e9e9838333324ed3bc993748b9684ff83a9"
+        },
+        {
+          "path": "evidence/README.md",
+          "url": "https://lmp-six.vercel.app/profiles/supabase-core/evidence/README.md",
+          "digest": "71f9b8d0ff15187c227d533aa73492fbb9230f9666d5c4089c1d0decc4e9886b"
+        },
+        {
+          "path": "guidance.md",
+          "url": "https://lmp-six.vercel.app/profiles/supabase-core/guidance.md",
+          "digest": "a000b64a0f0e3b66c992e557b622c741afe4b9dab9e7ecd745144151dffb01e9"
+        },
+        {
+          "path": "release.json",
+          "url": "https://lmp-six.vercel.app/profiles/supabase-core/release.json",
+          "digest": "7b02b43c05ee24b10c83cd59b0f9096d15ef4588692b0de574c840027beae4cb"
+        },
+        {
+          "path": "rules/commands.json",
+          "url": "https://lmp-six.vercel.app/profiles/supabase-core/rules/commands.json",
+          "digest": "788dda5b76f8ac775a948d58c30cc3117d7c22ecb4c93a6ebb6d0cd182267544"
+        },
+        {
+          "path": "rules/complexity.json",
+          "url": "https://lmp-six.vercel.app/profiles/supabase-core/rules/complexity.json",
+          "digest": "77206d97effb8ddec9e6259bd0aeb57c60e44b24f8a8b6ef79c5dc91c1925fdb"
+        },
+        {
+          "path": "rules/dependencies.json",
+          "url": "https://lmp-six.vercel.app/profiles/supabase-core/rules/dependencies.json",
+          "digest": "6173228df3b916c2de0235d66f751199ddb4a17c7ce2426e12e434c8a45555d8"
+        },
+        {
+          "path": "rules/manifest.json",
+          "url": "https://lmp-six.vercel.app/profiles/supabase-core/rules/manifest.json",
+          "digest": "510656e137e77acd9e54342133d30db9eb490bc3620606e69297cf498a184410"
+        },
+        {
+          "path": "rules/typescript.json",
+          "url": "https://lmp-six.vercel.app/profiles/supabase-core/rules/typescript.json",
+          "digest": "ab700cc4a703a80479f5e8eb44dfd2a36bf03a84b3ab5941c672ca86224e378f"
+        },
+        {
+          "path": "signatures/manifest.sig",
+          "url": "https://lmp-six.vercel.app/profiles/supabase-core/signatures/manifest.sig",
+          "digest": "7c188b713b805422cfb6fc45d500ab57198b7a31925a23140ee8f99a55639b46"
+        },
+        {
+          "path": "signatures/public-key.hex",
+          "url": "https://lmp-six.vercel.app/profiles/supabase-core/signatures/public-key.hex",
+          "digest": "e7e5075011bd9c9ced4dad252222b553e4675050256850069f89d0963ff20b62"
+        },
+        {
+          "path": "SKILL.md",
+          "url": "https://lmp-six.vercel.app/profiles/supabase-core/SKILL.md",
+          "digest": "e337ca662a4420db0da6d713e1cbd713272c18a0f3b096dcb859337a913b8e4d"
+        }
+      ]
+    },
+    {
+      "id": "lmp:mind:linux-kernel",
+      "version": "1.0.0",
+      "manifestUrl": "https://lmp-six.vercel.app/profiles/linux-kernel/mind.json",
+      "sourceUrl": "https://github.com/lendmind-protocol/LMP/tree/main/packages/create-lmp/profiles/linux-kernel",
+      "digest": "d8e9d50f182be74e17958aaa383a9006a6c75104767c9e67b84316ee65edd4f3",
+      "signatureStatus": "verified",
+      "signature": "0xe0615763498f0ffd34f15bb7dac1de51930f2ed5cd2623e675b85517bb6856376187535355b9827c1e04781cb0e53c3e3ec6f75e68aca7c219a7afab56e03e0c",
+      "publicKey": "0x39ccdb53e0f70b4adb5c18fd46651b4fb81d65479182d107bd73dbc64dc621e6",
+      "ipfsCid": null,
+      "packageFiles": [
+        {
+          "path": "evidence.json",
+          "url": "https://lmp-six.vercel.app/profiles/linux-kernel/evidence.json",
+          "digest": "8680614b023545575021014e15c32b89a59d8df7263b370b58af0544ea933b61"
+        },
+        {
+          "path": "evidence/README.md",
+          "url": "https://lmp-six.vercel.app/profiles/linux-kernel/evidence/README.md",
+          "digest": "77344d744b6c2b5c5b79e17e58f0f21152fece754f38f32e61d9b81e6c73e873"
+        },
+        {
+          "path": "guidance.md",
+          "url": "https://lmp-six.vercel.app/profiles/linux-kernel/guidance.md",
+          "digest": "174aaef62f1767e65665f386e01eec508b80ceb5befe7f420007fe6cd27b56ca"
+        },
+        {
+          "path": "release.json",
+          "url": "https://lmp-six.vercel.app/profiles/linux-kernel/release.json",
+          "digest": "8868fdf66f6d7971cf729e6d5773cf0a86b2a88a177bf27669e331a58e7bdb71"
+        },
+        {
+          "path": "rules/commands.json",
+          "url": "https://lmp-six.vercel.app/profiles/linux-kernel/rules/commands.json",
+          "digest": "440fe401e4aaeaa291542c5632b5fd9f9bbbc1ab903b2d82d2085a7a4ba97124"
+        },
+        {
+          "path": "rules/complexity.json",
+          "url": "https://lmp-six.vercel.app/profiles/linux-kernel/rules/complexity.json",
+          "digest": "05e6c48fe04c38fd5ed962c0a0300dc948141c0ee5dda5cccf162a954cdca936"
+        },
+        {
+          "path": "rules/dependencies.json",
+          "url": "https://lmp-six.vercel.app/profiles/linux-kernel/rules/dependencies.json",
+          "digest": "c438d99aa09d0bc74f6545c1277da15deeb12b77636bbb1e296e23e31bc75948"
+        },
+        {
+          "path": "rules/manifest.json",
+          "url": "https://lmp-six.vercel.app/profiles/linux-kernel/rules/manifest.json",
+          "digest": "510656e137e77acd9e54342133d30db9eb490bc3620606e69297cf498a184410"
+        },
+        {
+          "path": "rules/typescript.json",
+          "url": "https://lmp-six.vercel.app/profiles/linux-kernel/rules/typescript.json",
+          "digest": "c2593eec203ffceaaa58be484012348a9c30f8b04efb89a1214989159e791c04"
+        },
+        {
+          "path": "signatures/manifest.sig",
+          "url": "https://lmp-six.vercel.app/profiles/linux-kernel/signatures/manifest.sig",
+          "digest": "e562e05c0cc2ba98caf88ac47c9b29c5f351b2df73c68380c1e1f781ae4ac7d0"
+        },
+        {
+          "path": "signatures/public-key.hex",
+          "url": "https://lmp-six.vercel.app/profiles/linux-kernel/signatures/public-key.hex",
+          "digest": "48264eaa64b36c97ab3d2535792165757e8384b5b59210a4183b35cd721cd74a"
+        },
+        {
+          "path": "SKILL.md",
+          "url": "https://lmp-six.vercel.app/profiles/linux-kernel/SKILL.md",
+          "digest": "591bda31fd2702f659194c4cb5233f0333f78f389e01531a2aa24395b7ce7d85"
+        }
+      ]
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 {
-  "name": "@lending-mind/skill-compiler",
+  "name": "@lending-mind/internal-skill-compiler",
+  "private": true,
   "version": "0.1.0",
   "type": "module",
   "main": "dist/index.js",
@@ -12,7 +13,7 @@
     "lint": "biome check src"
   },
   "dependencies": {
-    "@lending-mind/core": "workspace:*",
-    "@lending-mind/skill-schema": "workspace:*"
+    "@lending-mind/sdk": "workspace:*",
+    "@lending-mind/skill": "workspace:*"
   }
 }

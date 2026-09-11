@@ -1,0 +1,12 @@
+{
+  "title": "Operations",
+  "description": "Proof, scale, security, and troubleshooting.",
+  "pages": [
+    "capability-inventory",
+    "roadmap",
+    "benchmark-analytics",
+    "security",
+    "troubleshooting",
+    "release-readiness"
+  ]
+}

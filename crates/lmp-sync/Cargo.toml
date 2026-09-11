@@ -2,8 +2,14 @@
 name = "lmp-sync"
 version = "0.1.0"
 edition = "2021"
+repository = "https://github.com/lendmind-protocol/LMP"
+homepage = "https://lmp-six.vercel.app/docs/reference/cli"
 
 [dependencies]
 anyhow = "1.0"
 clap = { version = "4.4", features = ["derive"] }
 lmp-core = { path = "../lmp-core" }
+ureq = { version = "=2.9.7", default-features = false, features = ["json", "tls"] }
+base64ct = "=1.6.0"
+url = "=2.4.1"
+serde = { version = "1.0", features = ["derive"] }

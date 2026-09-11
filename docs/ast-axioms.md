@@ -6,3 +6,5 @@ This document is generated automatically by the core compiler source analysis to
 | :--- | :--- |
 | `CRITICAL_AXIOM_VIOLATION` | Function '{}' names async execution but lacks the literal 'async' structural keyword modifier. |
 | `THREAD_RACE_RISK` | Blocking routine `{}` invoked while thread holds an exclusive resource access lock! |
+| `FUNCTION_COMPLEXITY_VIOLATION` | Function '{}' has {} statements; maximum is {}. |
+| `FORBIDDEN_AST_VIOLATION` | Macro definition is not allowed. |

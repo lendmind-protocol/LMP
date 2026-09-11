@@ -1,0 +1,108 @@
+---
+title: Roadmap and implementation status
+description: The authoritative milestone map, current evidence, and remaining release work.
+---
+
+# Roadmap and implementation status
+
+This page explains how the implementation currently compares with the
+authoritative [project roadmap](https://github.com/lendmind-protocol/LMP/blob/main/ROADMAP.md).
+The repository roadmap is the contract; this page is the user-facing status
+interpretation. It does not replace the roadmap and does not turn a present
+implementation into a completed milestone without evidence.
+
+## How to read the status
+
+| Status | Meaning |
+| --- | --- |
+| **Verified** | The acceptance boundary has a current, reproducible artifact or test in this checkout. |
+| **Implemented, evidence incomplete** | Code exists, but one or more roadmap acceptance tests, fixtures, or reproducibility records are still missing. |
+| **Partial** | The capability exists for a bounded path, but the complete roadmap contract is not implemented. |
+| **External gate** | Local implementation is present, but completion requires an external service, credential, deployment, pin, or independent person. |
+| **Planned** | The roadmap describes the capability, but the implementation is not part of the current product path. |
+
+Passing tests do not automatically graduate a milestone. A milestone is only
+complete when its acceptance criteria and its evidence boundary are both met.
+
+## Current milestone status
+
+| Milestone | Current status | Evidence and remaining work |
+| --- | --- | --- |
+| 0. Core inventory and stability baseline | **Implemented, evidence incomplete** | The maintained [capability inventory](/docs/operations/capability-inventory) now classifies the local, external, and human boundaries. Complete command coverage and explicit classification of every mock or optional path still need release evidence. |
+| 1. Local-first product experience | **Implemented, evidence incomplete** | `lmp init` and local evaluation create offline configuration and redacted artifacts. Greenfield creation, brownfield detection, false-strategy refusal, additive gitignore protection, bundled signature verification, and workspace-scoped Claude Code, Cursor, Cline, and Roo Code MCP configuration now have automated acceptance tests; independent host acceptance remains external. |
+| 2. Profile contracts and policy compilation | **Implemented, evidence incomplete** | Versioned schemas, provenance, guidance, rules, digests, signature metadata, strict positive/negative/exception evidence manifests, semantic-version range resolution, digest validation, canonical ID validation, and verified-authority impersonation rejection now exist for bundled profiles. Release-grade matrix evidence remains. |
+| 3. Deterministic evaluation and tool adapters | **Implemented, evidence incomplete** | Rust evaluation, static sync, TypeScript local/OCI registry adapters, and the tool-adapter contract are functional and tested. The adapter layer detects configured tools, records capabilities and unavailable-tool skips, creates explicit plans, requires authorization for execution, validates adapter identity and executable names, confines execution to an existing workspace boundary, avoids shell invocation and installation, caps/redacts output, and normalizes results. Full host/tool matrix coverage remains evidence work. |
+| 4. Baseline and TypeScript Minimal profiles | **Implemented, evidence incomplete** | Baseline and TypeScript-minimal profiles carry machine-validated positive, negative, and exception fixtures, and CI executes their expected states through the evaluator. The fixture runner asserts the relevant finding IDs; broader repository-specific evidence still remains. |
+| 5. Bounded agent remediation loops | **Verified locally for the bounded path** | `pnpm verify:evaluator-integration` runs a real failing candidate through remediation and re-evaluation, producing a failing artifact, five-state transition history, and a passing artifact. Security/regression escalation and human-attestation boundaries remain separately tested; host-agent wiring is not claimed. |
+| 6. Autonomy and tool authorization | **Verified locally for the policy boundary** | The same integration evidence proves deployment denial at A2 and allowance at A6, while unit tests cover independent command, package-install, network, and deployment gates. It is not approval to deploy to an external service. |
+| 7. Evidence artifacts and pull-request workflow | **Verified locally for artifact contracts** | JSON artifacts include identity, scope, findings, skipped checks, loop transitions, status, privacy metadata, and per-finding rationale/remediation/limitations; Rust artifacts validate against the shared TypeScript schema. `evaluator_artifact_gate.py` fail-closes on malformed canonical package identity, digest, finding context, transition, limitation, and privacy records and can require a clean workspace. `render_evaluation_summary.py` produces a bounded Markdown review summary; the registry bot posts PR summaries and the benchmark workflow publishes a job summary. Repository-level workflow execution remains external. |
+| 8. Skills and MCP compatibility | **Implemented, evidence incomplete** | Skill schema/validation and Rust stdio MCP discovery/evaluation/artifact tools exist with Rust tests. Workspace-scoped Claude Code, Cursor, Cline, and Roo Code adapters are additive and tested; official host acceptance and complete compatibility evidence for every supported agent surface remain external evidence gates. |
+| 9. Profile evidence pipeline and governance | **Implemented, evidence incomplete** | Canonical profiles require source type, access method, public-content digest, retention policy, allowed use, source URLs, license notes, evidence tier, rights basis, strict positive/negative/exception manifests, and complete machine-checkable rule contracts; the local fixture gate executes all six bundled profiles and asserts profile-specific finding IDs. The evidence harvester now separates textual, implementation, and critique sources, maps contradictions, and emits fail-closed draft artifacts without raw source text. The registry PR bot validates signed local packages and posts machine-readable summaries; author verification and independent provenance review remain release evidence gates. |
+| 10. Human-reviewed profile evolution | **Implemented, evidence incomplete** | CLI proposals now persist, require explicit `submit`, require an approver and reason for `approve`/`reject`, require an expected benefit, false-positive risk, fixture plan, benchmark plan, and declared patch/minor/major bump, enforce that bump at promotion, append JSONL audit records, and support an explicit `proposal promote` step that creates a strictly newer unsigned package and supersedes the proposal. A multi-reviewer repository workflow still needs release evidence. |
+| 11. Benchmark and proof of value | **Verified locally; release evidence incomplete** | The latest technical run is complete: `lmp-test-results/benchmark-current/real-world-benchmark.json` records 64/64 scenarios and transitions, 128/128 Docker gates, 128/128 ordinary compiler controls, and 15/15 verified provenance sources. The release-clean condition, non-empty independent review, setup-cost interpretation, and human pilot are still separate requirements for a public release claim. |
+| 12. Protocol core productization | **Implemented, evidence incomplete** | One-shot CLI, embedded signed baseline onboarding, daemon lifecycle (`--once`, PID-file status/stop/reload, and clean signal shutdown), MCP, signing, authenticated key rotation, explicit local key revocation, sync, telemetry, release checks, and toolchain pinning exist. Parser/version coverage and complete release evidence remain incomplete. |
+| 13. Optional sandbox and remote distribution | **Partial / external gate** | Docker sandbox capability detection, limits, redaction, strict static registry checks, and a local OCI Distribution adapter exist. Real OCI/IPFS credentials, pinned production CIDs, external deployment, upload preview against a production registry, and remote failure recovery require external infrastructure and further verification. |
+| 14. Fleet and graph orchestration | **Implemented, evidence incomplete** | Rust now validates a versioned acyclic role graph, computes deterministic handoff order, enforces graph and report budgets, preserves disagreements, and emits merged per-role evidence through `fleet-validate` and `fleet-merge`. External agent-host integration and a release-grade multi-host run remain evidence work. |
+
+## What is verified in this checkout
+
+The following evidence is present and should be treated as bounded evidence,
+not as a universal quality claim:
+
+- `lmp-test-results/qualification-result.json` reports `complete`, 38 of 38
+  scenarios, with Docker required.
+- The Rust workspace has AST, profile compilation, scope resolution, signing,
+  evaluation, daemon, MCP, and synchronization crates.
+- TypeScript packages provide the CLI, evaluator, schema validation, redaction,
+  registry, skill compiler, and MCP-facing compatibility surfaces.
+- The docs application builds as a static-first Next.js/Fumadocs portal and
+  includes architecture, onboarding, MCP, benchmark, registry, proof, release,
+  and versioning references.
+- The CLI and evaluator use explicit `pass`, `needs_revision`, `blocked`, and
+  error boundaries rather than treating unavailable infrastructure as success.
+
+## Release blockers that remain
+
+These are not wording issues; each blocks a stronger public release claim:
+
+1. **Public registry integrity:** the checked-in packages now have verified
+   signatures, public trust keys, and content digests; the production registry
+   still needs independently retrievable immutable CIDs.
+2. **Release-grade real-world benchmark evidence:** the technical benchmark is
+   complete for the current revision with all Docker gates, source verification,
+   tool versions, profile digests, and environment metadata retained; a clean
+   final release-commit rerun and independent review are still required for a
+   publication claim.
+3. **Remote distribution:** OCI/IPFS must remain explicitly opt-in until a real
+   transport and pinning path is tested. Mock CIDs and placeholder manifests
+   cannot be presented as production distribution.
+4. **Deployment verification:** the static portal and registry index must be
+   reachable at the configured temporary deployment URL before a release claim.
+5. **Independent adoption pilot:** people outside the implementation loop must
+   install, use, remediate, and explain the workflow. Automation cannot replace
+   this evidence.
+6. **Profile governance:** named-person or organization profiles require
+   authorization or must be labeled as community archetypes with provenance and
+   no endorsement claim.
+
+## Interaction boundary
+
+Most roadmap work is verified locally and does not require the in-app browser:
+
+- Rust, TypeScript, Python, Docker, CLI, schema, signature, artifact, MCP, and
+  benchmark checks use repository commands and test fixtures.
+- Documentation pages, navigation, diagrams, playground behavior, and
+  responsive layout require browser verification.
+- Production deployment and GitHub Actions require external-service inspection.
+- The adoption pilot requires independent human interaction.
+
+## Release rule
+
+LMP should not be described as roadmap-complete or released as a fully proven
+production protocol while any required artifact is `blocked`, `failed`,
+`incomplete`, missing, stale, unsigned, or based only on a fixture. The next
+release step is to close the local evidence gaps first, then run the external
+deployment and human adoption gates, and publish only the exact claims those
+results support.
+
+See [release readiness](/docs/operations/release-readiness), the [proof matrix](/docs/reference/proof-matrix), and [versioning](/docs/reference/versioning) for the operational gates.

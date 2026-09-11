@@ -1,8 +1,18 @@
 {
-  "name": "@lending-mind/skill-schema",
+  "name": "@lending-mind/skill",
   "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lendmind-protocol/LMP.git",
+    "directory": "packages/skill-schema"
+  },
+  "homepage": "https://lmp-six.vercel.app/docs/reference/mind-vault",
   "type": "module",
-  "dependencies": { "@lending-mind/core": "workspace:*", "zod": "^3.24.0" },
+  "files": ["dist", "README.md"],
+  "dependencies": { "@lending-mind/sdk": "workspace:*", "zod": "^3.24.0" },
+  "author": "Justinedevs",
+  "maintainers": [{ "name": "Justinedevs" }],
+  "publishConfig": { "access": "public" },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -10,7 +20,7 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "node -e \"for (const p of ['dist','tsconfig.tsbuildinfo','tsconfig.build.tsbuildinfo']) require('node:fs').rmSync(p,{recursive:true,force:true})\" && tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run src"
   }

@@ -1,68 +1,96 @@
-name: Lending-Mind Protocol Benchmark Matrix Gate
+name: Lending-Mind Protocol Benchmark Gate
 
 on:
   push:
-    branches: [ main, dev ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 permissions:
   contents: read
 
 jobs:
-  system-evaluation-matrix:
+  benchmark:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Codebase
-        uses: actions/checkout@v4
-
-      - name: Set Up Rust Core Toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
         with:
-          toolchain: stable
-
-      - name: Cache Rust Build Artifacts
-        uses: actions/cache@v4
+          version: 9.15.4
+      - uses: actions/setup-node@v4
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
-
-      - name: Build System Daemon Binary (lmpd)
-        run: cargo build --release --workspace
-
-      - name: Set Up Python Runtime
-        uses: actions/setup-python@v5
-        with:
-          python-month: '3.11'
-          cache: 'pip'
-
-      - name: Install Sandboxing Dependencies
+          node-version: 22
+          cache: pnpm
+      - name: Install JavaScript workspace dependencies
+        run: corepack enable && pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm typecheck
+      - name: Verify generated public registry assets are current
         run: |
-          if [ -f orchestrator/requirements.txt ]; then
-            pip install -r orchestrator/requirements.txt
-          else
-            pip install matplotlib pandas
-          fi
-
-      - name: Initialize Docker Virtualization Daemon
+          pnpm sync:public-registry
+          git diff --exit-code -- registry/registry.json apps/docs/public/registry.json apps/docs/public/profiles
+      - name: Verify evaluator remediation and authorization evidence
         run: |
-          docker --version
-          # Verification that the core container framework is responsive
+          pnpm verify:evaluator-integration
+          for artifact in lmp-test-results/evaluator-integration/*.json; do
+            python3 orchestrator/evaluator_artifact_gate.py "$artifact"
+          done
+          python3 orchestrator/render_evaluation_summary.py \
+            lmp-test-results/evaluator-integration/"$(find lmp-test-results/evaluator-integration -maxdepth 1 -name '*.json' | sort | head -n 1 | xargs -n1 basename)" \
+            --output lmp-test-results/evaluator-integration-summary.md
+      - uses: dtolnay/rust-toolchain@1.98.1
+        with:
+          toolchain: 1.98.1
+      - run: cargo test --workspace
+      - run: cargo build --release --workspace
+      - name: Verify Rust and Node onboarding integration
+        run: bash orchestrator/integration_test.sh
+      - name: Measure greenfield and brownfield onboarding target
+        run: python3 orchestrator/onboarding_benchmark.py --max-ms 3000 --output lmp-test-results/onboarding-current.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run orchestration and release safety tests
+        run: python3 -m unittest discover -s orchestrator -p 'test_*.py'
+      - name: Build required sandbox image
+        run: docker build -t lmp-sandbox:local orchestrator
+      - name: Run qualification matrix
+        run: python3 orchestrator/qualification_suite.py --lmp target/release/lmp --lmpd target/release/lmpd --mcp target/release/lmp-mcp --output lmp-test-results/qualification-result.json
+      - name: Run real OSS benchmark matrix
+        run: python3 orchestrator/real_world_benchmark.py --lmp target/release/lmp --output lmp-test-results/real-world
+      - name: Validate technical benchmark evidence contract
+        run: python3 orchestrator/benchmark_artifact_gate.py lmp-test-results/real-world/real-world-benchmark.json
+      - name: Publish benchmark job summary
+        if: always()
+        run: |
+          python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
 
-      - name: Run Local Matrix Test-Bed Orchestrator
-        run: python3 orchestrator/test_bed.py
-
-      - name: Compile Performance Visualizations
-        run: python3 orchestrator/plot_metrics.py
-
-      - name: Archive Telemetry Artifacts & Metrics
+          qualification = Path("lmp-test-results/qualification-result.json")
+          benchmark = Path("lmp-test-results/real-world/real-world-benchmark.json")
+          print("## LMP benchmark evidence")
+          for label, path in (("Qualification", qualification), ("Real-world benchmark", benchmark)):
+              if not path.is_file():
+                  print(f"- **{label}:** artifact missing")
+                  continue
+              data = json.loads(path.read_text())
+              print(f"- **{label}:** `{data.get('status', 'unknown')}`")
+              if label == "Qualification":
+                  print(f"  - Scenarios: `{data.get('scenarioCount', 0)}/{data.get('expectedScenarioCount', 0)}`")
+              else:
+                  summary = data.get("summary", {})
+                  print(f"  - Transitions: `{summary.get('passedTransitions', 0)}/{summary.get('expectedScenarioCount', 0)}`")
+                  print(f"  - Docker gates: `{summary.get('dockerGatesPassed', 0)}/{summary.get('dockerGatesExpected', 0)}`")
+                  print(f"  - Ordinary compiler controls: `{summary.get('controlChecksPassed', 0)}/{summary.get('controlChecksExpected', 0)}`")
+          PY
+      - name: Verify signed static sync path
+        run: bash orchestrator/test_registry_sync.sh
+      - name: Upload qualification evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: lmp-evaluation-telemetry-payload
-          path: |
-            lmp_test_bed/results/*.json
-            lmp_test_bed/results/*.png
-          if-no-files-found: error
+          name: lmp-benchmark-evidence
+          path: lmp-test-results
+      - run: python3 orchestrator/test_bed.py

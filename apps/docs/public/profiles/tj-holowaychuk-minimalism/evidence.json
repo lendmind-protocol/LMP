@@ -1,0 +1,9 @@
+{
+  "status": "verified-fixtures",
+  "tests": [
+    { "id": "native-handler", "kind": "positive", "description": "A small native handler passes the declared profile checks.", "expected": "pass" },
+    { "id": "broad-dependencies", "kind": "negative", "description": "A prohibited dependency is reported with remediation.", "expected": "needs_revision" },
+    { "id": "runtime-behavior", "kind": "exception", "description": "Runtime behavior outside static checks requires review.", "expected": "blocked" }
+  ],
+  "notes": "Community archetype only; no named-person endorsement is claimed."
+}

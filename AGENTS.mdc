@@ -1,0 +1,45 @@
+---
+description: Lending-Mind Protocol implementation guidance
+alwaysApply: true
+---
+
+# Lending-Mind Protocol Agent Guide
+
+LMP is an executable engineering-cognition runtime for AI-assisted software delivery. It lends documented engineering philosophy, methodology, trade-offs, implementation patterns, review expectations, and verified outcomes to coding agents through versioned Mind Packages.
+
+## Implementation direction
+
+- Treat Rust as the primary and canonical LMP implementation language.
+- Rust owns Mind Package schemas and validation, the Mind compiler, evaluator, evidence artifacts, signing, local registry, daemon, CLI, MCP server, filesystem watching, low-level parsing, and system-intensive workloads.
+- Treat Python 3.11+ as the secondary orchestration language for Docker sandbox virtualization, agent-run measurement, metrics aggregation, and dashboard/plot generation.
+- Treat TypeScript/Node.js 22 as the supporting delivery language, used exclusively by `create-lmp` for onboarding and agent configuration files such as `CLAUDE.md` and `AGENTS.md`.
+- Python and TypeScript must consume Rust artifacts/contracts and must not define competing protocol semantics.
+- Rust is the source of truth for protocol behavior; secondary adapters must remain compatibility-tested against Rust outputs.
+- Do not reduce LMP to Markdown instructions, a passive linter, a prompt template, or a single quality score.
+- Preserve the complete architecture: Mind ingestion, compilation, agent guidance, tool integration, source/configuration mutation where configured, AST/static evaluation, behavioral checks, sandbox telemetry, signed evidence, calibration, and optional OCI/IPFS distribution.
+- Treat Mind guidance and deterministic policy as separate but connected layers: guidance shapes agent decisions; executable rules and evidence verify observable results.
+- Keep policy execution, remediation loops, mutations, telemetry, and artifact generation deterministic, bounded, observable, and versioned.
+- Do not claim model-weight training or access to hidden private chain-of-thought. Mind evolution uses curated, provenance-linked, signed, verified artifacts and approved calibration.
+
+## Immutable project references
+
+Never edit, rewrite, rename, move, delete, format, or generate over these files:
+
+- `docs/architecture.md`
+- `docs/Solution.md`
+- `docs/Onboarding.md`
+- `docs/Concept.md`
+- `ROADMAP.md`
+- `NOTICE.md`
+- `SECURITY.md`
+- `.internal/Context.pdf`
+
+These files are authoritative read-only guidance for what LMP is building. Make implementation changes only in source code, tests, configuration, scripts, or other non-protected files.
+
+## Quality and verification
+
+- Inspect existing code and tests before changing behavior.
+- Add regression tests for protocol semantics and boundary conditions.
+- Preserve stable schemas, findings, artifacts, exit codes, and compatibility contracts.
+- Verify with formatting, linting, type checks where applicable, Rust checks/tests, integration tests, fixture benchmarks, and security-focused tests.
+- Never report a capability as complete without implementation and fresh verification evidence.

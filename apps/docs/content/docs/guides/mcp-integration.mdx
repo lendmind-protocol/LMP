@@ -1,0 +1,177 @@
+---
+title: MCP integration
+description: Connect an agent host to LMP through the native JSON-RPC surface.
+---
+
+# MCP integration
+
+The LMP MCP server is the agent-facing delivery surface for discovery, profile
+activation, compiled guidance, evaluation, and evidence retrieval. It changes
+how a host talks to LMP, not what a passing result means. The Rust evaluator
+remains authoritative for package integrity, scope, findings, and exit state.
+
+## The host lifecycle
+
+An agent host should perform these actions in order:
+
+```text
+discover capabilities
+    ↓
+list or select a Mind package
+    ↓
+verify package integrity
+    ↓
+request compiled guidance
+    ↓
+let the agent work
+    ↓
+submit the changed scope for evaluation
+    ↓
+show findings or continue to review
+```
+
+The host should retain the selected profile identifier, package digest,
+workspace revision, changed-file list, and evaluator result together. Guidance
+is input; the evaluation artifact is the decision. Never let a later guidance
+response overwrite the evidence that explains why a change passed or failed.
+
+## Workspace onboarding adapters
+
+`npx create-lmp` always writes `.lmp_telemetry/agent-mcp.json`. When a verified
+Rust server is installed, it additionally adds a workspace-scoped `lending-mind`
+server to `.mcp.json` for Claude Code, `.cursor/mcp.json` for Cursor,
+`.cline/mcp.json` for Cline, or `.roo/mcp.json` for Roo Code. Existing servers
+are preserved; a conflicting `lending-mind` entry is reported as blocked rather
+than overwritten. Global host settings are never modified. The authoritative
+result is `.lmp_telemetry/host-integrations.json`, not the presence of a file.
+
+## Tool categories
+
+- **Discovery:** list Minds and capabilities.
+- **Activation:** select a profile and verify its integrity.
+- **Guidance:** retrieve compiled agent-facing instructions and typed context.
+- **Explanation:** explain a rule without mutating the active profile.
+- **Enforcement:** run `enforce_architectural_axioms` before accepting a change.
+- **Evaluation:** submit a workspace or delta and receive findings.
+- **Evidence:** retrieve decision metadata, persisted artifacts, and loop status.
+
+The exact tool names and argument shapes are declared by the server at runtime.
+Hosts must handle an unknown capability or field without assuming success.
+
+## JSON-RPC wire contract
+
+`lmp-mcp` reads one JSON-RPC request per line and writes one response per line
+over its configured stdio stream. A host can call the evaluator like this:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 7,
+  "method": "tools/call",
+  "params": {
+    "name": "lmp_evaluate_workspace",
+    "arguments": {
+      "mind": "./skills/typescript-minimal",
+      "workspace": ".",
+      "mode": "enforced",
+      "changedOnly": true
+    }
+  }
+}
+```
+
+Responses are Rust-produced artifacts. Hosts should preserve the mode, package
+digest, checked-file scope, findings, and final state rather than reducing the
+response to a boolean. Paths are constrained by the configured workspace root.
+Request IDs must be unique while requests are in flight. The compatibility
+adapter rejects a duplicate ID with JSON-RPC `-32600` rather than replacing the
+earlier pending response; this prevents a concurrent host from losing an
+evaluation result.
+
+The server also exposes the pre-flight enforcement operation. A host may call
+it before saving or accepting an agent change:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 8,
+  "method": "tools/call",
+  "params": {
+    "name": "enforce_architectural_axioms",
+    "arguments": {
+      "mind": "./skills/typescript-minimal",
+      "workspace": ".",
+      "changedOnly": true
+    }
+  }
+}
+```
+
+The response must be treated as a normal evaluation decision. A host cannot
+turn a `needs_revision`, `invalid_input`, or `execution_error` response into a
+pass by retrying unchanged input.
+
+### Typed context and explanations
+
+`lmp_get_context` returns the selected Mind identity, compiled-instruction
+digest, a privacy-preserving workspace path hash, and explicit capabilities.
+It never returns source code or enables commands. `lmp_explain_rule` returns
+the matching rule material and guidance without changing the package. Hosts
+should display these as context, not as a passing evaluation.
+
+### Loop status
+
+`lmp_get_loop_status` reads an existing artifact and returns its state, summary,
+limitations, and run identifier. It does not recompute or mutate the artifact;
+the artifact remains the immutable evidence for that evaluation.
+
+## Host responsibilities
+
+The host owns the boundary between the model and LMP. It decides when guidance
+is shown, which workspace is in scope, and whether a generated change can
+continue. It must:
+
+1. select and verify the intended Mind;
+2. expose compiled guidance before generation;
+3. submit the generated change to evaluation before acceptance;
+4. show findings, locations, severity, and remediation to the agent or person;
+5. preserve the profile digest, revision, scope, and result as evidence.
+
+The model can use guidance, but it must not be allowed to rewrite a failed
+evaluation into a pass. A retry is meaningful only when it evaluates a new
+change or a deliberately changed scope.
+
+## Result handling
+
+```text
+if state == pass:
+    continue to review or merge
+if state == needs_revision:
+    show findings and ask the agent to revise
+if state == invalid_input or execution_error:
+    stop and report the environment or request problem
+```
+
+Treat malformed input as `invalid_input` when the protocol can identify the
+problem. Treat a crashed process, unavailable parser, or broken transport as
+an execution failure. An unknown capability is unavailable, not an implicit
+success.
+
+## When the agent cannot comply
+
+An agent may be unable to satisfy a rule because the request conflicts with an
+existing API, the workspace is missing a dependency, or the rule is not
+appropriate for that language. The useful response is a visible finding with a
+reason and a path forward. If a human accepts an exception, record it outside
+the evaluator result so the original evidence remains immutable.
+
+## Integration checklist
+
+- Start `lmp-mcp` with the repository workspace root explicitly configured.
+- Perform capability discovery instead of hard-coding unsupported tools.
+- Verify the profile before requesting guidance or evaluation.
+- Keep guidance, enforcement, and evidence as separate host states.
+- Display the selected scope and final state to the user.
+- Persist the JSON artifact with the revision and profile digest.
+- Test malformed requests, invalid signatures, missing paths, and a failed
+  then corrected change before enabling automatic acceptance.

@@ -1,6 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if command -v rustup >/dev/null 2>&1; then
+    RUST_TOOLCHAIN="${LMP_RUST_TOOLCHAIN:-1.98.1}"
+    if ! rustup toolchain list | grep -Eq "^${RUST_TOOLCHAIN}(-| |$)"; then
+        echo "Pinned Rust toolchain ${RUST_TOOLCHAIN} is not installed" >&2
+        exit 1
+    fi
+    RUST_TOOLCHAIN_BIN="$(dirname "$(rustup which --toolchain "$RUST_TOOLCHAIN" rustc)")"
+    export PATH="$RUST_TOOLCHAIN_BIN:$PATH"
+fi
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
 # Define text coloring properties for scannability
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -12,76 +24,80 @@ echo -e "${GREEN}=======================================================${NC}"
 
 # Define temporary execution sandboxes
 TEST_WORKSPACE="/tmp/lmp_integration_sandbox"
+RUST_CLI_WORKSPACE="/tmp/lmp_rust_cli_sandbox"
 echo "🧹 Scrubbing temporary environments at: ${TEST_WORKSPACE}"
 rm -rf "${TEST_WORKSPACE}"
+rm -rf "${RUST_CLI_WORKSPACE}"
 mkdir -p "${TEST_WORKSPACE}"
 
-# 1. Compile Core Systems Components (Rust Daemon Binary)
-echo "🦀 Building Systems Daemon Binary (lmpd) via Cargo..."
-cargo build --release --workspace
+# 1. Compile the actual Rust runtime components used by onboarding
+echo "🦀 Building Rust runtime binaries (lmp, lmpd, lmp-mcp) via Cargo..."
+if command -v rustup >/dev/null 2>&1; then
+    rustup run "${RUST_TOOLCHAIN:-stable}" cargo build --release --workspace --manifest-path "${ROOT_DIR}/Cargo.toml"
+else
+    cargo build --release --workspace --manifest-path "${ROOT_DIR}/Cargo.toml"
+fi
 
-# Mocking binary target location inside test workspace for sidecar loading simulation
 mkdir -p "${TEST_WORKSPACE}/.lmp_telemetry/bin"
-cp ./target/release/lmpd "${TEST_WORKSPACE}/.lmp_telemetry/bin/"
-echo "✅ Rust daemon compiled and staged cleanly."
+echo "✅ Rust runtime compiled cleanly."
 
-# 2. Package and Link the Node.js Onboarding Bootloader
-echo "📦 Staging Node.js Bootloader Script..."
-cd "${TEST_WORKSPACE}"
+# 1b. Verify the Rust-native onboarding path independently of the Node wrapper.
+mkdir -p "${RUST_CLI_WORKSPACE}"
+echo "🧪 Exercising Rust-native init --baseline and default evaluation..."
+(
+    cd "${RUST_CLI_WORKSPACE}"
+    "${ROOT_DIR}/target/release/lmp" init --baseline
+    test -f .lending-mind/skills/baseline/mind.json
+    python3 -c 'import json; assert json.load(open(".lending-mind/config.json"))["defaultMind"] == ".lending-mind/skills/baseline"'
+    "${ROOT_DIR}/target/release/lmp" evaluate --json > rust-evaluation.json
+    python3 -c 'import json; assert json.load(open("rust-evaluation.json"))["state"] == "pass"'
+)
+echo "👉 Assert Pass: Rust-native baseline onboarding and offline evaluation verified."
 
-# Writing our create-lmp bin utility natively for standalone simulation execution
-cat << 'EOF' > ./bootloader.js
-#!/usr/bin/env node
-import fs from 'fs';
-import path from 'path';
+# 2. Trigger the real create-lmp onboarding flow against the isolated workspace
+echo "🚀 Executing the real Node.js onboarding bootstrapper..."
+LMP_DISABLE_RUNTIME_DOWNLOAD=1 \
+LMPD_BIN="${ROOT_DIR}/target/release/lmpd" \
+LMP_MCP_BIN="${ROOT_DIR}/target/release/lmp-mcp" \
+node "${ROOT_DIR}/packages/create-lmp/bin.js" \
+    --yes --agent cursor --mind tj-ponytail --stack rust --strategy greenfield \
+    "${TEST_WORKSPACE}"
 
-const targetWorkspace = process.cwd();
-console.log("🌐 Node.js Bootloader active...");
-
-const lmpDir = path.join(targetWorkspace, '.lmp_telemetry');
-if (!fs.existsSync(lmpDir)) {
-  fs.mkdirSync(lmpDir, { recursive: true });
-  fs.mkdirSync(path.join(lmpDir, 'minds'), { recursive: true });
-}
-
-// Generate the baseline testing model definition
-const mockMind = {
-  id: "lmp:mind:integration-test",
-  version: "1.0.0",
-  telemetry_metrics: { max_cyclomatic_complexity: 5, forbidden_ast_nodes: [] }
-};
-fs.writeFileSync(path.join(lmpDir, 'minds', 'integration-test.json'), JSON.stringify(mockMind, null, 2));
-
-// Initialize simulated Git Hooks infrastructure 
-mkdir -p path.join(targetWorkspace, '.git', 'hooks');
-fs.writeFileSync(path.join(targetWorkspace, '.git', 'hooks', 'pre-commit'), '#!/bin/sh\necho "LMP Git Validation Active"\n', { mode: 0o755 });
-console.log("💎 Bootloader pipeline executed cleanly.");
-EOF
-
-# 3. Trigger Environment Onboarding via Bootloader Code
-echo "🚀 Executing Node.js onboarding bootloader environment bootstrap..."
-node ./bootloader.js
-
-# 4. Assert and Verify System Boundaries and Component Integration Handshakes
+# 3. Assert the generated workspace and actual component handshakes
 echo "🔍 Performing Integration System Asserts..."
 
-if [ ! -f "${TEST_WORKSPACE}/.lmp_telemetry/minds/integration-test.json" ]; then
-    echo -e "${RED}❌ SYSTEM FAILURE: Node.js bootloader failed to deploy the mind schema file!${NC}"
+if [ ! -f "${TEST_WORKSPACE}/.lending-mind/mind/mind.json" ]; then
+    echo -e "${RED}❌ SYSTEM FAILURE: create-lmp failed to deploy the selected Mind package!${NC}"
     exit 1
 fi
-echo "👉 Assert Pass: Mind configuration artifact deployed successfully."
+echo "👉 Assert Pass: Signed Mind package deployed successfully."
 
-if [ ! -f "${TEST_WORKSPACE}/.lmp_telemetry/bin/lmpd" ]; then
-    echo -e "${RED}❌ SYSTEM FAILURE: Rust sidecar binary engine is missing from the workspace!${NC}"
+if [ ! -x "${TEST_WORKSPACE}/.lmp_telemetry/bin/lmpd" ] || [ ! -x "${TEST_WORKSPACE}/.lmp_telemetry/bin/lmp-mcp" ]; then
+    echo -e "${RED}❌ SYSTEM FAILURE: create-lmp failed to install both Rust sidecars!${NC}"
     exit 1
 fi
-echo "👉 Assert Pass: Rust core sidecar daemon binary located in system paths."
+echo "👉 Assert Pass: Rust daemon and MCP sidecars installed."
 
-# Verify the compiled binary responds to base process arguments correctly
-echo "⚙️ Testing Rust daemon verification loop handshake execution..."
+if ! grep -q '"signatureStatus": "verified"' "${TEST_WORKSPACE}/.lending-mind/config.json"; then
+    echo -e "${RED}❌ SYSTEM FAILURE: onboarding did not record verified profile provenance!${NC}"
+    exit 1
+fi
+echo "👉 Assert Pass: Profile signature status recorded as verified."
+
+if ! grep -q 'lending-mind' "${TEST_WORKSPACE}/.cursor/mcp.json"; then
+    echo -e "${RED}❌ SYSTEM FAILURE: onboarding failed to configure the project MCP integration!${NC}"
+    exit 1
+fi
+echo "👉 Assert Pass: Cursor project MCP integration configured."
+
+echo "⚙️ Testing both compiled Rust sidecars..."
 "${TEST_WORKSPACE}/.lmp_telemetry/bin/lmpd" --help > /dev/null
+"${TEST_WORKSPACE}/.lmp_telemetry/bin/lmp-mcp" --help > /dev/null
+
+echo "🔁 Verifying daemon status, reload, stop, and PID cleanup lifecycle..."
+LMPD_BIN="${ROOT_DIR}/target/release/lmpd" "${ROOT_DIR}/orchestrator/test_daemon_lifecycle.sh" > /dev/null
+echo "👉 Assert Pass: Daemon lifecycle controls verified."
 
 echo -e "\n${GREEN}=======================================================${NC}"
 echo -e "${GREEN}🎉 INTEGRATION SUCCESSFUL: Node.js and Rust elements link perfectly!${NC}"
 echo -e "${GREEN}=======================================================${NC}"
-

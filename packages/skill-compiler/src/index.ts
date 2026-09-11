@@ -6,8 +6,9 @@ import {
   type RuleDefinition,
   canonicalJson,
   sha256,
-} from "@lending-mind/core";
-import { MindPackageSchema, validateMindPackage } from "@lending-mind/skill-schema";
+  verifyMindPackage,
+} from "@lending-mind/sdk";
+import { MindPackageSchema, validateMindPackage } from "@lending-mind/skill";
 
 export interface InstructionBundle {
   package: MindPackage;
@@ -17,6 +18,8 @@ export interface InstructionBundle {
   evidence: Record<string, unknown>;
   digest: string;
   signature: string;
+  signatureStatus: "unsigned" | "verified" | "invalid";
+  policies: Record<string, Record<string, unknown>>;
 }
 
 export interface LoadedSkill {
@@ -26,6 +29,8 @@ export interface LoadedSkill {
   evidence: Record<string, unknown>;
   signature: string;
   declaredRules?: RuleDefinition[];
+  policies: Record<string, Record<string, unknown>>;
+  signatureStatus: "unsigned" | "verified" | "invalid";
 }
 
 const readOptional = async (directory: string, file: string): Promise<string | undefined> => {
@@ -59,12 +64,14 @@ export async function loadSkill(directory: string): Promise<LoadedSkill> {
     evidence = parsed as Record<string, unknown>;
   }
   const declaredRules: RuleDefinition[] = [];
+  const policies: Record<string, Record<string, unknown>> = {};
   for (const [name, path] of Object.entries(result.package.enforcement ?? {})) {
     try {
       const policy = JSON.parse(await readFile(join(directory, path), "utf8")) as Record<
         string,
         unknown
       >;
+      policies[name] = policy;
       for (const [key, value] of Object.entries(policy))
         if (typeof value === "boolean" || typeof value === "number" || Array.isArray(value))
           declaredRules.push({
@@ -77,13 +84,16 @@ export async function loadSkill(directory: string): Promise<LoadedSkill> {
       /* legacy packages can omit declared policy files */
     }
   }
+  const verification = await verifyMindPackage(resolve(directory));
   return {
     directory: resolve(directory),
     package: result.package,
     guidance,
     evidence,
     declaredRules,
+    policies,
     signature: (await readOptional(directory, "signature.txt"))?.trim() ?? "UNSIGNED",
+    signatureStatus: verification.signatureStatus,
   };
 }
 
@@ -118,6 +128,8 @@ export function compileInstructions(skill: LoadedSkill): InstructionBundle {
     guidance: skill.guidance,
     rules: normalized.rules,
     evidence: skill.evidence,
+    policies: skill.policies,
+    signatureStatus: skill.signatureStatus,
   };
   return {
     package: normalized,
@@ -125,8 +137,10 @@ export function compileInstructions(skill: LoadedSkill): InstructionBundle {
     guidance: skill.guidance,
     rules,
     evidence: skill.evidence,
+    policies: skill.policies,
     digest: sha256(canonicalJson(payload as unknown as JsonValue)),
     signature: skill.signature,
+    signatureStatus: skill.signatureStatus,
   };
 }
 

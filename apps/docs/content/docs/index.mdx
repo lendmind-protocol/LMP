@@ -1,0 +1,50 @@
+---
+title: Welcome to LMP
+description: The documentation map for the Lending-Mind Protocol.
+---
+
+Lending-Mind Protocol (LMP) is a local-first protocol for turning explicit engineering preferences into inspectable, signed, and enforceable code-quality policy.
+
+If you are deciding whether LMP belongs in your workflow, start with one question: can another person see which engineering preference affected a generated change and reproduce the check that accepted or rejected it? LMP is designed to make that answer concrete.
+
+## Choose a path
+
+- **New to LMP:** Start with [the protocol model](/docs/concepts/overview), then follow the [Getting started onboarding](/docs/getting-started).
+- **Integrating an agent:** Read [MCP integration](/docs/guides/mcp-integration), including the host lifecycle and JSON-RPC contract.
+- **Authoring a profile:** Follow [author a Mind package](/docs/guides/author-a-mind).
+- **Evaluating a brownfield repository:** Read the [systems architecture](/docs/architecture/overview) and [benchmark analytics](/docs/operations/benchmark-analytics).
+- **Contributing:** Use the repository engineering documents alongside this product guide.
+
+## A short version of the workflow
+
+You author or select a Mind package. The package contains its identity, source records, guidance, rules, and integrity metadata. LMP verifies the package before use, exposes the compiled guidance to the agent host, then evaluates the change the agent produces.
+
+The important part is the handoff between those stages. The evaluator does not have to trust a prompt that says "the agent followed the preference." It can report the selected files, the active rules, the findings, and the final decision.
+
+```text
+choose a Mind
+    ↓
+verify its schema, digest, and signature
+    ↓
+give the agent the compiled guidance
+    ↓
+generate or edit code
+    ↓
+evaluate the selected change
+    ↓
+keep the evidence with the review
+```
+
+You can use the CLI for a local workflow, the daemon for a file-watching workflow, or MCP when an agent host already speaks JSON-RPC. They are different delivery surfaces for the same protocol decisions.
+
+## The central promise
+
+LMP does not train model weights or reproduce private reasoning. It compiles a declared source record into rules and guidance that can be inspected before an agent acts, then evaluates the resulting change and emits evidence.
+
+That promise is only meaningful when a result is reproducible. Every guide therefore separates policy input, agent-facing guidance, changed-file scope, findings, and proof artifacts.
+
+When a page says that LMP "proves" something, look for the command, fixture, or result field that supports the claim. If the evidence is not there yet, the correct description is "designed to" or "under test," not "proven."
+
+## What to read next
+
+If the terms are new, read [What is LMP?](/docs/concepts/overview). If you want to run it now, use the [Getting started onboarding](/docs/getting-started). If you are building an agent adapter, go to [MCP integration](/docs/guides/mcp-integration). The [release readiness](/docs/operations/release-readiness) page explains what still needs evidence before a public release.

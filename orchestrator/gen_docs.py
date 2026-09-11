@@ -12,9 +12,9 @@ class LMPDocsGenerator:
         """Parses the Rust AST module for custom string violations and compiles a documentation grid."""
         print(f"📖 Scanning Rust core systems source tree: {self.src_file}")
         if not os.path.exists(self.src_file):
-            print("⚠️ Source file not found. Generating a standard placeholder documentation file.")
-            self._write_fallback_docs()
-            return
+            raise FileNotFoundError(
+                f"AST source required for generated documentation was not found: {self.src_file}"
+            )
 
         with open(self.src_file, "r") as f:
             content = f.read()
@@ -36,17 +36,6 @@ class LMPDocsGenerator:
             f.write("\n".join(markdown_output))
         
         print(f"✨ Static protocol documentation site asset generated successfully: {self.output_md}")
-
-    def _write_fallback_docs(self) -> None:
-        fallback_content = (
-            "# Lending-Mind Protocol (LMP) AST Enforcement Registry 🛡️\n\n"
-            "| Rule Code Class | Automated Evaluation Violation / Prevention Constraint Guard |\n"
-            "| :--- | :--- |\n"
-            "| `CRITICAL_AXIOM_VIOLATION` | Function names async execution but lacks the literal async keyword modifier. |\n"
-            "| `THREAD_RACE_RISK` | Blocking routine invoked while thread holds an exclusive resource access lock. |\n"
-        )
-        with open(self.output_md, "w") as f:
-            f.write(fallback_content)
 
 if __name__ == "__main__":
     generator = LMPDocsGenerator()

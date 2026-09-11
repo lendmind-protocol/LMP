@@ -1,0 +1,48 @@
+---
+title: Evaluation results
+description: How to interpret a pass, rejection, or execution failure.
+---
+
+An evaluation result should make its decision explainable without access to the agent's private context.
+
+That does not mean the result should record private prompts or hidden reasoning. It should record the public inputs needed to reproduce the decision: package identity and digest, evaluator version, workspace revision, selected paths, active rules, findings, and final state.
+
+| State | Meaning | Next action |
+| --- | --- | --- |
+| `pass` | Required checks passed for the selected scope | Continue the workflow |
+| `needs_revision` | A policy finding requires a change | Fix the change and rerun |
+| `invalid_input` | Profile, workspace, or request is not valid | Correct the input |
+| `execution_error` | The evaluator could not complete | Repair the environment and rerun |
+
+The result should include the profile digest, scope, findings, evaluator version, and timestamps. A pass is scoped evidence, not a universal quality certificate.
+
+## Reading a finding
+
+When a result contains a finding, read it in this order:
+
+1. Confirm the file and line are inside the selected scope.
+2. Confirm the rule identifier and severity match the active package.
+3. Read the message and suggested next action.
+4. Decide whether to change the code, change the package through review, or fix the evaluation environment.
+
+Do not solve a required finding by deleting the file from the scope. If the scope is wrong, fix the scope and rerun the evaluation. The new result should make that change visible.
+
+## Example result shape
+
+```json
+{
+  "state": "needs_revision",
+  "profile": { "id": "example.profile", "digest": "sha256:..." },
+  "scope": { "base": "abc123", "files": ["src/boundary.rs"] },
+  "findings": [
+    {
+      "rule": "errors.keep-cause",
+      "severity": "required",
+      "path": "src/boundary.rs",
+      "message": "The boundary drops the original error."
+    }
+  ]
+}
+```
+
+The exact serialization can evolve with the protocol version. The important property is that a person can connect the state to a rule and a file without asking the agent what it meant to do.

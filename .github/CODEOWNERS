@@ -1,0 +1,10 @@
+# Governance ownership for changes that can alter trust, policy, or release claims.
+# Repository branch protection must require the listed review for these paths.
+
+/registry/definitions/ @Justinedevs
+/registry/schemas/ @Justinedevs
+/crates/lmp-core/src/crypto.rs @Justinedevs
+/crates/lmp-mcp/ @Justinedevs
+/.github/workflows/ @Justinedevs
+/SECURITY.md @Justinedevs
+/docs/governance.md @Justinedevs

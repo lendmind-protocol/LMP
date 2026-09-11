@@ -1,0 +1,103 @@
+---
+title: Why LMP when agents already have rules and MCP
+description: The practical difference between passive guidance and an evidence-producing acceptance gate.
+---
+
+Agent hosts such as Claude Code, Cursor, Cline, and Roo Code already provide
+rule files, system prompts, terminal access, hooks, and MCP. LMP is not a
+replacement for those products. It supplies the policy and evidence layer that
+they do not own: a versioned Mind, deterministic evaluation, and a recorded
+acceptance decision.
+
+## The gap LMP addresses
+
+Rule files such as `CLAUDE.md` and `.roo/rules` are useful guidance, but they
+are still text supplied to an agent. They can be overlooked during a long
+debugging loop, and they do not independently prove that a generated change
+obeys the stated rule.
+
+MCP provides a standardized tool channel. An MCP server can expose useful
+operations, but MCP itself does not decide whether a change respects a
+complexity budget, dependency policy, security boundary, or runtime limit.
+
+LMP connects those surfaces to an acceptance path:
+
+```text
+[Agent emits a change]
+          |
+          v
+[LMP Rust evaluator: Mind + scope + AST/policy checks]
+          |
+          +--> [required violation] --> [structured correction context]
+          |
+          v
+[Docker execution gate when runtime evidence is required]
+          |
+          v
+[recorded pass, revision, or blocked result]
+```
+
+The important distinction is not that LMP makes an agent infallible. It makes
+the configured decision inspectable and enforceable at the workflow boundary.
+
+## What LMP adds to existing tools
+
+| Existing surface | Native purpose | LMP contribution |
+| --- | --- | --- |
+| Claude Code, Cursor, Cline, Roo Code | Generate code and operate on a workspace | Supplies a selected Mind and a machine-readable acceptance result |
+| `CLAUDE.md`, `.roo/rules`, `AGENTS.md` | Give an agent passive project context | Compiles relevant guidance into a profile that is checked separately |
+| MCP | Expose tools through a standard protocol | Exposes `enforce_architectural_axioms` and related verification tools |
+| Git hooks and CI | Reject or review changes at repository boundaries | Provides continuous policy evidence before the change is accepted |
+| Docker | Isolate a process | Records bounded runtime evidence when a scenario requires execution telemetry |
+
+## How the vendor integration works
+
+The local MCP adapter can call `enforce_architectural_axioms` with a Mind and a
+workspace. The Rust runtime evaluates the selected scope in `enforced` mode and
+returns the artifact. A required finding is a non-passing result; the host can
+show the finding to the agent and request a revision.
+
+The `lmpd` daemon watches workspace changes and evaluates them using the
+selected mode. Its default mode is `enforced`, so its output is an acceptance
+signal rather than an advisory-only report. A filesystem watcher observes a
+completed filesystem event; it cannot prevent the operating system from
+writing bytes before the event arrives. For pre-commit or CI acceptance, use
+the CLI's enforced command or the MCP tool as the authoritative gate.
+
+## Context reduction through compiled Minds
+
+An engineering culture is represented as a versioned Mind Package rather than
+being re-injected as an unbounded collection of blog posts, repository files,
+and issue discussions on every generation. The compiler produces a deterministic
+content digest and separate guidance and enforcement layers. Signature status
+and package digest are recorded so a host can distinguish the package it loaded
+from the claims made about its source material.
+
+This reduces repeated context transfer, but it does not prove that a source
+author endorses a profile or that the profile captures private reasoning. The
+registry's provenance records identify public sources; the package's rules are
+the actual executable contract.
+
+## Runtime evidence is separate from static policy
+
+The Rust evaluator can reject structural violations. When the claim depends on
+execution cost, the Python orchestrator runs the selected candidate in the
+Docker sandbox with disabled networking, read-only mounts, dropped
+capabilities, bounded CPU/PIDs, and a 128 MiB memory ceiling. The result must
+say whether the sandbox executed. A simulated cold-start number or browser
+preview is not a measured hardware result.
+
+## The practical claim
+
+LMP turns passive instructions into a reproducible policy workflow:
+
+1. the agent receives the chosen engineering guidance;
+2. the Rust runtime applies the declared structural and dependency rules;
+3. Docker runs only when runtime evidence is required;
+4. a structured result tells the host to accept, revise, or block the change;
+5. the profile digest, scope, findings, and telemetry remain inspectable.
+
+That is the value beyond a prompt file or a generic MCP server. It is also the
+limit of the claim: LMP does not replace tests, human review, threat modeling,
+or domain judgment, and it does not claim to reproduce a person's private
+reasoning or guarantee that every generated change is production-ready.

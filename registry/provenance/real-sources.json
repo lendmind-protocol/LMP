@@ -1,0 +1,21 @@
+{
+  "version": "1.0.0",
+  "purpose": "Auditable source references for benchmark Minds; source text is not copied into LMP artifacts.",
+  "sources": [
+    {"id":"typescript-handbook","kind":"method","publisher":"Microsoft TypeScript","url":"https://www.typescriptlang.org/docs/handbook/intro.html","claim":"Use explicit static typing and compiler-supported design feedback."},
+    {"id":"node-security","kind":"method","publisher":"Node.js","url":"https://nodejs.org/en/learn/getting-started/security-best-practices","claim":"Prefer explicit boundaries and avoid unsafe dynamic execution."},
+    {"id":"express-guide","kind":"implementation","publisher":"Express.js","url":"https://expressjs.com/en/guide/routing.html","claim":"Keep routing and middleware behavior explicit and composable."},
+    {"id":"hono-guide","kind":"implementation","publisher":"Hono","url":"https://hono.dev/docs/getting-started/basic","claim":"Use small runtime-aware handlers and platform capabilities."},
+    {"id":"supabase-rls","kind":"security","publisher":"Supabase","url":"https://supabase.com/docs/guides/database/postgres/row-level-security","claim":"Put tenant authorization at the data boundary."},
+    {"id":"linux-coding-style","kind":"philosophy","publisher":"Linux Kernel","url":"https://www.kernel.org/doc/html/latest/process/coding-style.html","claim":"Prefer readable, unsurprising, maintainable implementation choices."},
+    {"id":"google-code-review","kind":"review","publisher":"Google","url":"https://google.github.io/eng-practices/review/reviewer/","claim":"Review design, tests, maintainability, and overall code health."},
+    {"id":"typescript-repository","kind":"source-code","publisher":"Microsoft TypeScript","url":"https://github.com/microsoft/TypeScript","claim":"Use real implementation and contributor practice as evidence, not invented examples."}
+    ,{"id":"typescript-engineering-blog","kind":"blog","publisher":"Microsoft TypeScript","url":"https://devblogs.microsoft.com/typescript/announcing-the-new-typescript-handbook/","claim":"Use documented engineering methodology and explain trade-offs through maintainable guidance."}
+    ,{"id":"rust-blog","kind":"blog","publisher":"Rust Project","url":"https://blog.rust-lang.org/","claim":"Use public Rust project design and maintenance discussions as source material, not as an endorsement of an LMP profile."}
+    ,{"id":"rust-book","kind":"method","publisher":"Rust Project","url":"https://doc.rust-lang.org/book/","claim":"Use ownership, type-directed correctness, and explicit error handling as observable Rust practices."}
+    ,{"id":"go-effective","kind":"method","publisher":"Go Project","url":"https://go.dev/doc/effective_go","claim":"Use clear, idiomatic Go composition, naming, formatting, and explicit error handling."}
+    ,{"id":"vercel-edge-blog","kind":"blog","publisher":"Vercel","url":"https://vercel.com/blog/new-edge-dev-infrastructure","claim":"Use measured runtime performance and a strong local-to-production development loop as an engineering consideration."}
+    ,{"id":"shadcn-docs","kind":"implementation","publisher":"shadcn/ui","url":"https://ui.shadcn.com/docs","claim":"Use inspectable, composable UI primitives with explicit accessibility and interaction states."}
+    ,{"id":"terraform-docs","kind":"method","publisher":"HashiCorp","url":"https://developer.hashicorp.com/terraform/intro","claim":"Use declarative, reproducible infrastructure and make operational drift visible."}
+  ]
+}

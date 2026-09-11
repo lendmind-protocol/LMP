@@ -1,0 +1,69 @@
+---
+title: Capability inventory
+description: A maintained map of LMP capabilities, evidence, and interaction boundaries.
+---
+
+# Capability inventory
+
+This page is the compact status record for the implementation. It separates
+what runs locally from what needs an external service or an independent human.
+It is intentionally more precise than a feature list: a capability is only
+marked verified when a reproducible test or artifact exists in this checkout.
+
+## Status vocabulary
+
+| Status | Meaning |
+| --- | --- |
+| **Verified locally** | A current test, build, or artifact proves the stated bounded behavior. |
+| **Implemented; evidence pending** | The code path exists, but the acceptance evidence is not complete. |
+| **External gate** | Completion depends on deployment, credentials, a network service, or a real maintainer identity. |
+| **Human gate** | An independent person must perform and record the action. |
+| **Not implemented** | The capability is not part of the current product path. |
+
+## Local protocol surface
+
+| Capability | Entry point | Current evidence | Interaction? |
+| --- | --- | --- | --- |
+| Mind package validation | `lmp skill validate` and `@lending-mind/skill` | Schema tests cover canonical fields, provenance, community authorship, artifacts, and proposals. | No; deterministic local command. |
+| Profile and rule contract | `evidence.json`, `rules/manifest.json`, `orchestrator/profile_fixture_gate.mjs` | Canonical validation requires positive, negative, and exception fixtures plus a machine-checkable contract for every declared policy file. Each rule records classification, rationale, assertion, scope, remediation, limitations, and evidence; the gate executes all six bundled profiles through the evaluator and compares observed findings with the contract. | No; deterministic local contract. |
+| Mind compilation and guidance | `lmp skill compile`, agent instructions | Compiles a package into visible instructions; does not claim private reasoning access. | No; output is deterministic for the same input. |
+| Public-evidence harvesting | `orchestrator/mind_compiler.py`, `orchestrator/mind_crawler.py`, `orchestrator/mind_harvest_artifact_gate.py` | The stable compiler command delegates to one canonical engine that separates textual, implementation, and critique evidence; supports bounded RSS/Atom, public YouTube timed text, and public GitHub discovery; records language choices, bounded dependency-manifest names, digests, and rights metadata; clusters repeated signals; extracts only explicit numeric bounds; records contradictions; and emits a draft-only proposal. The artifact gate rejects raw source fields and promotion/enforcement flags. | No; explicit sources are compiled deterministically, with human review required for contradictions. |
+| Signature creation and verification | `lmp skill sign`, `lmp skill verify`, `lmp skill rotate-key`, `lmp share` | Ed25519 digest/signature tests reject altered bytes; signer rotation requires the current package signature, records a proof signed by the previous key over the exact new public key, re-signs with the new key, and returns the old key for explicit revocation; Rust verification can reject an explicit revoked-key list. | No; requires an explicit command. |
+| Workspace onboarding | `lmp init`, `create-lmp`, `orchestrator/onboarding_benchmark.py` | Additive `.gitignore` handling, brownfield/greenfield mismatch protections, checksum-verified platform runtime downloads, and measured greenfield/brownfield bootstrap timing under a 3,000 ms fail-closed target are tested. | Yes; interactive selection is user-controlled and runtime failure is reported explicitly. |
+| Changed-file evaluation | Rust evaluator and `lmp evaluate --changed-only` | Scope, artifact, redaction, and failure-state tests exist. | No; bounded by the selected workspace and profile. |
+| Parser boundary reporting | Rust evaluator artifacts | Each result records analyzed languages, parser adapters, versions, and checked-file count; recognized but unsupported Go, Python, JVM, C-family, SQL, and HCL/Terraform files are explicit skipped checks rather than silent omissions. | No; deterministic and bounded by the selected files. |
+| Remediation lifecycle | `packages/evaluator/` | Deterministic state transitions enforce retry budgets, repeated-finding stops, security/regression escalation, and explicit human attestation. | Yes; an agent or person supplies remediation and evaluation events. |
+| Proposal acceptance | `lmp proposal approve` | Acceptance validates candidate changes, expected benefit, false-positive risk, required tests, benchmark plans, declared version-bump class, artifact schema, profile identity/version, and rejects blocked or evaluation-error evidence. Promotion enforces the declared patch/minor/major semver floor. | No; explicit maintainer action is required. |
+| Autonomy authorization | `packages/evaluator/` | A0-A6 policy resolution independently gates commands, package installation, network, and deployment; denied and enabled paths are tested. | No; each action requires an explicit policy decision. |
+| External tool execution boundary | `packages/evaluator/src/tool-adapters.ts` | Adapter plans require explicit authorization, validate adapter identity and executable names, require an existing absolute working directory, optionally confine execution to a workspace root, use non-shell bounded processes, cap timeouts at 120 seconds, pass only a sanitized environment, redact output, and reject boundary violations before spawning. | Yes; the caller must authorize execution and provide a boundary when isolation is required. |
+| Bounded fleet evidence | Rust `lmp fleet-validate` and `lmp fleet-merge` | Versioned role DAGs reject cycles and unknown handoffs; aggregate/per-role retry, handoff, command, and time budgets are enforced; reports merge in deterministic order and preserve disagreements as first-class evidence. | Yes; external agent hosts submit role reports, while Rust owns validation and merge semantics. |
+| Daemon watching | `lmpd` | Notify watcher, initial evaluation, `--once`, PID-file `--status`/`--stop`/`--reload` lifecycle controls, clean signal shutdown, and a readiness-aware resource gate are implemented. Created, modified, and removed paths trigger re-evaluation. A real Linux process smoke test verified status, SIGHUP reload, stop, and PID-file cleanup; the latest resource gate measured 3.926 MiB RSS and 0.0% CPU for 5 seconds in an isolated workspace. | Yes; reacts to filesystem events and explicit lifecycle signals. |
+| MCP compatibility | `lmp-mcp`, TypeScript adapter, and `create-lmp` | Stdio JSON-RPC lifecycle, accepted and rejected initialization, state locking after invalid protocol negotiation, malformed input, concurrency, duplicate in-flight ID rejection, strict schemas, typed context, rule explanation, changed-file scope, loop-status evidence, notification forwarding, and the no-command/no-network/no-deployment surface are tested. The TypeScript adapter preserves one persistent Rust session instead of spawning one process per request; onboarding adds tested project-scoped Claude Code, Cursor, Cline, and Roo Code entries without overwriting existing servers or global settings. | Yes; host sends JSON-RPC requests and onboarding selects the host. |
+| Evidence artifacts | `.lending-mind/artifacts` | Strict artifact schema records identity, scope, findings, skipped checks, loop transitions, limitations, and privacy; Rust-generated artifacts emit canonical RFC3339 timestamps, hashed workspace identity, Git state, and changed-scope metadata. | No; artifacts are produced by runs. |
+| Public npm packages | `orchestrator/public_package_gate.mjs` | Dry-run packing verifies the four scoped packages (`@lending-mind/sdk`, `@lending-mind/skill`, `@lending-mind/lmp`, and `@lending-mind/mcp`) plus the unscoped `create-lmp` bootstrap package contain only their intended runtime files, without tests, build state, or internal workspace dependencies. | No; release gate is deterministic. |
+| Optional sandbox | Python orchestrator and Docker checks | Docker capability detection and selected-path checks exist; unavailable Docker is reported as blocked. | No; requires explicit opt-in. |
+
+The documentation portal's Fumadocs search is also static-first: the build
+exports an immutable search index at `/api/search`, and the browser performs
+queries locally. It is a static asset route, not a custom application backend
+or registry service.
+
+## External and human boundaries
+
+| Capability | Required evidence | Current state |
+| --- | --- | --- |
+| Public registry release | Real maintainer signatures, valid digests, immutable CIDs, and a passing registry gate | **External gate:** checked-in packages now have locally verified signatures and digests, and canonical/bundled profile drift is checked; the gate still rejects entries without independently retrievable immutable CIDs. |
+| Static portal deployment | A successful request to the configured temporary deployment and registry index | **External gate:** local build is separate from the live deployment. |
+| OCI/IPFS distribution | Static registry sync is implemented for complete signed packages: the generated public index can describe every package file with an HTTPS URL and SHA-256 digest, and the Rust sync client fetches, verifies, and installs the complete package. Legacy manifest-only entries remain compatible but are explicitly incomplete for full enforcement. Public IPFS pinning, immutable CID verification, and failure recovery remain external release gates. | **Local implementation verified:** generated registry/public-index parity, complete package-file digests, local static deployment fetch, signature validation, and install. **External gate:** local/static sync is not a substitute for a public pin. |
+| 64-scenario real-world benchmark | Complete technical artifact with Docker, ordinary compiler controls, source verification, versions, digests, and all scenarios passing | **Locally verified:** `lmp-test-results/benchmark-current/real-world-benchmark.json` is complete with 64/64 transitions, 128/128 Docker gates, 128/128 ordinary compiler controls, and 15/15 provenance sources. It records a dirty checkout; final clean-release revision and independent-review evidence are separate publication gates. |
+| Adoption pilot | An independent developer completes install, use, evaluation, remediation, and explains the result | **Human gate:** automation cannot provide independent adoption evidence. |
+| Profile authorship and endorsement | Maintainer authorization or explicit community-archetype labeling and provenance | **Governance gate:** no profile is treated as an official person's or organization's endorsement without proof. |
+
+## How to use this inventory
+
+Before a release, run the local verification suite, inspect the generated
+artifacts, and then close each external or human row with its own evidence.
+Do not promote an “implemented; evidence pending” row to verified merely
+because a test fixture passes. The [roadmap](/docs/operations/roadmap) and
+[release readiness](/docs/operations/release-readiness) pages define the
+release decision boundary.

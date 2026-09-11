@@ -1,0 +1,36 @@
+---
+title: Add LMP to CI
+description: Make policy evaluation a visible, repeatable status check.
+---
+
+CI should run the same evaluator users run locally, with the same profile digest and a declared Git base. A minimal workflow has four stages:
+
+1. Build the Rust workspace.
+2. Verify the Mind package signature.
+3. Evaluate the change in changed-only mode.
+4. Upload the structured result as a build artifact.
+
+The order matters. If the package cannot be validated, do not report a policy failure against the source tree. If the evaluator cannot start, do not report that the code violated a rule. Each failure should tell the person fixing CI whether the input was bad, the policy rejected the change, or the execution environment failed.
+
+## Example workflow shape
+
+The exact action syntax belongs to your repository, but the checks should look like this:
+
+```text
+checkout the declared base and head
+build and test the Rust workspace
+validate and verify the selected Mind package
+evaluate the changed scope with JSON output
+upload the JSON result
+fail only when the result state requires revision
+```
+
+Keep the profile path and base revision explicit in the job. A CI job that silently uses whatever profile happens to be installed on the runner is difficult to reproduce.
+
+Keep policy failures distinct from infrastructure failures. A rejected change should have a finding and a stable exit state; a missing compiler or invalid package should be reported as an execution error.
+
+## Release evidence
+
+For a release gate, retain the test matrix, profile provenance, evaluator version, and generated result. A green CI badge alone is not enough to prove that a profile affected output or that all claims were exercised.
+
+For a policy regression test, commit a small fixture that should fail and a corrected version that should pass. Run both in the same job or in a dedicated qualification job. This tests the policy path itself instead of only testing that the binary starts.

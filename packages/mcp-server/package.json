@@ -1,22 +1,24 @@
 {
-  "name": "@lending-mind/mcp-server",
+  "name": "@lending-mind/mcp",
   "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lendmind-protocol/LMP.git",
+    "directory": "packages/mcp-server"
+  },
+  "homepage": "https://lmp-six.vercel.app/docs/guides/mcp-integration",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": ["dist", "README.md"],
   "bin": { "lending-mind-mcp": "dist/bin.js" },
   "scripts": {
-    "build": "tsc -p tsconfig.json && node -e \"require('node:fs').copyFileSync('src/bin.ts','dist/bin.ts')\"",
+    "build": "node -e \"for (const p of ['dist','tsconfig.tsbuildinfo','tsconfig.build.tsbuildinfo']) require('node:fs').rmSync(p,{recursive:true,force:true})\" && tsc -p tsconfig.build.json && node -e \"require('node:fs').copyFileSync('src/bin.ts','dist/bin.ts')\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --config vitest.config.ts",
     "lint": "biome check src"
   },
-  "dependencies": {
-    "@lending-mind/core": "workspace:*",
-    "@lending-mind/evaluator": "workspace:*",
-    "@lending-mind/registry": "workspace:*",
-    "@lending-mind/skill-compiler": "workspace:*",
-    "@lending-mind/skill-schema": "workspace:*",
-    "zod": "^3.24.1"
-  }
+  "author": "Justinedevs",
+  "maintainers": [{ "name": "Justinedevs" }],
+  "publishConfig": { "access": "public" }
 }

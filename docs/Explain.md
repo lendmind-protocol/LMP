@@ -7,6 +7,8 @@ If you ask a default AI agent to build a simple web page or an API, it will pull
 
 **Lending-Mind**, solves this practically by doing something no default agent can do on its own: **It forces the AI to look at the world through the eyes of a specific expert.**
 
+> **Status note:** Rust is the canonical LMP runtime. TypeScript references describe secondary Node.js integration and target-project tooling, not a second LMP implementation.
+
 ## Is It Practical?
 Think of a default AI agent like a highly skilled rental car driver. They know how to steer, gas, and brake perfectly (that is what Claude Code or Codex does natively).
 
@@ -34,22 +36,22 @@ Independent tracking studies (including deep multi-run tests by teams like _JetB
 
 ### Do not think of LMP project as a duplicate of `ponytail`.
 - `ponytail` is a specific profile asset. It tells the AI: "_Be a lazy senior developer, write less code, use native standard libraries._"
-- **LMP is the engine format**. It doesn't matter if the community is using `ponytail`, `caveman`, or `supabase-core`. LMP provides the **unified registry format, the cryptographic author signing keys, the local terminal daemon, and the sandbox metrics recorder** that turns any of those skills into an unbreakable system requirement.
+- **LMP is the engine format**. It doesn't matter if the community is using `ponytail`, `caveman`, or `supabase-core`. LMP provides the **unified registry format, cryptographic package integrity, the local terminal daemon, and the sandbox metrics recorder** that turns a supported skill into a signed, reviewable policy package with bounded local enforcement where the declared rule is supported. It does not make an agent infallible or prove that a policy is universally correct.
 
 - **Questions**: And How do we Force the AI Use this is there we need to setup or touching like the AI Agents Artifacts control system (config.toml, etc) and how the Agent know the LMP is newly existing in their system like if a greenfield or brownfield user install this AI doesn't have idea what this, so is like when they install this the agent start action it first all needed (e,g. installs, configuration, etc)?
 
 - to use the Lending-Mind Protocol (LMP), we don't need to rebuild or fork them. Instead, we target the precise **extension configuration files** and **instruction injection boundaries** that these agents already read by default. Every modern AI agent reads local workspace manifest files to determine its system instructions and tool constraints. LMP targets these configuration files automatically during installation: **Claude Code**: Reads `CLAUDE.md` and project `settings.json`. **Roo Code / Cline**: Reads `AGENTS.md` and `.roo/rules` inside the workspace directory. **Cursor / Claude Desktop**: Reads a centralized `mcpServers configuration layer`.
 > The question targets the exact moment of installation: if a user opens a brand-new project (**greenfield**) or an established system repository (**brownfield**), how does the agent discover LMP, and how does the agent instantly bootstrap its own configurations?
 
-The protocol accomplishes this via a automated two-phase interception model: **System-Prompt Hijacking** and **MCP Tool-Calling Enforcers**.
+The protocol accomplishes this via a two-part workspace contract: **discoverable guidance** and **MCP/tool-backed evidence enforcement**.
 
-- When a user runs `npx create-lmp`, the script checks the environment. Whether the environment is a greenfield or brownfield project, the bootstrapper automatically overwrites the local agent config files. It forces the agent to use the LMP Rust sidecar before writing a single line of application code.
+- When a user runs `npx create-lmp`, the script checks the environment. Whether the environment is a greenfield or brownfield project, the bootstrapper adds an explicit, marked LMP section to the workspace guidance files without overwriting existing instructions. It installs the local adapter contract and, when available, a checksum-verified Rust sidecar. The evaluator then enforces the selected policy on the scoped change before the result can be treated as passing.
 
 ### The Lifecycle Stream: What Happens Post-Install
-``[Agent Initialized] ──► [1. Reads CLAUDE.md/AGENTS.md] ──► [2. Auto-Calls LMP MCP Tool] ──► [3. Code Enforced]``
-The LMP MCP server receives the call from the agent. The server checks the project layout, clones the necessary dependencies into `.lmp_telemetry/`, loads the requested mind profile (e.g., `tj-ponytail`), and returns the exact constraint parameters right into the conversation context window.
+``[Agent Initialized] ──► [1. Reads CLAUDE.md/AGENTS.md] ──► [2. Host invokes configured LMP MCP adapter] ──► [3. Code Enforced]``
+The LMP MCP adapter receives the host request and keeps a persistent Rust session for the request lifecycle. The Rust side validates the workspace scope, loads the selected local Mind package, and returns typed guidance, findings, remediation state, or an explicit blocked/error result. It does not silently clone dependencies or pretend that an unavailable host integration was installed.
 
-By setting up the protocol this way, you do not have to write custom integrations for individual agent vendors. LMP use their **file-reading habits** to inject the instructions, and you use their **MCP capabilities** to pass the local Rust validation rules. The agent is made aware of the protocol instantly, and the system enforces the engineering boundaries automatically without needing user configuration.
+By setting up the protocol this way, the workspace contract remains portable across agent vendors. LMP uses their **file-reading habits** to make the active policy discoverable, and their **MCP capabilities** to pass requests to the local Rust validation rules. The host still needs to consume `.lmp_telemetry/agent-mcp.json`; onboarding does not silently edit global agent settings, and a missing adapter is reported rather than treated as enforcement.
 
 To understand what success looks like under the Lending-Mind Protocol (LMP), we must look at the objective output code. When system forces an AI agent to operate under its constraints, the code changes significantly in architecture, complexity, and performance metrics. Below are three side-by-side, universal examples showing the **Expectation vs. Result** across different tech stacks, highlighting exactly how LMP transforms "internet-average AI code" into elite, production-grade systems architecture.
 

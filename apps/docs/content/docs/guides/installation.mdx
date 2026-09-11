@@ -1,0 +1,73 @@
+---
+title: Install and verify LMP locally
+description: Bootstrap the existing workspace without overwriting project policy or source files.
+---
+
+The repository includes `install.sh` as an idempotent local bootstrap. It
+provisions missing directories, builds the real Rust workspace, builds the
+required Docker sandbox image, and runs the 38-check qualification matrix.
+
+It does not replace `Cargo.toml`, `.gitignore`, Mind Packages, policies, or
+documentation. That is intentional: an installer must not destroy an existing
+checkout or silently replace the rules it is supposed to verify.
+
+## Standard installation
+
+From the repository root:
+
+```bash
+./install.sh
+```
+
+The command requires Cargo, Python 3, Git, and a running Docker daemon. It
+creates ignored qualification output under `lmp-test-results/` and exits
+non-zero if the Rust build, Docker setup, or qualification gate fails.
+
+## Check layout only
+
+To validate the checkout without compiling or creating a Docker image:
+
+```bash
+./install.sh --check-only
+```
+
+This checks the Rust workspace members, bundled Mind Package, qualification
+runner, Docker definition, and expected directory layout.
+
+## Docker-unavailable development mode
+
+```bash
+./install.sh --skip-docker
+```
+
+This is useful for inspecting the layout on a machine without Docker, but it is
+not a successful end-to-end installation. The qualification artifact must
+report `status: "blocked"` until `lmp-sandbox:local` is available. Do not use
+this mode as release evidence.
+
+## Full real-OSS benchmark
+
+The standard installer does not clone external repositories. Run the larger
+benchmark explicitly after the local qualification gate:
+
+```bash
+./install.sh --full-benchmark
+```
+
+The benchmark requires Docker and produces a complete result only when all 64
+scenarios, 128 paired Docker gates, and all provenance checks pass. A partial,
+failed, or blocked artifact is not a release result.
+
+## What the installer proves
+
+| Stage | Evidence |
+| --- | --- |
+| Layout | Required workspace members and runtime files exist |
+| Rust build | All workspace crates compile together |
+| Docker | `lmp-sandbox:local` can be built for isolated execution |
+| Qualification | 38 required CLI, daemon, MCP, profile, scope, sandbox, and fleet checks |
+| Full benchmark | Optional 64-scenario real-OSS evidence |
+
+The installer verifies the checked-out implementation; it does not publish
+packages, deploy binaries to another host, or claim that a policy pass replaces
+human review and production testing.

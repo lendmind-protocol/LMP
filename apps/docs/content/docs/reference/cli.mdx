@@ -1,0 +1,189 @@
+---
+title: CLI reference
+description: The command-line surface for compilation and evaluation.
+---
+
+The exact command set is authoritative in `lmp --help`. The unified `@lending-mind/lmp` package is the beginner-facing Node.js command surface; Rust remains the authority for evaluation, AST checks, signatures, and daemon execution.
+
+The examples below use `cargo run` because they assume a checkout of the repository. Once you install a released binary, replace `cargo run --bin lmp --` with `lmp`. The flags and result states remain the same for that release.
+
+| Operation | Purpose | Output |
+| --- | --- | --- |
+| `init` | Create LMP workspace files; optionally install the baseline profile | Workspace files |
+| `evaluate` | Apply rules to a workspace or Git delta | Findings and exit state |
+| `instructions` | Print agent-facing guidance from a selected Mind | Guidance text |
+| `validate` | Validate a Mind or policy path | Validation result |
+| `verify` | Verify a signed artifact or package | Verification result |
+| `fleet-validate` | Validate a bounded role DAG and compute its deterministic handoff order | Valid graph and execution order |
+| `fleet-merge` | Merge externally-produced role reports under graph budgets | One merged evidence record or a non-zero disagreement/block result |
+| `use <mind>` | Activate a locally available Mind profile | Active profile and workspace configuration |
+| `share <path>` | Sign a package and prepare it for contribution | Digest, signature, and contribution handoff |
+| `skill rotate-key <path>` | Rotate a verified package signer with an old-key proof | New signature, authenticated rotation record, and old key for explicit revocation |
+| `proposal submit <path>` | Move a draft promotion proposal into review | Updated proposal plus audit event |
+| `proposal approve <path>` | Record an explicit maintainer approval | Accepted proposal plus audit event |
+| `proposal reject <path>` | Record an explicit rejection and reason | Rejected proposal plus audit event |
+| `proposal promote <path>` | Materialize an accepted proposal as a new semvered package | New unsigned package, promotion record, and superseded proposal |
+
+Common evaluation options are `--mind`, `--workspace`, `--mode`, `--artifact-dir`, `--json`, `--changed-only`, and `--base`. Use `--help` for version-specific flags. Scripts should consume JSON output and exit codes rather than parse human-readable text.
+
+```bash
+cargo run --bin lmp -- init --install-baseline
+cargo run --bin lmp -- instructions --mind ./skills/baseline
+cargo run --bin lmp -- evaluate --workspace . --mind ./skills/baseline --changed-only --json
+cargo run --bin lmp -- validate ./skills/baseline/mind.json
+cargo run --bin lmp -- verify ./path/to/artifact
+# Rotate a verified package signer; keep the returned old key in the revocation list
+npx lmp skill rotate-key ./path/to/mind \
+  --current-private-key ./.lmp_telemetry/crypto_vault/private-key.pem \
+  --output-key-dir ./.lmp_telemetry/crypto_vault/rotated-2026-09
+# Reject packages signed by a key listed in a reviewable revocation file
+cargo run --bin lmp -- verify ./path/to/mind \
+  --revocation-list ./security/revoked-public-keys.hex
+```
+
+The revocation file is newline-delimited public-key hex. Blank lines and lines
+starting with `#` are ignored; a matching key makes verification return an
+invalid signature state or a non-zero error. Revocation is local and explicit:
+it does not contact a remote service or silently change a consumer's policy.
+
+## Bounded fleet evidence
+
+Fleet commands coordinate evidence from agent roles; they do not execute agent
+hosts or grant them permissions. A graph is a versioned acyclic DAG with
+explicit role, retry, handoff, command, and elapsed-time budgets:
+
+```bash
+lmp fleet-validate --graph ./fleet/graph.json
+lmp fleet-merge --graph ./fleet/graph.json --reports ./fleet/reports.json
+```
+
+`fleet-validate` rejects duplicate roles, unknown or duplicate edges,
+self-handoffs, cycles, and graph-size overruns. `fleet-merge` requires exactly
+one report per declared role, rejects aggregate or per-role budget overruns,
+preserves deterministic topological order, and records conflicting values as
+explicit disagreements. A disagreement or non-pass role never becomes a pass
+by aggregation; the command returns a non-zero exit code.
+
+## Unified beginner workflow
+
+The npm package keeps the common contribution path short:
+
+```bash
+npx lmp init
+npx lmp use tj-ponytail
+npx lmp share ./.lending-mind/registry/<encoded-id>/1.0.0 --out ./shared-mind
+```
+
+`use` searches the local registry and bundled profiles, validates the package,
+installs an immutable local copy, and records it as the active Mind. `share`
+creates an Ed25519 identity under `.lmp_telemetry/crypto_vault/` when one does
+not exist, signs the package, and emits a PR-ready artifact. Remote OCI/IPFS
+upload is intentionally reported as `not-configured` until a real endpoint and
+credentials are supplied; the command never fabricates a CID or claims that a
+network publication occurred.
+
+The published npm CLI carries the baseline profile. Therefore
+`npx lmp init --baseline` (or `--install-baseline`) is self-contained and does not require the
+user to run the command from an LMP repository checkout.
+
+The standalone Rust `lmp` release binary embeds the same signed baseline at
+build time. Its `lmp init --baseline` path therefore works from a clean
+directory without access to the LMP source checkout; the release integration
+smoke test exercises this path before any external publication claim.
+
+## Governed profile evolution
+
+Proposal lifecycle commands are provided by the Node.js `@lending-mind/lmp`
+package (`npx lmp`). The Rust binary remains the authority for evaluation,
+AST analysis, signing verification, and daemon/runtime operations; it does not
+pretend to implement the proposal-management layer.
+
+`artifact promote` only creates a proposal. It never edits an installed Mind:
+
+```bash
+npx lmp artifact promote ./artifacts/lmp/run.json \
+  --out ./.lending-mind/proposals/proposal-1.json
+npx lmp proposal submit ./.lending-mind/proposals/proposal-1.json
+npx lmp proposal approve ./.lending-mind/proposals/proposal-1.json \
+  --approver maintainer-id \
+  --reason "Positive and negative fixtures plus the pinned benchmark were reviewed."
+# Materialize the reviewed change; this never carries stale signatures forward
+npx lmp proposal promote ./.lending-mind/proposals/proposal-1.json \
+  --source ./skills/baseline \
+  --version 1.1.0 \
+  --out ./.lending-mind/releases/baseline-1.1.0 \
+  --promoter maintainer-id
+```
+
+The proposal must move through `draft` → `under-review` → `accepted` or
+`rejected`. Approval and rejection require both an actor and a written reason.
+Each transition appends a JSON Lines event beside the proposal at
+`<proposal>.audit.jsonl`; an accepted proposal still requires a separate,
+versioned package release. `proposal promote` requires an accepted proposal,
+an explicit source package, and a strictly greater semantic version. It copies
+the package without old detached signatures, records a promotion manifest, and
+marks the proposal superseded; the maintainer must sign the new bytes before
+publishing. Selected evidence files are resolved relative to the proposal and
+absolute or traversal paths are rejected. There is no CLI path that mutates the
+installed profile as a side effect of creating or approving a proposal.
+
+## Choosing a command
+
+Use `init` when a repository has not been prepared for LMP. Use `instructions` when an agent host needs the compiled guidance without running an evaluation. Use `validate` when you are reviewing a package before activation. Use `verify` when you already have a signed artifact and need to check its integrity. Use `evaluate` for the code decision itself.
+
+## Three-minute onboarding
+
+The Node.js wrapper provides the first-run selection surface:
+
+```bash
+npx create-lmp
+```
+
+It asks for the agent host, target stack, and Mind profile, then verifies and copies the selected bundled package into `.lending-mind/mind`. For scripts and tests, selections can be supplied without the quiz:
+
+```bash
+npx create-lmp --yes --agent claudecode --stack typescript-node --strategy brownfield --mind tj-ponytail .
+```
+
+Before writing files, the wrapper checks whether the target looks empty
+(greenfield) or already contains project content (brownfield). If the chosen
+strategy conflicts with that evidence, interactive runs require typing
+`continue`; non-interactive and `--yes` runs fail closed. Use the detected
+strategy, or pass `--allow-strategy-mismatch` only for an intentional and
+documented exception.
+
+The wrapper also writes `.lmp_telemetry/agent-mcp.json`,
+`.lmp_telemetry/host-integrations.json`, and `.lmp_telemetry/runtime.json`.
+When a verified sidecar is available, it adds a workspace-scoped MCP entry for
+Claude Code, Cursor, Cline, or Roo Code without replacing existing servers. It
+does not mutate global agent settings or claim that a Rust sidecar is installed
+when release binaries are unavailable.
+
+## Exit behavior
+
+Automation should use the process exit code together with the JSON state. Human-readable output is useful while working at a terminal, but it is not a stable interface for CI parsers. Save the command, profile path, base revision, and result artifact whenever the decision matters later.
+
+## Common patterns
+
+Inspect guidance before an agent run:
+
+```bash
+cargo run --bin lmp -- instructions --mind ./skills/baseline
+```
+
+Validate a package before selecting it:
+
+```bash
+cargo run --bin lmp -- validate ./skills/baseline/mind.json
+```
+
+Evaluate a patch and preserve machine-readable evidence:
+
+```bash
+cargo run --bin lmp -- evaluate \
+  --workspace . \
+  --mind ./skills/baseline \
+  --changed-only \
+  --artifact-dir ./artifacts/lmp \
+  --json
+```

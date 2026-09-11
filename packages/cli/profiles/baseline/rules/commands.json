@@ -1,0 +1,5 @@
+{
+  "requiredScripts": ["test", "lint", "typecheck"],
+  "allowPackageScripts": false,
+  "timeoutMs": 120000
+}

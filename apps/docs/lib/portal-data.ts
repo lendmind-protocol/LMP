@@ -1,0 +1,286 @@
+export type MindProfile = {
+  id: string;
+  name: string;
+  version: string;
+  focus: string;
+  author: string;
+  languages: string[];
+  availability: "Public registry" | "Bundled locally" | "Catalog proposal";
+  principles: string[];
+  guardrails: string[];
+  verification: "Unsigned in checkout" | "Signature present";
+  sourceIds: string[];
+};
+
+export const mindProfiles: MindProfile[] = [
+  {
+    id: "lmp:mind:tj-ponytail",
+    name: "TJ Ponytail Minimalism",
+    version: "1.0.0",
+    focus: "Zero-dependency, high-throughput TypeScript and Node.js delivery",
+    author: "TJ Holowaychuk Core Minimalism Era",
+    languages: ["TypeScript", "JavaScript", "Node.js"],
+    availability: "Public registry",
+    principles: [
+      "Prefer small, direct runtime handlers",
+      "Keep TypeScript strict and unused code visible",
+      "Remove unnecessary dependencies before generation",
+    ],
+    guardrails: ["express", "lodash", "axios", "request", "moment", "bluebird"],
+    verification: "Signature present",
+    sourceIds: ["typescript-handbook", "hono-guide"],
+  },
+  {
+    id: "lmp:mind:tj-holowaychuk-minimalism",
+    name: "TJ Holowaychuk Minimalism",
+    version: "1.0.0",
+    focus: "Minimal manifests with explicit compiler and runtime verification",
+    author: "Registry definition; provenance must be reviewed independently",
+    languages: ["TypeScript", "JavaScript", "Node.js"],
+    availability: "Public registry",
+    principles: [
+      "Force strict compiler feedback",
+      "Prefer undici and polka where they fit the requirement",
+      "Run tests and profiling after generation",
+    ],
+    guardrails: ["lodash", "express", "axios"],
+    verification: "Signature present",
+    sourceIds: ["typescript-handbook", "node-security"],
+  },
+  {
+    id: "lmp:mind:supabase-core",
+    name: "Supabase Data Isolation",
+    version: "1.0.0",
+    focus: "Database-bound authorization and explicit tenant data locality",
+    author: "Lending-Mind community archetype informed by public Supabase guidance",
+    languages: ["SQL", "TypeScript", "JavaScript"],
+    availability: "Public registry",
+    principles: [
+      "Put tenant authorization at the strongest data boundary",
+      "Keep compute close to data when that preserves correctness",
+      "Make policy migrations and tests explicit",
+    ],
+    guardrails: ["APP_LAYER_JOIN", "UI-only authorization"],
+    verification: "Signature present",
+    sourceIds: ["supabase-rls"],
+  },
+  {
+    id: "lmp:mind:linux-kernel",
+    name: "Linux Kernel Defensive Systems",
+    version: "1.0.0",
+    focus: "Readable systems code, explicit ownership, and bounded logic",
+    author: "Lending-Mind community archetype informed by public Linux Kernel guidance",
+    languages: ["Rust", "C"],
+    availability: "Public registry",
+    principles: [
+      "Separate policy from mechanism",
+      "Make allocation and ownership visible",
+      "Keep complexity budgets reviewable",
+    ],
+    guardrails: ["RAW_MACRO_EXPANSION", "UNHANDLED_ERROR"],
+    verification: "Signature present",
+    sourceIds: ["linux-coding-style"],
+  },
+  {
+    id: "lmp:mind:rust-systems",
+    name: "Rust Systems Maintainer Practice",
+    version: "0.1.0",
+    focus: "Explicit ownership, zero-cost abstraction, and compiler-led feedback",
+    author: "Community proposal based on public Rust project documentation and blog material",
+    languages: ["Rust"],
+    availability: "Catalog proposal",
+    principles: [
+      "Use the type system to make invalid states difficult to represent",
+      "Prefer abstractions whose cost is visible and measurable",
+      "Keep unsafe boundaries narrow and reviewable",
+    ],
+    guardrails: ["UNJUSTIFIED_UNSAFE", "PANIC_AT_BOUNDARY"],
+    verification: "Unsigned in checkout",
+    sourceIds: ["rust-blog", "rust-book"],
+  },
+  {
+    id: "lmp:mind:typescript-maintainers",
+    name: "TypeScript Maintainer Practice",
+    version: "0.1.0",
+    focus: "Static feedback, explicit narrowing, and maintainable JavaScript interop",
+    author:
+      "Community proposal based on Microsoft TypeScript documentation and repository practice",
+    languages: ["TypeScript", "JavaScript"],
+    availability: "Catalog proposal",
+    principles: [
+      "Let compiler feedback expose uncertainty early",
+      "Narrow untrusted values before they cross a boundary",
+      "Prefer clear module contracts over ambient coupling",
+    ],
+    guardrails: ["IMPLICIT_ANY", "UNNARROWED_INPUT", "UNUSED_EXPORT"],
+    verification: "Unsigned in checkout",
+    sourceIds: ["typescript-handbook", "typescript-repository", "typescript-engineering-blog"],
+  },
+  {
+    id: "lmp:mind:go-core-simplicity",
+    name: "Go Core Simplicity",
+    version: "0.1.0",
+    focus: "Readable composition, explicit errors, and simple package boundaries",
+    author: "Community proposal based on Effective Go and the public Go project",
+    languages: ["Go"],
+    availability: "Catalog proposal",
+    principles: [
+      "Prefer composition over elaborate inheritance-like structures",
+      "Handle errors explicitly at the boundary",
+      "Keep names, formatting, and package construction unsurprising",
+    ],
+    guardrails: ["IGNORED_ERROR", "CLEVER_ABSTRACTION", "HIDDEN_GLOBAL_STATE"],
+    verification: "Unsigned in checkout",
+    sourceIds: ["go-effective"],
+  },
+  {
+    id: "lmp:mind:vercel-edge",
+    name: "Vercel Edge Delivery",
+    version: "0.1.0",
+    focus: "Small request paths, measured performance, and local-to-edge parity",
+    author: "Community proposal based on public Vercel engineering material",
+    languages: ["TypeScript", "JavaScript"],
+    availability: "Catalog proposal",
+    principles: [
+      "Keep request paths small and runtime assumptions explicit",
+      "Measure startup and delivery behavior instead of assuming it",
+      "Preserve a productive local development loop",
+    ],
+    guardrails: ["UNMEASURED_COLD_START", "UNBOUNDED_REQUEST_WORK"],
+    verification: "Unsigned in checkout",
+    sourceIds: ["vercel-edge-blog"],
+  },
+  {
+    id: "lmp:mind:shadcn-composition",
+    name: "shadcn/ui Composition",
+    version: "0.1.0",
+    focus: "Accessible, inspectable UI primitives owned by the application",
+    author: "Community proposal based on public shadcn/ui documentation",
+    languages: ["TypeScript", "React", "CSS"],
+    availability: "Catalog proposal",
+    principles: [
+      "Prefer inspectable primitives over opaque component dependencies",
+      "Keep accessibility and interaction states explicit",
+      "Let teams own the copied implementation they adapt",
+    ],
+    guardrails: ["OPAQUE_UI_BUNDLE", "MISSING_FOCUS_STATE", "MISSING_LABEL"],
+    verification: "Unsigned in checkout",
+    sourceIds: ["shadcn-docs"],
+  },
+  {
+    id: "lmp:mind:hashicorp-immutable-infra",
+    name: "HashiCorp Immutable Infrastructure",
+    version: "0.1.0",
+    focus: "Declarative infrastructure, reproducibility, and visible operational drift",
+    author: "Community proposal based on public HashiCorp Terraform documentation",
+    languages: ["HCL", "Shell", "Go"],
+    availability: "Catalog proposal",
+    principles: [
+      "Describe desired state declaratively",
+      "Make changes reviewable and reproducible",
+      "Avoid manual configuration drift",
+    ],
+    guardrails: ["CLICK_OPS_DRIFT", "UNPINNED_MODULE", "IMPERATIVE_STATE_MUTATION"],
+    verification: "Unsigned in checkout",
+    sourceIds: ["terraform-docs"],
+  },
+];
+
+export const sourceReferences = [
+  {
+    id: "typescript-handbook",
+    publisher: "Microsoft TypeScript",
+    kind: "method",
+    url: "https://www.typescriptlang.org/docs/handbook/",
+  },
+  {
+    id: "node-security",
+    publisher: "Node.js",
+    kind: "method",
+    url: "https://nodejs.org/en/learn/getting-started/security-best-practices",
+  },
+  {
+    id: "supabase-rls",
+    publisher: "Supabase",
+    kind: "security",
+    url: "https://supabase.com/docs/guides/database/postgres/row-level-security",
+  },
+  {
+    id: "linux-coding-style",
+    publisher: "Linux Kernel",
+    kind: "philosophy",
+    url: "https://www.kernel.org/doc/html/latest/process/coding-style.html",
+  },
+  {
+    id: "google-code-review",
+    publisher: "Google",
+    kind: "review",
+    url: "https://google.github.io/eng-practices/review/reviewer/",
+  },
+  {
+    id: "typescript-repository",
+    publisher: "Microsoft TypeScript",
+    kind: "source code",
+    url: "https://github.com/microsoft/TypeScript",
+  },
+  {
+    id: "typescript-engineering-blog",
+    publisher: "Microsoft TypeScript",
+    kind: "blog",
+    url: "https://devblogs.microsoft.com/typescript/announcing-the-new-typescript-handbook/",
+  },
+  {
+    id: "rust-blog",
+    publisher: "Rust Project",
+    kind: "blog",
+    url: "https://blog.rust-lang.org/",
+  },
+  {
+    id: "rust-book",
+    publisher: "Rust Project",
+    kind: "method",
+    url: "https://doc.rust-lang.org/book/",
+  },
+  {
+    id: "go-effective",
+    publisher: "Go Project",
+    kind: "method",
+    url: "https://go.dev/doc/effective_go",
+  },
+  {
+    id: "vercel-edge-blog",
+    publisher: "Vercel",
+    kind: "blog",
+    url: "https://vercel.com/blog/new-edge-dev-infrastructure",
+  },
+  {
+    id: "shadcn-docs",
+    publisher: "shadcn/ui",
+    kind: "implementation",
+    url: "https://ui.shadcn.com/docs",
+  },
+  {
+    id: "terraform-docs",
+    publisher: "HashiCorp",
+    kind: "method",
+    url: "https://developer.hashicorp.com/terraform/intro",
+  },
+];
+
+export const proofSummary = {
+  qualification: 38,
+  ossBenchmark: 64,
+  internalDemos: 3,
+  minimumExecutableScenarios: 100,
+};
+
+export const benchmarkScenarios = [
+  ["Express", "API behavior"],
+  ["Hono", "Performance judgment"],
+  ["create-t3-app", "Dependency choice"],
+  ["Supabase", "Security boundary"],
+  ["codex-security", "CLI workflow"],
+  ["Microsoft TypeScript", "Regression testing"],
+  ["Swagger UI", "Input validation"],
+  ["Cal.com", "Architecture/refactoring"],
+] as const;

@@ -1,0 +1,5 @@
+{
+  "title": "Architecture",
+  "description": "How the Rust runtime, scoped evaluator, and execution boundary cooperate.",
+  "pages": ["overview"]
+}

@@ -1,7 +1,7 @@
 {
-  "$schema": "https://lendingmind.dev/schemas/mind-v1.json",
+  "$schema": "https://lmp-six.vercel.app/schema/mind-v1.json",
   "specVersion": "1.0",
-  "id": "lmp:skill:typescript-minimal",
+  "id": "lmp:mind:typescript-minimal",
   "version": "1.0.0",
   "name": "TypeScript Minimal",
   "description": "Minimal TypeScript implementation guidance.",
@@ -17,7 +17,14 @@
       {
         "title": "Explicit TypeScript service practices",
         "url": "https://www.typescriptlang.org/docs/",
-        "licenseNote": "Summary only; no copied proprietary text."
+        "licenseNote": "Summary only; no copied proprietary text.",
+        "sourceType": "documentation",
+        "accessMethod": "public-http",
+        "contentDigest": "sha256:e52757caa2706e88eb42cd750faf8f166186a4bac71a5377f69e2350f24059e1",
+        "retentionPolicy": "metadata-only",
+        "allowedUse": "summarize-public-guidance",
+        "evidenceTier": "primary",
+        "rights": "public-documentation"
       }
     ],
     "attributionRequired": true

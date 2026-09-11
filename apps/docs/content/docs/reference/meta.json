@@ -1,0 +1,5 @@
+{
+  "title": "Reference",
+  "description": "Stable interfaces and machine-readable contracts.",
+  "pages": ["cli", "versioning", "results", "mind-vault", "proof-matrix"]
+}

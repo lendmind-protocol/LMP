@@ -1,0 +1,13 @@
+{
+  "packageId": "lmp:mind:typescript-minimal",
+  "version": "1.0.0",
+  "changelog": ["Initial TypeScript minimal community archetype release."],
+  "limitations": [
+    "The fallback TypeScript checks do not replace a project compiler, test suite, or security review."
+  ],
+  "review": {
+    "status": "unreviewed",
+    "reviewers": [],
+    "notes": "Independent profile review is required before public release claims."
+  }
+}

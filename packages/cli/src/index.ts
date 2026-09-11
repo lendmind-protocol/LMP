@@ -1,13 +1,23 @@
+import { randomUUID } from "node:crypto";
 import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { signMindPackage, verifyMindPackage } from "@lending-mind/core";
+import { fileURLToPath } from "node:url";
+import { rotateMindPackageKey, signMindPackage, verifyMindPackage } from "@lending-mind/sdk";
+import { PromotionProposalSchema } from "@lending-mind/skill";
 import { Command } from "commander";
 import {
+  activateMind,
+  decideProposal,
+  ensureGitignore,
   evaluate,
   installPackage,
   instructions,
   listPackages,
   loadMind,
+  promoteProposal,
+  resolveMindPath,
+  shareMind,
+  submitProposal,
   validate,
   writeJson,
 } from "./runtime.js";
@@ -28,6 +38,7 @@ export function createProgram() {
     .command("init")
     .option("--force")
     .option("--install-baseline")
+    .option("--baseline", "alias for --install-baseline")
     .option("--install-hooks")
     .action(async (options) => {
       const path = resolve(".lending-mind/config.json");
@@ -40,17 +51,22 @@ export function createProgram() {
         }
       }
       await mkdir(resolve(".lending-mind"), { recursive: true });
+      await ensureGitignore();
       await writeFile(
         path,
-        `${JSON.stringify({ $schema: "https://lendingmind.dev/schemas/workspace-config-v1.json", version: 1, defaultMind: "lmp:skill:baseline", defaultMode: "advisory", excludedPaths: ["generated/**", "vendor/**"], commandPolicy: { allowPackageScripts: false, timeoutMs: 120000 }, artifactPolicy: { directory: ".lending-mind/artifacts", includeSourceCode: false, redactCommandOutput: true }, registry: { mode: "local", remoteEnabled: false } }, null, 2)}\n`,
+        `${JSON.stringify({ $schema: "https://lmp-six.vercel.app/schema/workspace-config-v1.json", version: 1, defaultMind: "lmp:mind:baseline", defaultMode: "advisory", excludedPaths: ["generated/**", "vendor/**"], commandPolicy: { allowPackageScripts: false, timeoutMs: 120000 }, artifactPolicy: { directory: ".lending-mind/artifacts", includeSourceCode: false, redactCommandOutput: true }, registry: { mode: "local", remoteEnabled: false } }, null, 2)}\n`,
       );
-      if (options.installBaseline) {
+      if (options.installBaseline || options.baseline) {
         await mkdir(resolve(".lending-mind/skills"), { recursive: true });
-        await cp(resolve("skills/baseline"), resolve(".lending-mind/skills/baseline"), {
-          recursive: true,
-          force: false,
-          errorOnExist: false,
-        });
+        await cp(
+          fileURLToPath(new URL("../profiles/baseline", import.meta.url)),
+          resolve(".lending-mind/skills/baseline"),
+          {
+            recursive: true,
+            force: false,
+            errorOnExist: false,
+          },
+        );
       }
       if (options.installHooks) {
         const hook = resolve(".git/hooks/pre-commit");
@@ -90,6 +106,20 @@ export function createProgram() {
       json(await signMindPackage(resolve(path), resolve(options.privateKey)));
     });
   skill
+    .command("rotate-key <path>")
+    .requiredOption("--current-private-key <path>")
+    .requiredOption("--output-key-dir <path>")
+    .description("Rotate a verified package signer through an authenticated key handoff")
+    .action(async (path, options) => {
+      json(
+        await rotateMindPackageKey(
+          resolve(path),
+          resolve(options.currentPrivateKey),
+          resolve(options.outputKeyDir),
+        ),
+      );
+    });
+  skill
     .command("verify <path>")
     .option("--public-key <path>")
     .action(async (path, options) => {
@@ -105,6 +135,28 @@ export function createProgram() {
     });
   const registry = program.command("registry");
   registry.command("install <path>").action(async (path) => json(await installPackage(path)));
+  program
+    .command("use <mind>")
+    .description("Activate a locally available Mind profile")
+    .option("--json")
+    .action(async (mind, options) => {
+      const result = await activateMind(mind);
+      options.json
+        ? json(result)
+        : console.log(`✨ Active profile shifted to ${result.id}@${result.version}`);
+    });
+  program
+    .command("share <path>")
+    .description("Sign a Mind package and prepare it for registry contribution")
+    .option("--private-key <path>")
+    .option("--out <directory>")
+    .option("--json")
+    .action(async (path, options) => {
+      const result = await shareMind(path, { privateKey: options.privateKey, output: options.out });
+      options.json
+        ? json(result)
+        : console.log(`✅ Signed ${result.digest}\n📦 ${result.nextStep}`);
+    });
   registry.command("list").action(async () => json(await listPackages()));
   registry
     .command("pull <id>")
@@ -129,19 +181,24 @@ export function createProgram() {
     .action(async (options) => {
       if (options.runCommands && options.mode === "audit")
         throw Object.assign(new Error("audit never runs commands"), { exitCode: EXIT.usage });
+      const mindPath = options.mind ? await resolveMindPath(options.mind) : undefined;
       const artifact = await evaluate(
         await loadMind(options.mind),
         resolve(options.workspace),
         options.mode,
+        { artifactDir: options.artifactDir, runCommands: options.runCommands === true, mindPath },
       );
-      if (options.artifactDir)
-        await writeJson(resolve(options.artifactDir, `${artifact.runId}.json`), artifact);
       options.json
         ? json(artifact)
         : console.log(
             `${artifact.summary.status}: ${artifact.summary.hardViolationCount} violation(s)`,
           );
-      if (options.mode === "enforced" && artifact.summary.status === "fail")
+      if (
+        options.mode === "enforced" &&
+        (artifact.summary.status === "fail" ||
+          artifact.summary.status === "blocked" ||
+          artifact.summary.status === "error")
+      )
         throw Object.assign(new Error("enforced evaluation failed"), { exitCode: EXIT.policy });
     });
   program
@@ -179,13 +236,69 @@ export function createProgram() {
     .option("--out <file>")
     .action(async (path, options) => {
       const source = JSON.parse(await readFile(resolve(path), "utf8"));
-      const proposal = {
-        artifactId: source.runId ?? source.id,
+      const proposal = PromotionProposalSchema.parse({
+        proposalId: `proposal-${randomUUID()}`,
+        profileId: source.mind?.id ?? "unknown",
+        profileVersion: source.mind?.version ?? "unknown",
+        selectedArtifacts: [resolve(path)],
         candidateChanges: [],
-        rationale: "Human review required",
-        benchmarkRequirements: [],
-      };
+        rationale:
+          "Evidence selected for human review; no profile mutation is performed automatically.",
+        expectedBenefit:
+          "Use observed evaluation evidence to propose a versioned policy improvement.",
+        falsePositiveRisk: "Requires fixture and benchmark review before acceptance.",
+        requiredVersionBump: "minor",
+        requiredTests: ["Add positive and negative fixtures for every candidate rule."],
+        benchmarkPlan: ["Compare the current and proposed profile on identical pinned fixtures."],
+        approver: null,
+        status: "draft",
+        createdAt: new Date().toISOString(),
+      });
       options.out ? await writeJson(resolve(options.out), proposal) : json(proposal);
+    });
+  const proposal = program.command("proposal");
+  proposal
+    .command("submit <path>")
+    .option("--json")
+    .action(async (path, options) => {
+      const result = await submitProposal(path);
+      options.json ? json(result) : console.log(`📝 Submitted ${result.proposalId} for review`);
+    });
+  proposal
+    .command("approve <path>")
+    .requiredOption("--approver <id>")
+    .requiredOption("--reason <reason>")
+    .option("--json")
+    .action(async (path, options) => {
+      const result = await decideProposal(path, "accepted", options.approver, options.reason);
+      options.json ? json(result) : console.log(`✅ Accepted ${result.proposalId}`);
+    });
+  proposal
+    .command("reject <path>")
+    .requiredOption("--approver <id>")
+    .requiredOption("--reason <reason>")
+    .option("--json")
+    .action(async (path, options) => {
+      const result = await decideProposal(path, "rejected", options.approver, options.reason);
+      options.json ? json(result) : console.log(`⛔ Rejected ${result.proposalId}`);
+    });
+  proposal
+    .command("promote <path>")
+    .requiredOption("--source <directory>")
+    .requiredOption("--version <version>")
+    .requiredOption("--out <directory>")
+    .requiredOption("--promoter <id>")
+    .option("--json")
+    .action(async (path, options) => {
+      const result = await promoteProposal(path, {
+        source: options.source,
+        version: options.version,
+        output: options.out,
+        promoter: options.promoter,
+      });
+      options.json
+        ? json(result)
+        : console.log(`📦 Promoted ${result.packageId}@${result.version}; sign before publishing`);
     });
   return program;
 }

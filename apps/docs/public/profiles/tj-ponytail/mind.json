@@ -1,0 +1,14 @@
+{
+  "$schema": "https://lmp-six.vercel.app/schema/mind-v1.json",
+  "specVersion": "1.0",
+  "id": "lmp:mind:tj-ponytail",
+  "version": "1.0.0",
+  "name": "TJ Ponytail Minimalism",
+  "description": "A community archetype for small, direct TypeScript and Node.js implementations.",
+  "modeDefaults": { "validation": "advisory", "network": "offline" },
+  "author": { "kind": "community-archetype", "displayName": "Lending-Mind Community", "verified": false, "website": null },
+  "provenance": { "sources": [{ "title": "Node.js security best practices", "url": "https://nodejs.org/en/learn/getting-started/security-best-practices", "licenseNote": "Public documentation reference; no external endorsement claimed.", "sourceType": "documentation", "accessMethod": "public-http", "contentDigest": "sha256:affe2cf0e45d3f7a9b8afec7c38bb5cf7b56e4034033e07500e018dc4753bc71", "retentionPolicy": "metadata-only", "allowedUse": "summarize-public-guidance", "evidenceTier": "primary", "rights": "public-documentation" }], "attributionRequired": true },
+  "philosophy": { "principles": ["Prefer native APIs and small direct handlers."], "tradeoffs": ["Strict dependency budgets require deliberate integration choices."], "decisionRules": ["Use platform capabilities before adding a dependency."], "antiPatterns": ["lodash", "express", "axios", "eval"] },
+  "capabilities": { "languages": ["typescript", "javascript", "node"], "requiredAgentTools": ["read_file", "write_file", "execute_command", "search"] },
+  "enforcement": { "dependencyPolicy": "rules/dependencies.json", "complexityPolicy": "rules/complexity.json", "typescriptPolicy": "rules/typescript.json", "commandPolicy": "rules/commands.json" }
+}

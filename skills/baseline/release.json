@@ -1,0 +1,11 @@
+{
+  "packageId": "lmp:mind:baseline",
+  "version": "1.0.0",
+  "changelog": ["Initial baseline evidence contract release."],
+  "limitations": ["Static checks do not establish universal correctness or production readiness."],
+  "review": {
+    "status": "unreviewed",
+    "reviewers": [],
+    "notes": "Independent profile review is required before public release claims."
+  }
+}

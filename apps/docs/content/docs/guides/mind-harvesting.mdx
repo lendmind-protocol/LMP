@@ -1,0 +1,119 @@
+---
+title: Harvest evidence into a mind proposal
+description: Discover public engineering signals without turning raw text into automatic enforcement.
+---
+
+The Mind Harvester is an offline-first evidence compiler. It accepts explicitly
+identified public sources, can fetch bounded RSS/Atom feeds, public YouTube
+timed-text transcripts, and public GitHub API summaries when requested,
+separates what an engineering culture says from what its repositories do and
+what its reviewers reject, and produces a compact draft proposal for human
+review.
+
+<Callout type="warn">
+  A harvest is not an endorsement, a private-thought reconstruction, a signed
+  package, or an active enforcement profile. It cannot modify the registry by
+  itself.
+</Callout>
+
+## Three evidence layers
+
+| Layer | Examples | What LMP records |
+| --- | --- | --- |
+| Textual | Public blogs, documentation, talks | Attributable claims and their content digest |
+| Implementation | Public repository or explicitly selected local repository | Bounded observations such as manifests and visible patterns |
+| Critique | Public reviews, rejected proposals, post-mortems | Preferences, exceptions, and rejection signals |
+
+The artifact keeps source identifiers, references, rights, allowed use, source
+type, and SHA-256 content digests. It does not retain raw source text, private
+paths, credentials, or private reasoning.
+
+## Run the compiler
+
+`mind_compiler.py` is the stable operator-facing command. It delegates to the
+canonical `mind_crawler.py` engine so discovery and compilation use one
+implementation and cannot drift apart.
+
+```bash
+python3 orchestrator/mind_compiler.py \
+  --entity example-style \
+  --input orchestrator/fixtures/mind-harvester/contradictory-footprint.json \
+  --output lmp-test-results/mind-harvester/example-style.json
+```
+
+The same input produces the same artifact bytes. Public HTTPS fetching is
+explicit with `--fetch`; `--rss`, `--youtube-video`, `--github-repo`, and
+`--github-profile` explicitly opt into their
+bounded public fetches. Local records require `--allow-local`. A local
+repository can be observed with `--repo`; its code is read for bounded
+observations, but no repository command or source program is executed.
+
+GitHub repository discovery reads at most 10 recent commits and 20 closed
+issues/PRs. `--github-profile` additionally discovers at most the ten
+highest-starred public repositories for a user or organization and applies
+those same per-repository bounds. For each repository it also reads the
+public language summary and up to eight root dependency manifests
+(`package.json`, `Cargo.toml`, `go.mod`, `requirements.txt`,
+`requirements-dev.txt`, or `pyproject.toml`). It records dependency names,
+language choices, repository revision, and an explicit `codeExecuted: false`
+observation. It also inspects at most 24 public source files within a 250 KB
+aggregate budget, recording only language-neutral declaration counts and
+content/path digests. This is implementation evidence, not compiler-grade AST
+analysis. It never clones the repository, installs dependencies, imports
+modules, or executes source code. Malformed manifests contribute no inferred
+dependency names and remain attributable observations rather than hidden
+claims.
+
+For conference material, `--youtube-video` requests the video's public
+timed-text endpoint and normalizes VTT, XML, JSON, or plain transcript
+payloads. The transcript is reduced to a digest-backed source record and is
+not retained in the output artifact.
+
+## From observations to candidates
+
+The compiler applies a small transparent lexicon to cluster repeated signals:
+dependency minimalism, performance budgets, security boundaries, complexity
+control, test evidence, and immutability. One source does not establish a
+policy. Numeric limits are candidates only when a source states an explicit
+bound, such as `cyclomatic complexity <= 5` or `cold-start latency below 15ms`.
+
+If evidence supports and rejects the same cluster, the output records a
+`human-review-required` contradiction. No side is selected automatically, and
+every candidate remains `promotionEligible: false`.
+
+Candidates are classified explicitly as `explicit-statement`,
+`repeated-code-pattern`, `review-pattern`, or `inferred-hypothesis`. Sources
+that produce no recognized signal remain in `unsupportedSources` with the
+`unsupported` classification, so an unmatched source cannot disappear into an
+apparently complete profile.
+
+## Promotion boundary
+
+The generated object has `status: draft` or `status: needs-review`, an explicit
+proposal ID, source references, candidate changes, false-positive risk, tests,
+and a benchmark plan. Promotion still requires:
+
+1. a maintainer or authorized community review of provenance and interpretation;
+2. positive, negative, and exception fixtures;
+3. benchmark evidence on the intended workspace scope;
+4. a declared semantic-version change; and
+5. package signing and the existing registry gates.
+
+This boundary is what prevents a broad footprint from becoming an opaque,
+context-free rule set or from being presented as an official person's or
+organization's endorsement.
+
+Validate the emitted artifact before sharing it with a reviewer:
+
+```bash
+python3 orchestrator/mind_harvest_artifact_gate.py \
+  lmp-test-results/mind-harvester/example-style.json
+```
+
+The gate rejects raw source fields, unknown provenance references, contradictions
+without human review, and any candidate marked as enforceable or promotion-ready.
+
+Private sources and long-lived archival crawling are not enabled; each would
+require a separate rights, credential, rate, and provenance contract. YouTube
+retrieval is opt-in and only works when a public timed-text transcript is
+available.

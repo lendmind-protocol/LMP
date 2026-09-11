@@ -1,0 +1,217 @@
+---
+title: Getting started
+description: Onboard a workspace, select a profile, and verify your first change.
+---
+
+## Prerequisites
+
+- Node.js 22 or newer for the interactive onboarding wrapper
+- Rust 1.75 or newer for the canonical evaluator and daemon
+- Git
+- A workspace with a clean or intentionally recorded working tree
+
+The five-minute path is designed to hide the lower-level Rust compilation,
+Docker isolation, and signature mechanics until they are useful. Rust remains
+the canonical implementation of protocol semantics; Node.js is the delivery
+wrapper for workspace onboarding and the unified beginner CLI.
+
+## 1. Onboard the workspace
+
+### Greenfield or brownfield? TL;DR
+
+- **Greenfield (new):** You are starting a project from the beginning, so
+  there is no existing application architecture that LMP needs to preserve.
+  Choose `--strategy greenfield` when LMP should help establish the initial
+  structure and rules.
+- **Brownfield (existing):** You are adding LMP to an existing or legacy
+  repository that already has source code, dependencies, conventions, and
+  history. Choose `--strategy brownfield` so the workflow preserves that
+  context and focuses verification on the files you change.
+- **Not sure?** If the workspace already contains application code or project
+  files such as `package.json`, `Cargo.toml`, or `pyproject.toml`, choose
+  **Brownfield**. Choose **Greenfield** only when creating the project itself.
+
+In one line: **greenfield means “build from the beginning”; brownfield means
+“improve an existing codebase.”**
+
+Before writing any files, onboarding compares your selection with the
+workspace. If it finds manifests, source directories, or other existing
+project content, it classifies the workspace as brownfield; an empty workspace
+is classified as greenfield. A mismatch never changes silently:
+
+- In the interactive wizard, LMP explains the evidence and asks you to type
+  `continue` before proceeding.
+- In scripts or `--yes` mode, LMP stops with a non-zero exit status. Pass the
+  detected strategy explicitly, or use `--allow-strategy-mismatch` only when
+  the unusual choice is intentional and documented.
+
+Run onboarding from the project root:
+
+```bash
+npx create-lmp
+```
+
+The interactive quiz detects the project stack and asks for the agent host,
+greenfield/brownfield strategy, and active Mind. Non-interactive automation can
+provide the same choices explicitly:
+
+```bash
+npx create-lmp --yes \
+  --agent claudecode \
+  --stack typescript-node \
+  --strategy brownfield \
+  --mind tj-ponytail .
+```
+
+The bundled profile is copied only after its detached Ed25519 signature
+verifies. The signature authenticates the package bytes; it does not claim
+that a named external person or organization endorsed the community archetype.
+
+<OnboardingSelector />
+
+After selection, the wrapper writes:
+
+- `.lending-mind/config.json` with the selected agent, stack, strategy, Mind
+  ID, changed-only default, and signature status;
+- `.lending-mind/mind/` with the manifest, guidance, enforcement rules,
+  evidence note, and signature material;
+- `.lmp_telemetry/agent-mcp.json` with the local MCP adapter contract;
+- `.lmp_telemetry/host-integrations.json` with the exact host configuration
+  result;
+- `.lmp_telemetry/runtime.json` with host detection and Rust sidecar readiness;
+- `.gitignore` entries for generated LMP state, telemetry, benchmark output,
+  and private signing material.
+- `AGENTS.md` and `CLAUDE.md` with discoverable protocol guidance.
+
+When a verified `lmp-mcp` binary is available, onboarding also adds a
+workspace-scoped server entry without replacing existing entries:
+
+- Claude Code: `.mcp.json`;
+- Cursor: `.cursor/mcp.json`;
+- Cline: `.cline/mcp.json`;
+- Roo Code: `.roo/mcp.json`;
+
+These are project-scoped files. Global host settings are never guessed or
+mutated.
+
+If the runtime is unavailable, no unusable host configuration is written. Read
+`.lmp_telemetry/host-integrations.json` before treating MCP as connected.
+
+When `lmp-mcp` is installed locally, the adapter manifest points directly to
+that workspace binary. If no verified binary is available, it records the
+fallback command and `available: false` instead of presenting an unusable
+local path as ready.
+
+If matching release binaries exist in `target/release`, or are supplied using
+`LMPD_BIN` and `LMP_MCP_BIN`, they are copied into `.lmp_telemetry/bin/`.
+When they are not available locally, the wrapper can download the exact
+platform release archive and its `SHA256SUMS` file, verify the archive digest,
+and install only the expected `lmpd` and `lmp-mcp` binaries. The runtime
+manifest records `verified-download`, the release URL, archive name, and
+checksum metadata. Set `LMP_RELEASE_BASE_URL` to test against a compatible
+release mirror; set `LMP_DISABLE_RUNTIME_DOWNLOAD=1` to require a local Rust
+runtime. A failed or unsupported download is recorded explicitly and the
+wizard does not claim that a daemon was installed.
+
+The ignore update is additive and idempotent. Existing `.gitignore` content is
+preserved; LMP only adds its own clearly marked block so generated artifacts or
+private keys are not accidentally committed.
+
+---
+
+## Optional source-checkout path
+
+> **Who needs this?** The next sections are for LMP contributors, maintainers,
+> and developers running LMP directly from a cloned source checkout. They are
+> **not required for a normal project user** who completed `npx create-lmp` and
+> is using a packaged release or an available precompiled sidecar.
+
+## 2. Build the workspace
+
+Build the workspace when you are developing LMP itself, changing Rust crates,
+or when onboarding reports a runtime download failure and no packaged binary
+is available locally. A normal user can skip this section when a local or
+verified release runtime was installed.
+
+```bash
+cargo build --workspace
+```
+
+Run the tests as well when you are checking a checkout rather than just compiling it:
+
+```bash
+cargo test --workspace
+```
+
+## 3. Inspect the available commands
+
+```bash
+cargo run --bin lmp -- --help
+cargo run --bin lmpd -- --help
+```
+
+The `lmp` binary is the easiest way to exercise the protocol directly. `lmpd` is the long-running daemon. Use `--once` when a script or CI job needs one evaluation and a deterministic exit; without it, `lmpd` watches for filesystem changes and stops cleanly on SIGINT or SIGTERM. For supervised local runs, add `--pid-file /tmp/lmpd.pid`; the same binary then supports `--status`, `--reload`, and `--stop` against that PID file. Reload sends SIGHUP and performs a fresh evaluation; stop sends SIGTERM and removes the PID file after clean shutdown. The help output is generated by the binaries, so use it when a checked-out version adds or changes a flag.
+
+## 4. Evaluate a workspace
+
+Run evaluation from the repository root. Use changed-only mode when working in a brownfield repository:
+
+```bash
+cargo run --bin lmp -- evaluate --workspace . --changed-only
+```
+
+The result identifies the selected files, active profile layers, findings, and final exit state. A successful command means the configured checks passed for that scope; it does not mean the whole repository is defect-free.
+
+For a result that another tool can consume, add `--json` and write the artifact to a directory that belongs to the run:
+
+```bash
+cargo run --bin lmp -- evaluate \
+  --workspace . \
+  --mind ./skills/baseline \
+  --changed-only \
+  --artifact-dir ./artifacts/lmp \
+  --json
+```
+
+If the working tree has no changes, changed-only mode may select nothing. That is a useful result, not a failure. To inspect a known comparison, provide an explicit base revision with `--base`.
+
+## 5. Read the evidence
+
+Store the JSON result with the change or CI run. For a release-quality claim, retain the profile digest, source revision, evaluator version, selected file list, and finding list together.
+
+When a run fails, do not start by changing the profile. First read the final state and the finding identifier. Confirm that the file was in scope, that the rule was active, and that the finding points to the expected source location. Then fix the code or revise the policy through the normal review process.
+
+## Selecting or sharing another Mind
+
+The unified CLI can activate a locally available profile after initialization:
+
+```bash
+npx lmp use tj-ponytail
+```
+
+To prepare a custom package for the community registry:
+
+```bash
+npx lmp share ./.lending-mind/registry/<encoded-id>/1.0.0 \
+  --out ./shared-mind
+```
+
+The command signs the package and reports a digest. Remote OCI/IPFS publication
+is reported as `not-configured` until a real endpoint and credentials are
+provided; no fabricated CID is produced. Submit the signed output through the
+registry pull-request flow.
+
+## Extending the registry
+
+Teams can create a custom Mind by writing a package manifest and explicit rules,
+signing the exact manifest with `mind_signer`, validating it, and installing it
+under a local registry path. The Rust validator, package signature, provenance,
+and evidence artifact are the authority for what was actually verified.
+
+## A first-day checklist
+
+- Build and test the Rust workspace.
+- Run `lmp instructions` and read the guidance a host would receive.
+- Run a JSON evaluation against a small, intentional change.
+- Keep the result artifact beside the change.
+- Repeat the run after fixing the finding and compare the two results.

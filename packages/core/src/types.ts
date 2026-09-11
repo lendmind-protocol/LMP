@@ -19,7 +19,18 @@ export interface MindPackage {
   modeDefaults?: { validation: "advisory" | "enforced" | "audit"; network: "offline" };
   author?: { kind: string; displayName: string; verified: boolean; website: string | null };
   provenance?: {
-    sources: { title: string; url: string; licenseNote: string }[];
+    sources: {
+      title: string;
+      url: string;
+      licenseNote: string;
+      evidenceTier: "primary" | "secondary" | "derived";
+      rights: "public-documentation" | "author-provided" | "licensed" | "unknown";
+      sourceType: "documentation" | "repository" | "blog" | "talk" | "review" | "derived";
+      accessMethod: "public-http" | "author-provided" | "local-repository";
+      contentDigest: string;
+      retentionPolicy: string;
+      allowedUse: string;
+    }[];
     attributionRequired: boolean;
   };
   philosophy?: {
@@ -38,8 +49,24 @@ export interface RuleResult {
   ruleId: string;
   passed: boolean;
   message?: string;
+  rationale?: string;
   severity?: "info" | "warning" | "error";
   evidence?: JsonValue;
+  file?: string;
+  line?: number;
+  column?: number;
+  remediation?: string;
+  limitations?: string[];
+}
+
+export type EvaluationState = "pass" | "needs_revision" | "blocked" | "evaluation_error";
+
+export interface EvaluationSummary {
+  status: "pass" | "warning" | "fail" | "blocked" | "error";
+  score?: number;
+  hardViolationCount: number;
+  warningCount: number;
+  informationalCount?: number;
 }
 
 export interface EvaluationArtifact {
@@ -50,6 +77,17 @@ export interface EvaluationArtifact {
   createdAt: string;
   results: RuleResult[];
   metadata?: Record<string, JsonValue>;
+  mode?: "advisory" | "enforced" | "audit";
+  summary?: Record<string, JsonValue>;
+  state?: EvaluationState;
+  limitations?: string[];
+  artifactPath?: string;
+  profile?: {
+    id: string;
+    version: string;
+    digest: string;
+    signatureStatus: "unsigned" | "present" | "verified" | "invalid";
+  };
 }
 
 export interface RegistryReference {
@@ -68,6 +106,24 @@ export interface PromotionRecord {
   promotedAt: string;
   promotedBy?: string;
   reason?: string;
+}
+
+export interface PromotionProposal {
+  proposalId: string;
+  profileId: string;
+  profileVersion: string;
+  selectedArtifacts: string[];
+  candidateChanges: JsonValue[];
+  rationale: string;
+  expectedBenefit: string;
+  falsePositiveRisk: string;
+  requiredVersionBump: "patch" | "minor" | "major";
+  requiredTests: string[];
+  benchmarkPlan: string[];
+  approver: string | null;
+  status: "draft" | "under-review" | "accepted" | "rejected" | "superseded";
+  createdAt: string;
+  decisionReason?: string;
 }
 
 export type RegistryEntry = RegistryReference;

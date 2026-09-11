@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-import os
+import argparse
 import json
+import os
 import time
 from typing import Dict, Any, List
 
@@ -41,7 +42,7 @@ class LMPEvaluationSuite:
             "timestamp": int(time.time()),
             "date_string": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()),
             "aggregate_metrics": {
-                "code_quality_score": round(final_quality_score, 2),
+                "policy_compliance_score": round(final_quality_score, 2),
                 "compliance_ratio": round(compliant_runs / total_runs, 2),
                 "total_breaches": total_breaches,
                 "mean_latency_ms": round(avg_latency, 4)
@@ -59,36 +60,65 @@ class LMPEvaluationSuite:
         """Outputs an analytical breakdown showing progression across pipeline cycles."""
         print("\n📈 ============ LMP HISTORICAL TREND SUMMARY ============")
         print(f"Current Evaluated Run Date : {current['date_string']}")
-        print(f"Calculated Quality Score    : {current['aggregate_metrics']['code_quality_score']}%")
+        print(f"Calculated Policy Compliance: {current['aggregate_metrics']['policy_compliance_score']}%")
         print(f"Active Axiom Breaches Found : {current['aggregate_metrics']['total_breaches']}")
         print(f"Mean Core Runtime Latency   : {current['aggregate_metrics']['mean_latency_ms']} ms")
         print("---------------------------------------------------------")
         
         if len(history) > 1:
-            previous_score = history[-2]["aggregate_metrics"]["code_quality_score"]
-            delta = current["aggregate_metrics"]["code_quality_score"] - previous_score
+            previous_metrics = history[-2].get("aggregate_metrics", {})
+            previous_score = previous_metrics.get(
+                "policy_compliance_score", previous_metrics.get("code_quality_score")
+            )
+            if not isinstance(previous_score, (int, float)):
+                raise ValueError("historical entry has no policy-compliance score")
+            delta = current["aggregate_metrics"]["policy_compliance_score"] - previous_score
             direction = "🔺 Improved" if delta >= 0 else "🔻 Regressed"
             print(f"Progression Vector Shift    : {direction} by {abs(round(delta, 2))}% since last run")
         else:
             print("Progression Vector Shift    : Baseline run established. Waiting for next telemetry iteration.")
         print("=========================================================\n")
 
+
+def benchmark_results(path: str) -> List[Dict[str, Any]]:
+    """Normalize a completed real-world benchmark into historical metrics.
+
+    This adapter accepts only the benchmark's recorded baseline/guided results.
+    It never invents quality, latency, or compliance values when an artifact is
+    incomplete or missing a required field.
+    """
+    with open(path, "r", encoding="utf-8") as handle:
+        report = json.load(handle)
+    if report.get("benchmark") != "lmp-real-world-scenario-matrix":
+        raise ValueError("input is not an LMP real-world benchmark artifact")
+    if report.get("status") != "complete":
+        raise ValueError(f"benchmark status is {report.get('status')!r}, not complete")
+    scenarios = report.get("scenarios")
+    if not isinstance(scenarios, list) or not scenarios:
+        raise ValueError("benchmark contains no scenarios")
+    normalized: List[Dict[str, Any]] = []
+    for scenario in scenarios:
+        guided = scenario.get("guided")
+        sandbox = scenario.get("sandbox", {}).get("guided")
+        if not isinstance(guided, dict) or not isinstance(sandbox, dict):
+            raise ValueError(f"scenario {scenario.get('id', '<unknown>')} has incomplete guided evidence")
+        if not isinstance(guided.get("state"), str) or not isinstance(guided.get("hardViolationCount"), int):
+            raise ValueError(f"scenario {scenario.get('id', '<unknown>')} has invalid guided evidence")
+        if not isinstance(sandbox.get("elapsedMs"), (int, float)) or not isinstance(sandbox.get("exitCode"), int):
+            raise ValueError(f"scenario {scenario.get('id', '<unknown>')} has invalid sandbox evidence")
+        normalized.append({
+            "repository": scenario.get("repository", scenario.get("id", "unknown")),
+            "status": "COMPLIANT" if guided["state"] == "pass" and sandbox["exitCode"] == 0 else "NON_COMPLIANT",
+            "metrics": {
+                "evaluation_latency_ms": float(sandbox["elapsedMs"]),
+                "axiomatic_breaches": guided["hardViolationCount"],
+            },
+        })
+    return normalized
+
 if __name__ == "__main__":
-    # Test suite run simulating code adjustments coming from the agent loop
-    suite = LMPEvaluationSuite()
-    
-    # Mock data modeling an agent cleaning its code assets after receiving an invalidation signal
-    simulated_run_output = [
-        {
-            "repository": "bloated-node-service",
-            "status": "COMPLIANT",  # Refactored down successfully by the agent
-            "metrics": {"evaluation_latency_ms": 1.24, "axiomatic_breaches": 0}
-        },
-        {
-            "repository": "clean-micro-service",
-            "status": "COMPLIANT",
-            "metrics": {"evaluation_latency_ms": 0.86, "axiomatic_breaches": 0}
-        }
-    ]
-    
-    suite.log_current_run(simulated_run_output)
+    parser = argparse.ArgumentParser(description="Aggregate a completed LMP benchmark artifact")
+    parser.add_argument("--input", required=True, help="completed real-world-benchmark.json")
+    parser.add_argument("--history-file", default="./lmp_test_bed/results/historical_trends.json")
+    args = parser.parse_args()
+    LMPEvaluationSuite(args.history_file).log_current_run(benchmark_results(args.input))

@@ -1,0 +1,34 @@
+{
+  "sources": [
+    {
+      "id": "blog-performance",
+      "layer": "textual",
+      "title": "Public engineering note on small services",
+      "url": "https://example.test/engineering/small-services",
+      "sourceType": "blog",
+      "rights": "public-documentation",
+      "allowedUse": "attribution required; analysis only",
+      "content": "Prefer minimal dependencies and readable functions. Keep cold-start latency below 15ms."
+    },
+    {
+      "id": "repository-practice",
+      "layer": "implementation",
+      "title": "Public repository implementation observation",
+      "url": "https://github.com/example/engineering-style",
+      "sourceType": "repository",
+      "rights": "public-documentation",
+      "allowedUse": "attribution required; analysis only",
+      "content": "The implementation uses few dependencies and a performance budget. Cyclomatic complexity <= 5."
+    },
+    {
+      "id": "review-tradeoff",
+      "layer": "critique",
+      "title": "Public review explaining an exception",
+      "url": "https://example.test/reviews/exception",
+      "sourceType": "review",
+      "rights": "public-documentation",
+      "allowedUse": "attribution required; analysis only",
+      "content": "Reject dependency bloat, but do not avoid a dependency when it is required for security."
+    }
+  ]
+}
