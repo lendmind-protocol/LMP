@@ -48,8 +48,10 @@ bounded public fetches. Local records require `--allow-local`. A local
 repository can be observed with `--repo`; its code is read for bounded
 observations, but no repository command or source program is executed.
 
-GitHub repository discovery reads at most 10 recent commits and 20 closed
-issues/PRs. `--github-profile` additionally discovers at most the ten
+GitHub repository discovery reads at most 10 recent commits, 20 closed issues,
+and 20 closed pull requests. Closed pull requests are retained as explicit
+`pull-request` critique records instead of being merged invisibly into the
+generic issue stream. `--github-profile` additionally discovers at most the ten
 highest-starred public repositories for a user or organization and applies
 those same per-repository bounds. For each repository it also reads the
 public language summary and up to eight root dependency manifests

@@ -23,8 +23,8 @@ For discovery, use `--rss` for a public feed, `--youtube-video` for a public
 video with an available timed-text transcript, `--github-repo` for a public
 `github.com/<owner>/<repo>` URL, or `--github-profile` for a public user or
 organization. Profile discovery is bounded to the ten highest-starred public
-repositories; each repository contributes at most 10 commits and 20 closed
-issues/PRs. It also reads the public language summary, up to eight root
+repositories; each repository contributes at most 10 commits, 20 closed
+issues, and 20 closed pull requests as separate critique records. It also reads the public language summary, up to eight root
 dependency manifests (`package.json`, `Cargo.toml`, `go.mod`,
 `requirements.txt`, `requirements-dev.txt`, or `pyproject.toml`), and at most
 24 source files within a 250 KB aggregate budget. Source inspection records
