@@ -51,7 +51,7 @@ remain partial even when the local implementation path is ready.
 | 11 — Benchmark and proof of value | Technical evidence only | The 64-scenario benchmark passes its configured controls; causal improvement and independent review remain unproven. |
 | 12 — Protocol core productization | Productized locally, release-bounded | One-shot/daemon contracts, signing, sync verification, self-hosting, and lifecycle checks pass; public release artifacts remain external. |
 | 13 — Optional sandbox and remote distribution | Productized locally, hosted qualification verified | Docker, local OCI/IPFS paths, GitHub Pages deployment, and all four hosted release targets plus aggregate archive verification pass; one current public IPFS package is gateway-verified, while three package pins are stale and pending republish. |
-| 14 — Optional fleet and graph orchestration | Planned | No multi-agent fleet is required for the current single-agent product scope. |
+| 14 — Optional fleet and graph orchestration | Productized locally, evidence incomplete | Versioned role-graph validation, deterministic report merging, budget enforcement, and disagreement preservation are implemented; external multi-agent host evidence is not required for the default single-agent product path and remains unverified. |
 
 ## Product Layers
 
