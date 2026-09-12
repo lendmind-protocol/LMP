@@ -362,6 +362,36 @@ describe("evaluator", () => {
     await rm(directory, { recursive: true, force: true });
   });
 
+  it("detects dynamic SQL construction and legacy var declarations", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "lmp-evaluator-quality-boundaries-"));
+    await writeFile(join(directory, "package.json"), "{}\n");
+    await writeFile(
+      join(directory, "tsconfig.json"),
+      JSON.stringify({ compilerOptions: { target: "ES2022" }, include: ["src.ts"] }),
+    );
+    await writeFile(
+      join(directory, "src.ts"),
+      "export function load(db: { query: (sql: string) => unknown }, name: string) { var sql = `select * from users where name = '${name}'`; return db.query(`select * from users where name = '${name}'`); }\n",
+    );
+    const report = await evaluate({
+      directory,
+      packageDirectory: resolve(
+        dirname(new URL(import.meta.url).pathname),
+        "../../../profiles/baseline",
+      ),
+      mode: "advisory",
+      artifactMode: "none",
+      runCommands: false,
+    });
+    expect(report.results).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ ruleId: "security.sql-injection", passed: false }),
+        expect.objectContaining({ ruleId: "typescript.var-declaration", passed: false }),
+      ]),
+    );
+    await rm(directory, { recursive: true, force: true });
+  });
+
   it("enforces the explicit Supabase application-layer join rule", async () => {
     const directory = await mkdtemp(join(tmpdir(), "lmp-supabase-join-"));
     await writeFile(

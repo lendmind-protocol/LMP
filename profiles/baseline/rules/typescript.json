@@ -8,5 +8,7 @@
   "warnUnusedVariable": true,
   "warnTypeErrors": true,
   "warnDuplicateLogic": true,
-  "warnInsecureDefault": true
+  "warnInsecureDefault": true,
+  "warnSqlInjection": true,
+  "warnVarDeclaration": true
 }

@@ -433,6 +433,8 @@ const supportedRuleIds = new Set([
   "typescript.duplicate-logic",
   "security.hardcoded-secret",
   "security.insecure-default",
+  "security.sql-injection",
+  "typescript.var-declaration",
   "database.app-layer-join",
   "typescript.ast",
   "typescript.strict",
@@ -479,6 +481,10 @@ const supportedPolicyRuleIds = new Set([
   "typescriptPolicy.warnEval",
   "typescriptPolicy.errorAppLayerJoin",
   "typescriptPolicy.warnAppLayerJoin",
+  "typescriptPolicy.errorSqlInjection",
+  "typescriptPolicy.warnSqlInjection",
+  "typescriptPolicy.errorVarDeclaration",
+  "typescriptPolicy.warnVarDeclaration",
 ]);
 
 async function unsupportedSourceFiles(
@@ -767,6 +773,23 @@ function sourceFindings(
             );
         }
       }
+      if (
+        node.isKind(SyntaxKind.VariableDeclaration) &&
+        enabled("errorVarDeclaration", "warnVarDeclaration", false) &&
+        node.getFirstAncestorByKind(SyntaxKind.VariableDeclarationList)?.getDeclarationKind() ===
+          "var"
+      )
+        findings.push(
+          finding(
+            directory,
+            "typescript.var-declaration",
+            file,
+            node,
+            "Legacy var declaration detected.",
+            severity,
+            "Use let or const and preserve the narrowest possible binding scope.",
+          ),
+        );
       if (node.isKind(SyntaxKind.AnyKeyword) && enabled("errorAny", "warnAny"))
         findings.push(
           finding(
@@ -781,6 +804,29 @@ function sourceFindings(
         );
       if (node.isKind(SyntaxKind.CallExpression)) {
         const expression = node.getExpression().getText();
+        if (
+          enabled("errorSqlInjection", "warnSqlInjection", false) &&
+          /(?:query|execute|rawQuery|unsafe|sql)$/i.test(expression) &&
+          node
+            .getArguments()
+            .some(
+              (argument) =>
+                (argument.isKind(SyntaxKind.BinaryExpression) &&
+                  argument.getOperatorToken().getText() === "+") ||
+                argument.isKind(SyntaxKind.TemplateExpression),
+            )
+        )
+          findings.push(
+            finding(
+              directory,
+              "security.sql-injection",
+              file,
+              node,
+              "Dynamic SQL-like query construction detected.",
+              severity,
+              "Use parameterized queries or the approved query builder and add an injection regression test.",
+            ),
+          );
         if (enabled("errorAppLayerJoin", "warnAppLayerJoin", false) && expression === "Promise.all")
           findings.push(
             finding(
@@ -1129,9 +1175,7 @@ export async function evaluate(options: EvaluationOptions): Promise<EvaluationRe
     simpleResult(
       "typescript.ast",
       sourceViolationCount === 0,
-      (policies.typescript ?? policies.typescriptPolicy)?.severity === "warning"
-        ? "warning"
-        : "error",
+      results.some((result) => result.severity === "error") ? "error" : "warning",
       sourceViolationCount === 0
         ? "AST source-policy checks passed."
         : `${sourceViolationCount} AST source-policy violation(s) detected.`,
