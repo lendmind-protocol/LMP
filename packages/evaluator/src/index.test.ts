@@ -243,6 +243,36 @@ describe("evaluator", () => {
     await rm(directory, { recursive: true, force: true });
   });
 
+  it("fails closed for source languages without a JavaScript evaluator", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "lmp-evaluator-unsupported-language-"));
+    await writeFile(join(directory, "package.json"), "{}\n");
+    await writeFile(join(directory, "worker.go"), "package worker\n\nfunc Run() {}\n");
+    const packageDirectory = resolve(
+      dirname(new URL(import.meta.url).pathname),
+      "../../../profiles/baseline",
+    );
+    const enforced = await evaluate({
+      directory,
+      packageDirectory,
+      mode: "enforced",
+      artifactMode: "full",
+      runCommands: false,
+    });
+    expect(enforced.passed).toBe(false);
+    expect(enforced.results).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ ruleId: "language.unsupported.go", severity: "error" }),
+      ]),
+    );
+    expect(enforced.artifact).toMatchObject({
+      analysis: { unsupportedLanguages: ["go"], unsupportedFiles: { go: ["worker.go"] } },
+      skippedChecks: expect.arrayContaining([
+        expect.objectContaining({ checkId: "language.go", status: "unsupported" }),
+      ]),
+    });
+    await rm(directory, { recursive: true, force: true });
+  });
+
   it("detects materially duplicated function bodies", async () => {
     const directory = await mkdtemp(join(tmpdir(), "lmp-evaluator-duplicate-"));
     await writeFile(join(directory, "package.json"), "{}\n");

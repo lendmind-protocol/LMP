@@ -152,7 +152,11 @@ export const ReleaseMetadataSchema = z
   .strict();
 
 const SkippedCheckSchema = z
-  .object({ checkId: z.string().min(1), reason: z.string().min(1) })
+  .object({
+    checkId: z.string().min(1),
+    reason: z.string().min(1),
+    status: z.enum(["skipped", "unsupported"]).optional(),
+  })
   .strict();
 
 export const MindPackageSchema = z
@@ -326,6 +330,8 @@ export const EvaluationArtifactSchema = z
         parsers: z.array(z.string()),
         versions: z.array(z.string()),
         checkedFiles: z.number().int().nonnegative(),
+        unsupportedLanguages: z.array(z.string()).optional(),
+        unsupportedFiles: z.record(z.array(z.string())).optional(),
       })
       .strict()
       .optional(),

@@ -55,6 +55,8 @@ export interface AstReport {
   languages: string[];
   parser: "ts-morph/typescript-compiler-api";
   version: "compiler-configured";
+  unsupportedLanguages: string[];
+  unsupportedFiles: Record<string, string[]>;
 }
 export interface EvaluationReport {
   package: InstructionBundle;
@@ -394,6 +396,64 @@ function sourceFiles(directory: string, tsconfig: string | undefined, exclusions
   return { included, excluded: excluded.sort(), project };
 }
 
+const unsupportedLanguageExtensions: Record<string, string> = {
+  ".c": "c",
+  ".cc": "cpp",
+  ".cpp": "cpp",
+  ".cs": "csharp",
+  ".go": "go",
+  ".h": "c",
+  ".hpp": "cpp",
+  ".java": "java",
+  ".jl": "julia",
+  ".kt": "kotlin",
+  ".kts": "kotlin",
+  ".php": "php",
+  ".py": "python",
+  ".rb": "ruby",
+  ".rs": "rust",
+  ".swift": "swift",
+};
+
+async function unsupportedSourceFiles(
+  directory: string,
+  exclusions: string[],
+): Promise<Record<string, string[]>> {
+  const found = new Map<string, string[]>();
+  const pending = [resolve(directory)];
+  const ignored = new Set([".git", "node_modules", "dist", "build", "coverage", ".next", "target"]);
+  while (pending.length) {
+    const current = pending.pop();
+    if (!current) continue;
+    let entries: import("node:fs").Dirent[] = [];
+    try {
+      entries = await readdir(current, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const entry of entries) {
+      if (ignored.has(entry.name)) continue;
+      const path = resolve(current, entry.name);
+      const relativePath = normalizePath(relative(directory, path));
+      if (isExcluded(relativePath, exclusions)) continue;
+      if (entry.isDirectory()) {
+        pending.push(path);
+        continue;
+      }
+      if (!entry.isFile()) continue;
+      const extension = entry.name.slice(entry.name.lastIndexOf(".")).toLowerCase();
+      const language = unsupportedLanguageExtensions[extension];
+      if (!language) continue;
+      found.set(language, [...(found.get(language) ?? []), relativePath]);
+    }
+  }
+  return Object.fromEntries(
+    [...found.entries()]
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([language, files]) => [language, files.sort()]),
+  );
+}
+
 export async function inspectDependencies(
   directory: string,
   prohibited: string[] = [],
@@ -543,6 +603,8 @@ export function analyzeAst(
     languages: [...languages].sort(),
     parser: "ts-morph/typescript-compiler-api",
     version: "compiler-configured",
+    unsupportedLanguages: [],
+    unsupportedFiles: {},
   };
 }
 
@@ -956,12 +1018,26 @@ export async function evaluate(options: EvaluationOptions): Promise<EvaluationRe
     dependencyPolicy.productionOnly === true,
   );
   const ast = analyzeAst(directory, options.tsconfig, options.exclusions);
+  const unsupportedFiles = await unsupportedSourceFiles(directory, options.exclusions ?? []);
+  ast.unsupportedFiles = unsupportedFiles;
+  ast.unsupportedLanguages = Object.keys(unsupportedFiles);
   const results: RuleResult[] = sourceFindings(
     directory,
     options.tsconfig,
     options.exclusions ?? [],
     policies.typescript ?? policies.typescriptPolicy ?? {},
   );
+  if (selectedMode === "enforced")
+    for (const language of ast.unsupportedLanguages)
+      results.push(
+        simpleResult(
+          `language.unsupported.${language}`,
+          false,
+          "error",
+          `Unsupported source language detected: ${language}.`,
+          { language, files: unsupportedFiles[language] },
+        ),
+      );
   const tsPolicy = policies.typescript ?? policies.typescriptPolicy ?? {};
   if (tsPolicy.errorTypeErrors === true || tsPolicy.warnTypeErrors === true)
     results.push(
@@ -1234,6 +1310,11 @@ export async function evaluate(options: EvaluationOptions): Promise<EvaluationRe
       checkId: `tool.${tool.adapterId}`,
       reason: tool.reason,
     })),
+    ...ast.unsupportedLanguages.map((language) => ({
+      checkId: `language.${language}`,
+      reason: `No JavaScript evaluator is available for ${language} source files in this runtime.`,
+      status: "unsupported" as const,
+    })),
   ];
   const loopTransitions = [
     { state: "evaluating", event: "evaluation_started", attempt: 0 },
@@ -1305,6 +1386,8 @@ export async function evaluate(options: EvaluationOptions): Promise<EvaluationRe
       parsers: [ast.parser],
       versions: [ast.version],
       checkedFiles: ast.files,
+      unsupportedLanguages: ast.unsupportedLanguages,
+      unsupportedFiles: ast.unsupportedFiles,
     },
     skippedChecks,
     loopTransitions,
