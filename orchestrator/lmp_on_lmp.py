@@ -261,7 +261,11 @@ def main() -> int:
         ("required-self-hosting-evaluation", [binary, "evaluate", "--workspace", ".", "--mind", "lmp:mind:lmp-protocol-core", "--mode", "enforced", "--artifact-out", ".lmp/artifacts/self-hosting.json", "--json"]),
         ("required-rust-systems-evaluation", [binary, "evaluate", "--workspace", ".", "--mind", "lmp:mind:rust-defensive-systems", "--scope", "crates", "--mode", "enforced", "--artifact-out", ".lmp/artifacts/rust-systems.json", "--json"]),
         ("required-kernel-evaluation", [binary, "evaluate", "--workspace", ".", "--mind", "lmp:mind:kernel-inspired-systems", "--scope", "crates/lmp-core,crates/lmp-evaluator,crates/lmpd,crates/lmp-sync", "--mode", "advisory", "--artifact-out", ".lmp/artifacts/kernel-inspired.json", "--json"]),
-        ("required-python-evaluation", [binary, "evaluate", "--workspace", ".", "--mind", "lmp:mind:python-orchestration-safety", "--scope", "orchestrator", "--mode", "enforced", "--artifact-out", ".lmp/artifacts/python-orchestrator.json", "--json"]),
+        # The Python Mind is enforced by its Python orchestration and Docker
+        # gates. The Rust evaluator must remain advisory here because it has
+        # no Python parser; enforced mode would misclassify an explicit
+        # unsupported-language boundary as a Python policy violation.
+        ("required-python-evaluation", [binary, "evaluate", "--workspace", ".", "--mind", "lmp:mind:python-orchestration-safety", "--scope", "orchestrator", "--mode", "advisory", "--artifact-out", ".lmp/artifacts/python-orchestrator.json", "--json"]),
         ("required-node-evaluation", [binary, "evaluate", "--workspace", ".", "--mind", "lmp:mind:node-onboarding-safety", "--scope", "packages/create-lmp", "--mode", "enforced", "--artifact-out", ".lmp/artifacts/node-onboarding.json", "--json"]),
         ("required-docs-evaluation", [binary, "evaluate", "--workspace", ".", "--mind", "lmp:mind:documentation-truthfulness", "--scope", "README.md,docs", "--mode", "advisory", "--artifact-out", ".lmp/artifacts/docs-truthfulness.json", "--json"]),
         ("completion-audit", [binary, "audit", "completion", "--workspace", ".", "--json"]),
