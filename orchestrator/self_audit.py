@@ -50,14 +50,19 @@ def run_check(check: Check, timeout: int) -> dict[str, object]:
             "reason": f"required executable is unavailable: {check.command[0]}",
         }
     try:
+        environment = {**os.environ, "CI": os.environ.get("CI", "1")}
+        command = list(check.command)
+        if check.command[0] == "cargo":
+            environment.update(rust_toolchain_environment())
+            command[0] = environment.get("CARGO", command[0])
         result = subprocess.run(
-            list(check.command),
+            command,
             cwd=ROOT,
             check=False,
             capture_output=True,
             text=True,
             timeout=timeout,
-            env={**os.environ, "CI": os.environ.get("CI", "1")},
+            env=environment,
         )
     except subprocess.TimeoutExpired as error:
         return {
@@ -81,6 +86,31 @@ def run_check(check: Check, timeout: int) -> dict[str, object]:
         "stdout": _tail(result.stdout),
         "stderr": _tail(result.stderr),
     }
+
+
+def rust_toolchain_environment() -> dict[str, str]:
+    """Make nested Cargo checks honor the repository's pinned toolchain."""
+    toolchain_file = ROOT / "rust-toolchain.toml"
+    channel = ""
+    if toolchain_file.is_file():
+        for line in toolchain_file.read_text(encoding="utf-8").splitlines():
+            if line.strip().startswith("channel ="):
+                channel = line.split("=", 1)[1].strip().strip('"')
+                break
+    if not channel or shutil.which("rustup") is None:
+        return {}
+    environment = {"RUSTUP_TOOLCHAIN": channel}
+    for variable, component in (("CARGO", "cargo"), ("RUSTC", "rustc"), ("RUSTDOC", "rustdoc")):
+        result = subprocess.run(
+            ["rustup", "which", component, "--toolchain", channel],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        executable = result.stdout.strip()
+        if result.returncode == 0 and executable:
+            environment[variable] = executable
+    return environment
 
 
 def sandbox_policy_check() -> dict[str, object]:
