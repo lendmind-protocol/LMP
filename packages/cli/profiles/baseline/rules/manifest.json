@@ -84,6 +84,104 @@
       "remediation": "Move the join into the approved data boundary or record a reviewed exception.",
       "limitations": ["The heuristic requires domain review for unusual query abstractions."],
       "evidence": { "classification": "verified-fixture", "sourceId": "evidence.json" }
+    },
+    {
+      "id": "security.hardcoded-secret",
+      "policyFile": "rules/typescript.json",
+      "severity": "warning",
+      "classification": "deterministic",
+      "rationale": "Credentials embedded in source can leak through version control, logs, and artifacts.",
+      "assertion": "Secret-shaped source values are not committed as literals.",
+      "scope": ["TypeScript and JavaScript source"],
+      "remediation": "Load the value through the approved environment or secret-management boundary and rotate any exposed credential.",
+      "limitations": [
+        "Heuristic name and length matching cannot detect every secret or prove that a placeholder is harmless."
+      ],
+      "evidence": { "classification": "explicit-statement", "sourceId": "evidence.json" }
+    },
+    {
+      "id": "typescript.type-error",
+      "policyFile": "rules/typescript.json",
+      "severity": "warning",
+      "classification": "verifiable",
+      "rationale": "Compiler diagnostics expose unresolved names and invalid API shapes before runtime review.",
+      "assertion": "The selected TypeScript project emits no configured compiler diagnostics in production source.",
+      "scope": ["TypeScript and JavaScript source included by tsconfig"],
+      "remediation": "Resolve the compiler diagnostic, add the correct dependency or type declaration, and rerun evaluation.",
+      "limitations": [
+        "Compiler diagnostics depend on the repository's tsconfig and dependency installation; they do not prove runtime or external API behavior."
+      ],
+      "evidence": {
+        "classification": "verified-fixture",
+        "sourceId": "evidence.json",
+        "sourceClaim": "Compiler-backed unresolved API detection; this is not a network lookup or whole-framework compatibility proof.",
+        "sourceLocator": "https://github.com/lendmind-protocol/LMP/blob/main/packages/evaluator/src/index.ts",
+        "implementation": "packages/evaluator/src/index.ts runs ts-morph pre-emit diagnostics and maps them to file and location evidence.",
+        "fixture": "packages/evaluator/src/index.test.ts#type-error"
+      }
+    },
+    {
+      "id": "typescript.unused-variable",
+      "policyFile": "rules/typescript.json",
+      "severity": "warning",
+      "classification": "deterministic",
+      "rationale": "Unused initialized bindings add bloat and obscure the behavior that a reviewer must trust.",
+      "assertion": "Named initialized variables in the selected source scope have a reference or are explicitly intentional.",
+      "scope": ["TypeScript and JavaScript source"],
+      "remediation": "Remove the unused declaration, use it, or prefix an intentionally unused binding with an underscore.",
+      "limitations": [
+        "This does not identify all dead exports, unreachable branches, or semantically redundant helpers."
+      ],
+      "evidence": {
+        "classification": "verified-fixture",
+        "sourceId": "evidence.json",
+        "sourceClaim": "LMP-local conservative dead-code heuristic; it is not a complete whole-program reachability proof.",
+        "sourceLocator": "https://github.com/lendmind-protocol/LMP/blob/main/packages/evaluator/src/index.ts",
+        "implementation": "packages/evaluator/src/index.ts resolves TypeScript symbols and reports initialized non-exported bindings with zero references.",
+        "fixture": "packages/evaluator/src/index.test.ts#unused-variable"
+      }
+    },
+    {
+      "id": "typescript.duplicate-logic",
+      "policyFile": "rules/typescript.json",
+      "severity": "warning",
+      "classification": "verifiable",
+      "rationale": "Repeated implementation bodies increase maintenance drift and make review coverage ambiguous.",
+      "assertion": "Selected source does not contain materially identical function bodies above the configured threshold.",
+      "scope": ["TypeScript and JavaScript source functions"],
+      "remediation": "Extract shared behavior only when the domain contract is genuinely shared; otherwise document why the duplication is intentional.",
+      "limitations": [
+        "Normalization is syntax-local and does not detect semantically equivalent algorithms with different spelling."
+      ],
+      "evidence": {
+        "classification": "verified-fixture",
+        "sourceId": "evidence.json",
+        "sourceClaim": "LMP-local duplicate-body heuristic; it is not a semantic clone detector.",
+        "sourceLocator": "https://github.com/lendmind-protocol/LMP/blob/main/packages/evaluator/src/index.ts",
+        "implementation": "packages/evaluator/src/index.ts normalizes function bodies and reports repeated bodies at or above the configured threshold.",
+        "fixture": "packages/evaluator/src/index.test.ts#duplicate-logic"
+      }
+    },
+    {
+      "id": "security.insecure-default",
+      "policyFile": "rules/typescript.json",
+      "severity": "warning",
+      "classification": "judgment-guided",
+      "rationale": "Permissive cross-origin and unsafe DOM defaults can turn an otherwise correct implementation into an exposed boundary.",
+      "assertion": "Selected source does not use the configured unsafe default patterns without an explicit reviewed boundary.",
+      "scope": ["TypeScript and JavaScript object properties"],
+      "remediation": "Use an explicit origin allowlist, trusted sanitizer, or safe data-boundary API and test the rejection path.",
+      "limitations": [
+        "The detector covers named syntactic defaults; it does not prove complete XSS, CORS, or framework security."
+      ],
+      "evidence": {
+        "classification": "verified-fixture",
+        "sourceId": "evidence.json",
+        "sourceClaim": "LMP-local named-property heuristic for high-risk permissive defaults; it is not a full application-security scanner.",
+        "sourceLocator": "https://github.com/lendmind-protocol/LMP/blob/main/packages/evaluator/src/index.ts",
+        "implementation": "packages/evaluator/src/index.ts reports configured unsafe DOM and permissive origin properties from the parsed AST.",
+        "fixture": "packages/evaluator/src/index.test.ts#insecure-default"
+      }
     }
   ]
 }
