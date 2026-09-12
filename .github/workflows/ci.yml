@@ -53,6 +53,7 @@ jobs:
           target/release/lmp evaluate \
             --mind profiles/baseline \
             --workspace . \
+            --scope crates,packages,registry/minds,docs,apps/docs/content/docs,scripts \
             --mode enforced \
             --changed-only \
             --base "$base" \
