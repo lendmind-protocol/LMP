@@ -47,6 +47,10 @@ export function createProgram() {
         .then(() => true)
         .catch(() => false);
       const installHooks = options.installHooks || hasGitBoundary;
+      const hasRepositoryBaseline = await access(resolve("profiles/baseline/mind.json"))
+        .then(() => true)
+        .catch(() => false);
+      const installBaseline = options.installBaseline || options.baseline || !hasRepositoryBaseline;
       const path = resolve(".lending-mind/config.json");
       if (!options.force) {
         try {
@@ -62,7 +66,7 @@ export function createProgram() {
         path,
         `${JSON.stringify({ $schema: "https://lmp-six.vercel.app/schema/workspace-config-v1.json", version: 1, defaultMind: "lmp:mind:baseline", defaultMode: installHooks ? "enforced" : "advisory", enforcementBoundary: installHooks ? "git-pre-commit" : "none", excludedPaths: ["generated/**", "vendor/**"], commandPolicy: { allowPackageScripts: false, timeoutMs: 120000 }, artifactPolicy: { directory: ".lending-mind/artifacts", includeSourceCode: false, redactCommandOutput: true }, registry: { mode: "local", remoteEnabled: false } }, null, 2)}\n`,
       );
-      if (options.installBaseline || options.baseline) {
+      if (installBaseline) {
         await mkdir(resolve(".lending-mind/skills"), { recursive: true });
         await cp(
           fileURLToPath(new URL("../profiles/baseline", import.meta.url)),

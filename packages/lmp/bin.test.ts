@@ -38,3 +38,19 @@ test("runs the documented init command in a clean project", async () => {
     await rm(workspace, { recursive: true, force: true });
   }
 });
+
+test("plain init leaves a clean project immediately evaluable", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "lmp-npx-plain-init-"));
+  try {
+    const result = await execFileAsync(process.execPath, [join(packageRoot, "bin.ts"), "init"], {
+      cwd: workspace,
+    });
+    assert.equal(result.stderr, "");
+    assert.match(
+      await readFile(join(workspace, ".lending-mind/skills/baseline/mind.json"), "utf8"),
+      /lmp:mind:baseline/,
+    );
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
