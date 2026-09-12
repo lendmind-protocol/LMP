@@ -9,7 +9,7 @@ homepage = "https://lmp-six.vercel.app/docs/reference/cli"
 anyhow = "1.0"
 clap = { version = "4.4", features = ["derive"] }
 lmp-core = { path = "../lmp-core" }
-ureq = { version = "=2.9.7", default-features = false, features = ["json", "tls"] }
+ureq = { version = "2.12.1", default-features = false, features = ["json", "tls"] }
 base64ct = "=1.6.0"
-url = "=2.4.1"
+url = "2.5.7"
 serde = { version = "1.0", features = ["derive"] }
