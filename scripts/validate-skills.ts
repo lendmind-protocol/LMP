@@ -75,6 +75,20 @@ const validateCanonicalEvidence = async (directory: string) => {
     throw new Error(`${directory}: rules/manifest.json must declare executable rule contracts`);
 };
 
+const validateBundledBaselineParity = async () => {
+  const canonicalRoot = "profiles/baseline";
+  const bundledRoot = "packages/cli/profiles/baseline";
+  for (const relative of ["rules/manifest.json", "rules/typescript.json"]) {
+    const [canonical, bundled] = await Promise.all([
+      readFile(join(canonicalRoot, relative), "utf8"),
+      readFile(join(bundledRoot, relative), "utf8"),
+    ]);
+    if (canonical !== bundled) throw new Error(`bundled baseline drift detected in ${relative}`);
+  }
+};
+
+await validateBundledBaselineParity();
+
 for (const directory of profileDirectories) {
   const result = await validateMindPackage(directory);
   if (!result.valid) {
