@@ -375,7 +375,10 @@ async function validateProfileContract(source, manifest) {
       rule.limitations.every(nonEmptyString) &&
       contractObjectKeysValid(rule.evidence, evidenceKeys) &&
       ["explicit-statement", "repeated-code-pattern", "review-pattern", "inferred-hypothesis", "unsupported", "verified-fixture"].includes(rule.evidence.classification) &&
-      nonEmptyString(rule.evidence.sourceId)
+      nonEmptyString(rule.evidence.sourceId) &&
+      rule.evidence.classification !== "unsupported" &&
+      !(rule.evidence.classification === "inferred-hypothesis" &&
+        (rule.severity === "error" || ["deterministic", "verifiable"].includes(rule.classification)))
     );
   });
   const policyFiles = new Set(Object.values(manifest.enforcement ?? {}));

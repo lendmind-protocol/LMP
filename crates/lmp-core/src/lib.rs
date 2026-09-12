@@ -37,6 +37,35 @@ impl Default for TelemetryMetrics {
     }
 }
 
+fn validate_rule_evidence_boundary(
+    rule: &serde_json::Value,
+    evidence: &serde_json::Map<String, serde_json::Value>,
+) -> anyhow::Result<()> {
+    let evidence_classification = evidence
+        .get("classification")
+        .and_then(serde_json::Value::as_str)
+        .context("rule contract evidence classification is required")?;
+    let rule_classification = rule
+        .get("classification")
+        .and_then(serde_json::Value::as_str)
+        .context("rule contract classification is required")?;
+    let severity = rule
+        .get("severity")
+        .and_then(serde_json::Value::as_str)
+        .context("rule contract severity is required")?;
+    anyhow::ensure!(
+        evidence_classification != "unsupported",
+        "unsupported evidence cannot define an enforcement rule"
+    );
+    anyhow::ensure!(
+        !(evidence_classification == "inferred-hypothesis"
+            && (severity == "error"
+                || matches!(rule_classification, "deterministic" | "verifiable"))),
+        "inferred hypothesis cannot become an enforced hard rule without reviewed evidence"
+    );
+    Ok(())
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct MindAxioms {
     pub data_locality: String,
@@ -541,6 +570,7 @@ fn validate_package_dir_impl(dir: &Path) -> anyhow::Result<MindPackage> {
                 ),
                 "rule contract evidence classification is invalid"
             );
+            validate_rule_evidence_boundary(rule, evidence)?;
             if source_backed {
                 for field in ["sourceClaim", "sourceLocator", "implementation", "fixture"] {
                     anyhow::ensure!(
@@ -650,7 +680,8 @@ fn validate_package_dir_impl(dir: &Path) -> anyhow::Result<MindPackage> {
 
 #[cfg(test)]
 mod tests {
-    use super::validate_package_dir;
+    use super::{validate_package_dir, validate_rule_evidence_boundary};
+    use serde_json::json;
     use std::path::PathBuf;
 
     #[test]
@@ -663,5 +694,25 @@ mod tests {
             "advisory"
         );
         assert_eq!(package.enforcement.len(), 4);
+    }
+
+    #[test]
+    fn keeps_inferred_and_unsupported_evidence_out_of_hard_rules() {
+        let hard_rule = json!({"classification":"verifiable","severity":"error"});
+        let inferred = json!({"classification":"inferred-hypothesis"});
+        assert!(
+            validate_rule_evidence_boundary(&hard_rule, inferred.as_object().unwrap()).is_err()
+        );
+
+        let judgment_rule = json!({"classification":"judgment-guided","severity":"warning"});
+        assert!(
+            validate_rule_evidence_boundary(&judgment_rule, inferred.as_object().unwrap()).is_ok()
+        );
+
+        let unsupported = json!({"classification":"unsupported"});
+        assert!(
+            validate_rule_evidence_boundary(&judgment_rule, unsupported.as_object().unwrap())
+                .is_err()
+        );
     }
 }

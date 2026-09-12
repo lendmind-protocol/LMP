@@ -128,6 +128,12 @@ that produce no recognized signal remain in `unsupportedSources` with the
 `unsupported` classification, so an unmatched source cannot disappear into an
 apparently complete profile.
 
+An `inferred-hypothesis` is proposal evidence only. The package validators
+reject it when attached to an `error`, `deterministic`, or `verifiable` rule;
+it must be reviewed and replaced with stronger evidence before it can become a
+hard enforcement rule. `unsupported` evidence cannot define an enforcement
+rule at all.
+
 ## Promotion boundary
 
 The generated object has `status: draft` or `status: needs-review`, an explicit

@@ -62,6 +62,25 @@ export const RuleContractManifestSchema = z
           message: `duplicate rule contract id: ${rule.id}`,
         });
       ids.add(rule.id);
+      if (rule.evidence.classification === "unsupported") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["rules"],
+          message: `unsupported evidence cannot define an enforcement rule: ${rule.id}`,
+        });
+      }
+      if (
+        rule.evidence.classification === "inferred-hypothesis" &&
+        (rule.severity === "error" ||
+          rule.classification === "deterministic" ||
+          rule.classification === "verifiable")
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["rules"],
+          message: `inferred hypothesis ${rule.id} cannot become an enforced hard rule without reviewed evidence`,
+        });
+      }
     }
   });
 

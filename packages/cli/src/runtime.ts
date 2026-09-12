@@ -228,7 +228,7 @@ export async function evaluate(
     });
     child.on("error", reject);
     child.on("close", (code) => {
-      if (code !== 0 && !stdout.trim()) {
+      if (code !== 0) {
         const detail = stderr.trim();
         reject(
           new Error(

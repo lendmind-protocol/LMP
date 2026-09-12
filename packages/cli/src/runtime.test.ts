@@ -40,6 +40,29 @@ describe("CLI runtime", () => {
     }
   });
 
+  it("rejects even when a failed evaluator emitted a JSON artifact", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "lmp-cli-runtime-json-exit-"));
+    const evaluator = join(directory, "fake-lmp");
+    const previous = process.env.LMP_RUST_BIN;
+    try {
+      await writeFile(
+        evaluator,
+        '#!/bin/sh\nprintf \'{"summary":{"status":"needs_revision"}}\\n\'\nexit 1\n',
+      );
+      await chmod(evaluator, 0o755);
+      process.env.LMP_RUST_BIN = evaluator;
+      await expect(
+        evaluate({ id: "lmp:mind:test", version: "1", rules: [] }, directory, "enforced", {
+          mindPath: directory,
+        }),
+      ).rejects.toThrow(/Rust evaluator exited with code 1/);
+    } finally {
+      if (previous === undefined) process.env.LMP_RUST_BIN = undefined;
+      else process.env.LMP_RUST_BIN = previous;
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
   it("produces deterministic visible instructions", () => {
     const mind = { id: "lmp:test", version: "1", rules: [] };
     expect(instructions(mind, "json")).toContain('"mind": "lmp:test"');
