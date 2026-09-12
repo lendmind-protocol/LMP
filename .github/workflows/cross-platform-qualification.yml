@@ -1,0 +1,69 @@
+name: Cross-platform qualification
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  binaries:
+    name: ${{ matrix.target }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: macos-latest
+            target: aarch64-apple-darwin
+          - os: macos-13
+            target: x86_64-apple-darwin
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.98.1
+        with:
+          targets: ${{ matrix.target }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Build release binaries
+        run: cargo build --release --workspace --target ${{ matrix.target }}
+      - name: Smoke-test native release binaries
+        shell: bash
+        run: python orchestrator/release_binary_smoke.py --target "${{ matrix.target }}" --binary-dir "target/${{ matrix.target }}/release"
+      - name: Package release archive
+        shell: bash
+        run: |
+          mkdir -p dist
+          python orchestrator/package_release_artifact.py \
+            --target "${{ matrix.target }}" \
+            --binary-dir "target/${{ matrix.target }}/release" \
+            --output-dir dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lmp-${{ matrix.target }}
+          path: dist/lmp-${{ matrix.target }}.tar.gz
+          if-no-files-found: error
+
+  verify:
+    needs: binaries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: lmp-*
+          merge-multiple: true
+      - name: Verify every cross-platform archive
+        run: python3 orchestrator/release_artifact_gate.py dist
+      - name: Publish qualification summary
+        run: |
+          {
+            echo "## Cross-platform qualification"
+            echo "All four target archives were built, smoke-tested on their native runner, and verified for safe contents and checksums."
+          } >> "$GITHUB_STEP_SUMMARY"
