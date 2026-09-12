@@ -249,7 +249,9 @@ The first Rust command with system Cargo 1.75 failed before compilation because 
 1. No production telemetry exists. Logs are process-level errors and test output, not distributed traces.
 2. No hosted health or readiness endpoints exist because no hosted service exists.
 3. No per-run metrics cover evaluation latency, finding rates, retries, artifact size, or scope fallback frequency in a durable store.
-4. No official MCP conformance suite or cross-host acceptance suite is present.
+4. The official MCP conformance harness now covers selected initialization,
+   ping, and tool-discovery scenarios in CI; optional capability suites and
+   cross-host acceptance remain unverified.
 5. The benchmark does not test generated agent behavior. It writes a fixed unsafe candidate and a fixed safe candidate.
 6. The ordinary-controls baseline runs the TypeScript compiler only. Repository lint, tests, and CI commands are discovered but not executed in that lane, as documented in `orchestrator/real_world_benchmark.py`.
 7. The benchmark includes a `reviewerAnnotations` contract, but current evidence remains incomplete until an independent reviewer supplies non-empty annotations.
