@@ -103,8 +103,8 @@ jobs:
         run: |
           pnpm publish:ipfs:pinata
           pnpm sync:public-registry
-      - name: Enforce production registry metadata
-        run: python3 orchestrator/registry_release_gate.py registry/registry.json --verify-cids
+      - name: Enforce production registry metadata and retrieved manifest integrity
+        run: python3 orchestrator/registry_release_gate.py registry/registry.json --verify-cids --verify-manifests
       - name: Verify registry index matches signed package bytes
         run: python3 orchestrator/registry_manifest_gate.py registry/registry.json --lmp target/release/lmp
       - name: Preserve the verifier for aggregate release readiness

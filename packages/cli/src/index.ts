@@ -174,6 +174,8 @@ export function createProgram() {
     .option("--mind <mind>", "Profile to activate", "linux-kernel")
     .option("--workspace <path>", ".")
     .option("--artifact-dir <path>", ".lending-mind/artifacts")
+    .option("--changed-only", "evaluate only files changed from the selected Git base")
+    .option("--base <ref>", "Git revision used with --changed-only")
     .option("--install-hook")
     .option("--json")
     .action(async (options) => {
@@ -184,7 +186,12 @@ export function createProgram() {
         await loadMind(activated.path, projectRoot),
         workspace,
         "enforced",
-        { artifactDir: options.artifactDir, mindPath: activated.path },
+        {
+          artifactDir: options.artifactDir,
+          mindPath: activated.path,
+          changedOnly: options.changedOnly === true,
+          base: options.base,
+        },
       );
       const hook = options.installHook
         ? await installEnforcedHook(projectRoot, options.mind)
@@ -234,6 +241,8 @@ export function createProgram() {
     .option("--artifact-dir <path>")
     .option("--offline")
     .option("--run-commands")
+    .option("--changed-only", "evaluate only files changed from the selected Git base")
+    .option("--base <ref>", "Git revision used with --changed-only")
     .action(async (options) => {
       if (options.runCommands && options.mode === "audit")
         throw Object.assign(new Error("audit never runs commands"), { exitCode: EXIT.usage });
@@ -242,7 +251,13 @@ export function createProgram() {
         await loadMind(options.mind),
         resolve(options.workspace),
         options.mode,
-        { artifactDir: options.artifactDir, runCommands: options.runCommands === true, mindPath },
+        {
+          artifactDir: options.artifactDir,
+          runCommands: options.runCommands === true,
+          mindPath,
+          changedOnly: options.changedOnly === true,
+          base: options.base,
+        },
       );
       options.json
         ? json(artifact)

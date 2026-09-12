@@ -177,7 +177,13 @@ export async function evaluate(
   mind: MindPackage,
   workspace: string,
   mode: Mode,
-  options: { artifactDir?: string; runCommands?: boolean; mindPath?: string } = {},
+  options: {
+    artifactDir?: string;
+    runCommands?: boolean;
+    mindPath?: string;
+    changedOnly?: boolean;
+    base?: string;
+  } = {},
 ): Promise<RuntimeArtifact> {
   const candidates = [
     process.env.LMP_RUST_BIN,
@@ -208,6 +214,8 @@ export async function evaluate(
     "--json",
   ];
   if (options.artifactDir) args.push("--artifact-dir", resolve(options.artifactDir));
+  if (options.changedOnly) args.push("--changed-only");
+  if (options.base) args.push("--base", options.base);
   const output = await new Promise<string>((resolveOutput, reject) => {
     const child = spawn(binary, args, { cwd: process.cwd(), shell: false });
     let stdout = "";
