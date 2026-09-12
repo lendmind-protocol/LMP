@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import "./global.css";
 import { cn } from "@/lib/utils";
 import { Geist } from "next/font/google";
+import { sitePath } from "@/lib/site";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -15,9 +16,9 @@ export const metadata: Metadata = {
   },
   description: "Deterministic code-quality policy for AI-assisted engineering.",
   icons: {
-    icon: "/logo.png",
-    shortcut: "/logo.png",
-    apple: "/logo.png",
+    icon: sitePath("/logo.png"),
+    shortcut: sitePath("/logo.png"),
+    apple: sitePath("/logo.png"),
   },
 };
 

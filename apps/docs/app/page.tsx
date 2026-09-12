@@ -3,6 +3,7 @@ import { BrainField } from "@/components/landing/brain-field";
 import { CommandCopy } from "@/components/landing/command-copy";
 import { FaqAccordion } from "@/components/landing/faq-accordion";
 import { MindVaultPreview } from "@/components/landing/mind-vault-preview";
+import { sitePath } from "@/lib/site";
 import { ArrowRight, ArrowUpRight, Terminal } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -97,12 +98,12 @@ export default function HomePage() {
       <header>
         <div className="mx-auto flex min-h-16 min-w-0 max-w-[1180px] items-center justify-between gap-3 px-[clamp(1rem,4vw,2rem)]">
           <Link
-            href="/"
+            href={sitePath("/")}
             aria-label="LMP home"
             className="inline-flex min-h-11 items-center gap-3 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
           >
             <Image
-              src="/logo.png"
+              src={sitePath("/logo.png")}
               alt=""
               width={25}
               height={25}
@@ -120,13 +121,13 @@ export default function HomePage() {
             className="flex min-w-0 items-center gap-0.5 border-0 font-mono text-[clamp(0.625rem,1.7vw,0.6875rem)] uppercase tracking-[0.1em] text-white/55"
           >
             <Link
-              href="/docs"
+              href={sitePath("/docs")}
               className="inline-flex min-h-11 items-center rounded-sm px-[clamp(0.5rem,2vw,0.75rem)] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
             >
               Docs
             </Link>
             <Link
-              href="/docs/reference/mind-vault"
+              href={sitePath("/docs/reference/mind-vault")}
               className="hidden min-h-11 items-center rounded-sm px-[clamp(0.5rem,2vw,0.75rem)] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 sm:inline-flex"
             >
               Mind Vault
@@ -179,7 +180,7 @@ export default function HomePage() {
                 evidence.
               </p>
               <Link
-                href="/docs/concepts/overview"
+                href={sitePath("/docs/concepts/overview")}
                 className="mt-6 inline-flex min-h-11 items-center gap-2 font-mono text-[11px] uppercase tracking-[0.12em] text-emerald-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
               >
                 Read the protocol <ArrowRight aria-hidden="true" className="size-3.5" />
@@ -228,7 +229,7 @@ export default function HomePage() {
               See what was loaded, checked, and recorded.
             </p>
             <Link
-              href="/docs/reference/results"
+                href={sitePath("/docs/reference/results")}
               className="mt-6 inline-flex min-h-11 items-center gap-2 font-mono text-[11px] uppercase tracking-[0.12em] text-emerald-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
             >
               Read results <ExternalMark />
@@ -252,7 +253,7 @@ export default function HomePage() {
               </h2>
             </div>
             <Link
-              href="/docs/reference/mind-vault"
+                href={sitePath("/docs/reference/mind-vault")}
               className="hidden min-h-11 items-center gap-2 font-mono text-[11px] uppercase tracking-[0.12em] text-white/55 hover:text-emerald-400 sm:inline-flex"
             >
               All topics <ExternalMark />
@@ -261,7 +262,7 @@ export default function HomePage() {
           <div className="mt-8 grid border-l border-t border-white/10 sm:grid-cols-2 lg:grid-cols-3">
             {disciplines.map(([title, description, href]) => (
               <Link
-                href={href}
+                href={sitePath(href)}
                 key={title}
                 className="group min-h-40 border-b border-r border-white/10 p-5 transition-colors duration-200 hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400"
               >
@@ -278,7 +279,7 @@ export default function HomePage() {
       <section className="mx-auto max-w-[1180px] border-x border-b border-white/10">
         <div className="grid divide-y divide-white/10 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
           <Link
-            href="/docs/concepts/overview"
+              href={sitePath("/docs/concepts/overview")}
             className="group p-5 transition-colors hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400 sm:p-6"
           >
             <span className="font-mono text-sm text-white/80">Evaluate LMP</span>
@@ -290,7 +291,7 @@ export default function HomePage() {
             </span>
           </Link>
           <Link
-            href="/docs/guides/installation"
+              href={sitePath("/docs/guides/installation")}
             className="group p-5 transition-colors hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400 sm:p-6"
           >
             <span className="font-mono text-sm text-white/80">Integrate LMP</span>
@@ -302,7 +303,7 @@ export default function HomePage() {
             </span>
           </Link>
           <Link
-            href="/docs/concepts/mind-packages"
+              href={sitePath("/docs/concepts/mind-packages")}
             className="group p-5 transition-colors hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400 sm:p-6"
           >
             <span className="font-mono text-sm text-white/80">Author a Mind</span>
@@ -320,13 +321,13 @@ export default function HomePage() {
       <footer className="mx-auto flex max-w-[1180px] flex-wrap items-center justify-between gap-4 px-[clamp(1rem,4vw,2rem)] py-8 font-mono text-[10px] uppercase tracking-[0.12em] text-white/35">
         <span>Local-first policy runtime / v0.1.0</span>
         <div className="flex flex-wrap gap-x-5 gap-y-2">
-          <Link href="/docs/operations/roadmap" className="hover:text-white">
+          <Link href={sitePath("/docs/operations/roadmap")} className="hover:text-white">
             Roadmap
           </Link>
-          <Link href="/docs/operations/security" className="hover:text-white">
+          <Link href={sitePath("/docs/operations/security")} className="hover:text-white">
             Security
           </Link>
-          <Link href="/docs/reference/versioning" className="hover:text-white">
+          <Link href={sitePath("/docs/reference/versioning")} className="hover:text-white">
             Release notes
           </Link>
           <a

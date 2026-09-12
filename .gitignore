@@ -57,6 +57,7 @@ lmp-test-results
 dist
 .source
 apps/docs/.next
+apps/docs/out
 *.log
 *.swp
 *.swo

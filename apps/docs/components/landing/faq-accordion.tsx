@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
+import { sitePath } from "@/lib/site";
 import type { ReactNode } from "react";
 import { useState } from "react";
 
@@ -32,7 +33,7 @@ const faqs = [
         the selected change, and records the result and its evidence. That is a{" "}
         <Highlight>control-and-evidence loop</Highlight>, not a claim that text injection alone
         creates enforcement.{" "}
-        <Citation href="/docs/concepts/overview">See the protocol boundaries</Citation>.
+        <Citation href={sitePath("/docs/concepts/overview")}>See the protocol boundaries</Citation>.
       </>
     ),
   },
@@ -45,7 +46,7 @@ const faqs = [
         <Highlight>pass, needs_revision, blocked, or evaluation_error</Highlight>. A passing result
         means the configured checks ran and passed; it does not mean the model was obedient or the
         code is universally correct.{" "}
-        <Citation href="/docs/reference/results">Inspect the result states</Citation>.
+        <Citation href={sitePath("/docs/reference/results")}>Inspect the result states</Citation>.
       </>
     ),
   },
@@ -58,7 +59,7 @@ const faqs = [
         missing or unperformed evidence rather than convert it into a pass. Network controls,
         protected branches, CI, dependency review, and human approval remain necessary for stronger
         operational guarantees.{" "}
-        <Citation href="/docs/operations/security">Read the security boundary</Citation>.
+        <Citation href={sitePath("/docs/operations/security")}>Read the security boundary</Citation>.
       </>
     ),
   },
@@ -71,7 +72,7 @@ const faqs = [
         universal filesystem firewall. Claims about a Rust daemon physically rejecting every write
         should only be made once that behavior is implemented, tested, and independently
         demonstrated.{" "}
-        <Citation href="/docs/architecture/overview">Review the architecture</Citation>.
+        <Citation href={sitePath("/docs/architecture/overview")}>Review the architecture</Citation>.
       </>
     ),
   },
@@ -84,7 +85,7 @@ const faqs = [
         supported parser and rule exist, but they cannot infer intent, prove architecture quality,
         or make an arbitrary engineering preference objective. The exact rule, parser, scope, and
         evidence artifact matter.{" "}
-        <Citation href="/docs/concepts/enforcement">See what enforcement means in LMP</Citation>.
+        <Citation href={sitePath("/docs/concepts/enforcement")}>See what enforcement means in LMP</Citation>.
       </>
     ),
   },
@@ -97,7 +98,7 @@ const faqs = [
         themselves, establish maintainability, security, correctness, or production readiness. Any
         telemetry claim needs a reproducible fixture, workload definition, environment, variance,
         and a record of what was not measured.{" "}
-        <Citation href="/docs/operations/monitoring">See the monitoring limits</Citation>.
+        <Citation href={sitePath("/docs/operations/monitoring")}>See the monitoring limits</Citation>.
       </>
     ),
   },
@@ -110,7 +111,7 @@ const faqs = [
         model. It does not prove that the rule is wise, that its source is authoritative, or that
         the resulting code is safe. Provenance, review, versioning, and evaluation evidence are
         separate obligations, not things cryptography magically supplies.{" "}
-        <Citation href="/docs/reference/mind-vault">Check package provenance</Citation>.
+        <Citation href={sitePath("/docs/reference/mind-vault")}>Check package provenance</Citation>.
       </>
     ),
   },
@@ -123,7 +124,7 @@ const faqs = [
         <Highlight>visible provenance, declared scope, review, and version history</Highlight>, plus
         a way to reject or replace them. The system should make judgment inspectable, not hide
         judgment behind a green check.{" "}
-        <Citation href="/docs/operations/governance">Read the governance model</Citation>.
+        <Citation href={sitePath("/docs/operations/governance")}>Read the governance model</Citation>.
       </>
     ),
   },
@@ -135,7 +136,7 @@ const faqs = [
         improving decisions. The meaningful test is whether LMP catches issues reviewers care about
         with <Highlight>lower noise than the existing toolchain</Highlight>. That requires fixed
         tasks, repeated runs, latency reporting, and negative results—not a demo score.{" "}
-        <Citation href="/docs/operations/roadmap">See what still needs evidence</Citation>.
+        <Citation href={sitePath("/docs/operations/roadmap")}>See what still needs evidence</Citation>.
       </>
     ),
   },
@@ -147,7 +148,7 @@ const faqs = [
         replace domain ownership, independent tests, security review, deployment controls, or final
         human and CI authority. If a page says otherwise, it is overselling the protocol rather than
         describing its current evidence boundary.{" "}
-        <Citation href="/docs/concepts/overview">Read what LMP does not claim</Citation>.
+        <Citation href={sitePath("/docs/concepts/overview")}>Read what LMP does not claim</Citation>.
       </>
     ),
   },
@@ -160,7 +161,7 @@ const faqs = [
         cost and latency numbers, failure cases, and artifacts anyone can inspect. The strongest
         claim should be no stronger than the result proves. “Designed to” and “under test” are more
         credible than calling an unverified capability hardware-enforced.{" "}
-        <Citation href="/docs/operations/quality-checks">Review the quality checklist</Citation>.
+        <Citation href={sitePath("/docs/operations/quality-checks")}>Review the quality checklist</Citation>.
       </>
     ),
   },

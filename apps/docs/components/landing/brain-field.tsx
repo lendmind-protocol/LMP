@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { sitePath } from "@/lib/site";
 
 export function BrainField() {
   return (
@@ -7,7 +8,7 @@ export function BrainField() {
       aria-label="Animated ASCII mind portrait"
     >
       <Image
-        src="/assets/ascii-magic-transparent.gif"
+        src={sitePath("/assets/ascii-magic-transparent.gif")}
         alt=""
         width={1312}
         height={1199}

@@ -1,6 +1,7 @@
 "use client";
 
 import { Search } from "lucide-react";
+import { sitePath } from "@/lib/site";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
@@ -46,7 +47,7 @@ export function MindVaultPreview() {
             </p>
           </div>
           <Link
-            href="/docs/reference/mind-vault"
+            href={sitePath("/docs/reference/mind-vault")}
             className="inline-flex min-h-11 items-center gap-2 font-mono text-[11px] uppercase tracking-[0.12em] text-white/65 hover:text-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
           >
             Open the vault <span aria-hidden="true">↗</span>
@@ -75,7 +76,7 @@ export function MindVaultPreview() {
         {visible.length ? (
           visible.map(([name, id, stack, status, provenance], index) => (
             <Link
-              href={`/docs/reference/mind-vault#${id}`}
+              href={sitePath(`/docs/reference/mind-vault#${id}`)}
               key={id}
               className="grid min-h-20 gap-3 px-5 py-4 transition-colors duration-200 hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400 sm:grid-cols-[2rem_minmax(0,1fr)_10rem_10rem_6rem] sm:items-center sm:gap-4 sm:px-8"
             >
