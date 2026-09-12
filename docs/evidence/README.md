@@ -15,4 +15,7 @@ These files are generated from commands run in this checkout. They are evidence 
 | [`self-hosting-evaluation.json`](./self-hosting-evaluation.json) | The real enforced LMP-on-LMP artifact produced by the Rust evaluator. |
 | [`docker-qualification.json`](./docker-qualification.json) | The real Docker qualification artifact, when Docker is available. |
 
-The release-candidate profile is intentionally not marked complete while external cross-platform artifacts, deployment, and independent review are absent. No placeholder CID or digest is used to make that gate green.
+The release-candidate profile is intentionally not marked complete while the
+macOS x86_64 hosted artifact, immutable public package retrieval, and
+independent review are absent. No placeholder CID or digest is used to make
+that gate green.

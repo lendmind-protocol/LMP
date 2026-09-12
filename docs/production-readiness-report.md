@@ -38,7 +38,9 @@ The GitHub Pages deployment at `https://lendmind-protocol.github.io/LMP/` was
 published by workflow run `34699927888` and probed on 2026-09-12. The root
 served HTTP 200 and `/docs/` served the expected documentation title. The
 former Vercel target remains unavailable and is not counted as deployment
-evidence.
+evidence. Hosted qualification run [34700933633](https://github.com/lendmind-protocol/LMP/actions/runs/34700933633)
+passed Linux x86_64, macOS arm64, and Windows x86_64 build/package/smoke jobs;
+the macOS x86_64 job remains queued, so the full matrix is not yet complete.
 
 The local checkout currently returns `LOCAL_QUALIFIED` from its deliberately
 bounded core-runtime scope:
@@ -53,10 +55,10 @@ Its latest machine-readable output is `lmp-test-results/lmp-on-lmp-reality.json`
 the run verifies the declared local toolchains and Docker gate, while retaining
 five partial Mind evaluations because their configured scopes expose unsupported
 or failing checks.
-`ci` adds the Rust format and workspace-test gates. `release-candidate` remains `BLOCKED` until
-external deployment, cross-platform execution artifacts, and independent review
-evidence are supplied. The command never emits an unbounded “production-ready”
-claim.
+`ci` adds the Rust format and workspace-test gates. `release-candidate` remains
+`BLOCKED` until immutable package retrieval, the remaining cross-platform
+execution artifact, and independent review evidence are supplied. The command
+never emits an unbounded “production-ready” claim.
 
 ## Quality improvement evidence
 
