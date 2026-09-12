@@ -31,7 +31,11 @@ def load_json(source: str) -> dict:
     return json.loads(Path(source).read_text(encoding="utf-8"))
 
 
-def fetch_cid(cid: str, gateways: tuple[str, ...]) -> tuple[bool, str]:
+def fetch_cid(
+    cid: str,
+    gateways: tuple[str, ...],
+    expected_digest: str | None = None,
+) -> tuple[bool, str]:
     failures: list[str] = []
     for template in gateways:
         url = template.format(cid=cid)
@@ -39,6 +43,13 @@ def fetch_cid(cid: str, gateways: tuple[str, ...]) -> tuple[bool, str]:
             request = urllib.request.Request(url, headers={"User-Agent": "lmp-release-gate/0.1"})
             with urllib.request.urlopen(request, timeout=15) as response:
                 if response.status == 200:
+                    if expected_digest is not None:
+                        actual_digest = hashlib.sha256(response.read()).hexdigest()
+                        if actual_digest != expected_digest:
+                            failures.append(
+                                f"{url}: content digest mismatch (expected {expected_digest}, got {actual_digest})"
+                            )
+                            continue
                     return True, url
                 failures.append(f"{url}: HTTP {response.status}")
         except OSError as error:
@@ -113,7 +124,7 @@ def validate_registry(
         if not isinstance(cid, str) or not CID.fullmatch(cid):
             errors.append(f"{identifier}: missing or syntactically invalid immutable IPFS CID")
         elif verify_cids:
-            reachable, detail = fetch_cid(cid, gateways)
+            reachable, detail = fetch_cid(cid, gateways, digest if isinstance(digest, str) else None)
             if not reachable:
                 errors.append(f"{identifier}: IPFS CID could not be retrieved from a configured gateway: {detail}")
         if verify_manifests:

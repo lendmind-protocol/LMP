@@ -1,5 +1,7 @@
 import importlib.util
+import hashlib
 import unittest
+from unittest.mock import Mock, patch
 from pathlib import Path
 
 
@@ -107,7 +109,7 @@ class RegistryReleaseGateTests(unittest.TestCase):
             ]
         }
 
-        def unavailable(_cid, _gateways):
+        def unavailable(_cid, _gateways, _expected_digest=None):
             return False, "gateway unavailable"
 
         original = MODULE.fetch_cid
@@ -119,6 +121,22 @@ class RegistryReleaseGateTests(unittest.TestCase):
 
         self.assertEqual(len(errors), 1)
         self.assertIn("could not be retrieved", errors[0])
+
+    def test_cid_retrieval_rejects_content_digest_mismatch(self):
+        payload = b"retrieved bytes"
+        response = Mock()
+        response.status = 200
+        response.read.return_value = payload
+        response.__enter__ = lambda value: response
+        response.__exit__ = Mock(return_value=False)
+        with patch.object(MODULE.urllib.request, "urlopen", return_value=response):
+            reachable, detail = MODULE.fetch_cid(
+                "bafy" + "a" * 56,
+                ("https://gateway.example/ipfs/{cid}",),
+                hashlib.sha256(b"different bytes").hexdigest(),
+            )
+        self.assertFalse(reachable)
+        self.assertIn("content digest mismatch", detail)
 
     def test_rejects_an_invalid_complete_package_file_contract(self):
         errors = MODULE.validate_registry(
