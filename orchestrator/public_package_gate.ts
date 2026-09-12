@@ -51,6 +51,30 @@ for (const [relative, expectedName] of packages) {
       .filter(([, version]) => version.startsWith("workspace:"))
       .map(([name, version]) => `${name}@${version}`);
     if (unresolved.length) failures.push(`${relative}: packed manifest has workspace dependencies: ${unresolved.join(", ")}`);
+    if (expectedName === "create-lmp") {
+      execFileSync("tar", ["-xzf", pack.filename, "-C", staging]);
+      execFileSync(
+        process.execPath,
+        [
+          join(staging, "package", "dist", "bin.js"),
+          "--yes",
+          "--agent",
+          "cursor",
+          "--mind",
+          "tj-ponytail",
+          "--stack",
+          "typescript-node",
+          "--strategy",
+          "greenfield",
+          join(staging, "workspace"),
+        ],
+        {
+          cwd: staging,
+          env: { ...process.env, LMP_DISABLE_RUNTIME_DOWNLOAD: "1", NO_COLOR: "1" },
+          stdio: "ignore",
+        },
+      );
+    }
   } finally {
     await rm(staging, { recursive: true, force: true });
   }
