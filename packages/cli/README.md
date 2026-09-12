@@ -28,6 +28,11 @@ adapter, endpoint, and credentials are explicitly configured. It does not
 invent a CID or silently upload a profile. The Rust runtime remains the source
 of truth for evaluation and signature enforcement.
 
+When the workspace already has an LMP-generated enforced Git boundary, `use`
+updates that generated hook to the selected Mind. It refuses to replace an
+unrecognized project hook, so switching policy cannot silently misrepresent the
+repository’s enforcement boundary.
+
 The standalone Rust `lmp` release binary embeds the same signed baseline at
 build time. Its `lmp init --baseline` path therefore works from a clean
 directory without access to the LMP source checkout.
