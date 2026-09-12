@@ -9,7 +9,7 @@ global_invariants = [
 [mind]
 id = "lmp:mind:lmp-protocol-core"
 version = "1.0.0"
-digest = "sha256:b53ce1edade44a848c5bad93afa6bdd46e977aad94fd09c2b7f7a2d25dbf79a0"
+digest = "sha256:461208cf555146a87218fae4445c6547f582c9f560fcb954e27e58fd30b22398"
 path = "registry/minds/lmp-protocol-core"
 require_signature = true
 
