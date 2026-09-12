@@ -120,6 +120,46 @@ fn configured_root() -> PathBuf {
         .map(PathBuf::from)
         .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")))
 }
+
+fn discover_minds(root: &std::path::Path) -> Vec<String> {
+    fn visit(root: &std::path::Path, directory: &std::path::Path, found: &mut Vec<String>) {
+        let Ok(entries) = std::fs::read_dir(directory) else {
+            return;
+        };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_symlink() {
+                continue;
+            }
+            if path.is_dir() {
+                visit(root, &path, found);
+                continue;
+            }
+            if path.file_name().and_then(|name| name.to_str()) != Some("mind.json") {
+                continue;
+            }
+            let Ok(relative) = path.strip_prefix(root) else {
+                continue;
+            };
+            found.push(relative.to_string_lossy().replace('\\', "/"));
+        }
+    }
+
+    let mut found = Vec::new();
+    for directory in [
+        root.join("profiles"),
+        root.join("registry/minds"),
+        root.join("packages/create-lmp/profiles"),
+    ] {
+        if directory.is_dir() {
+            visit(root, &directory, &mut found);
+        }
+    }
+    found.sort();
+    found.dedup();
+    found
+}
+
 fn safe_local_path(value: &str) -> Result<PathBuf, String> {
     let root = configured_root();
     let candidate = PathBuf::from(value);
@@ -150,14 +190,15 @@ fn call(name: &str, args: &Value) -> Result<Value, String> {
     match name {
         "lmp_list_minds" => {
             let root = configured_root();
-            let mut minds = Vec::new();
-            for relative in [
-                "profiles/baseline/mind.json",
-                "profiles/typescript-minimal/mind.json",
-                ".lending-mind/mind.json",
-            ] {
-                if root.join(relative).is_file() {
-                    minds.push(relative);
+            let mut minds = discover_minds(&root);
+            if args
+                .get("includeLocalWorkspace")
+                .and_then(Value::as_bool)
+                .unwrap_or(false)
+            {
+                let local = root.join(".lending-mind/mind.json");
+                if local.is_file() {
+                    minds.push(".lending-mind/mind.json".into());
                 }
             }
             if !args
@@ -167,6 +208,7 @@ fn call(name: &str, args: &Value) -> Result<Value, String> {
             {
                 minds.retain(|path| !path.starts_with(".lending-mind/"));
             }
+            minds.sort();
             Ok(json!({"minds": minds}))
         }
         "lmp_get_instructions" => {
@@ -919,6 +961,22 @@ mod tests {
         assert_eq!(result["isError"], false);
         assert!(result["content"].is_array());
         assert!(result["structuredContent"].is_object());
+    }
+
+    #[test]
+    fn mind_discovery_includes_all_canonical_profile_roots() {
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../..")
+            .canonicalize()
+            .expect("workspace root should exist");
+        let minds = discover_minds(&root);
+        assert!(minds.len() >= 11, "expected canonical registry profiles");
+        assert!(minds
+            .iter()
+            .any(|path| path == "registry/minds/linux-kernel/mind.json"));
+        assert!(minds
+            .iter()
+            .any(|path| path == "profiles/typescript-minimal/mind.json"));
     }
 
     #[test]
