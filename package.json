@@ -29,6 +29,7 @@
     "verify:evaluator-integration": "pnpm --filter @lending-mind/sdk build && pnpm --filter @lending-mind/internal-evaluator build && tsx orchestrator/evaluator_integration_evidence.ts",
     "verify:public-packages": "tsx orchestrator/public_package_gate.ts",
     "verify:docs": "python3 orchestrator/docs_quality_gate.py",
+    "verify:rule-contracts": "python3 orchestrator/rule_contract_gate.py",
     "verify:evidence-boundary": "python3 orchestrator/evidence_boundary_gate.py docs/claim-ledger.md",
     "verify:self-audit": "python3 orchestrator/self_audit.py",
     "verify:lmp-on-lmp": "python3 orchestrator/lmp_on_lmp.py",

@@ -44,6 +44,8 @@ jobs:
         run: pnpm verify:public-packages
       - name: Typecheck JavaScript workspace
         run: pnpm typecheck
+      - name: Verify every declared rule has an evaluator contract
+        run: pnpm verify:rule-contracts
       - name: Build documentation portal
         run: pnpm --filter @lending-mind/docs build
       - run: cargo fmt --all -- --check

@@ -30,6 +30,8 @@ jobs:
         run: pnpm validate:skills
       - name: Verify every canonical provenance source by its declared bytes
         run: pnpm verify:provenance
+      - name: Verify every declared rule has an evaluator contract
+        run: pnpm verify:rule-contracts
       - run: pnpm verify:self-hosting
       - run: cargo test --workspace --locked
       - run: pnpm verify:docs

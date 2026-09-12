@@ -1,0 +1,96 @@
+{
+  "$schema": "https://lmp-six.vercel.app/schema/rule-evaluator-map-v1.json",
+  "version": 1,
+  "rules": {
+    "architecture.boundary": {
+      "evaluator": "rust",
+      "implementation": "crates/lmp-core/src/evaluator.rs",
+      "scope": ["declared boundary metadata"],
+      "limitation": "Does not prove runtime dependency isolation."
+    },
+    "ast.unsafe-boundary": {
+      "evaluator": "rust",
+      "implementation": "crates/lmp-core/src/ast.rs",
+      "scope": ["Rust unsafe blocks"],
+      "limitation": "Does not prove that safe code is correct."
+    },
+    "commands.allowlist": {
+      "evaluator": "rust",
+      "implementation": "crates/lmp-core/src/self_hosting.rs",
+      "scope": ["configured commands"],
+      "limitation": "Does not prove an allowed command is safe for every workspace."
+    },
+    "complexity.cyclomatic": {
+      "evaluator": "rust",
+      "implementation": "crates/lmp-core/src/ast.rs",
+      "scope": ["Rust functions"],
+      "limitation": "The metric does not assess domain correctness."
+    },
+    "database.app-layer-join": {
+      "evaluator": "typescript",
+      "implementation": "packages/evaluator/src/index.ts",
+      "scope": ["TypeScript and JavaScript source"],
+      "limitation": "The heuristic requires domain review for unusual query abstractions."
+    },
+    "dependencies.deny": {
+      "evaluator": "rust",
+      "implementation": "crates/lmp-core/src/evaluator.rs",
+      "scope": ["package manifests"],
+      "limitation": "Does not replace vulnerability scanning or lockfile review."
+    },
+    "security.artifact-redaction": {
+      "evaluator": "rust",
+      "implementation": "crates/lmp-artifacts/src/lib.rs",
+      "scope": ["evaluation artifact privacy metadata"],
+      "limitation": "Pattern checks cannot identify every secret format."
+    },
+    "security.hardcoded-secret": {
+      "evaluator": "rust-and-typescript",
+      "implementation": "crates/lmp-core/src/evaluator.rs; packages/evaluator/src/index.ts",
+      "scope": ["supported source files"],
+      "limitation": "Heuristic detection cannot identify every secret."
+    },
+    "security.insecure-default": {
+      "evaluator": "typescript",
+      "implementation": "packages/evaluator/src/index.ts",
+      "scope": ["named TypeScript and JavaScript defaults"],
+      "limitation": "Only configured patterns are evaluated."
+    },
+    "typescript.any": {
+      "evaluator": "rust-and-typescript",
+      "implementation": "crates/lmp-core/src/evaluator.rs; packages/evaluator/src/index.ts",
+      "scope": ["TypeScript and JavaScript source"],
+      "limitation": "Generated and unsupported-language code is outside this check."
+    },
+    "typescript.console": {
+      "evaluator": "rust-and-typescript",
+      "implementation": "crates/lmp-core/src/evaluator.rs; packages/evaluator/src/index.ts",
+      "scope": ["TypeScript and JavaScript source"],
+      "limitation": "Static analysis cannot judge whether a log is operationally useful."
+    },
+    "typescript.duplicate-logic": {
+      "evaluator": "typescript",
+      "implementation": "packages/evaluator/src/index.ts",
+      "scope": ["TypeScript and JavaScript functions"],
+      "limitation": "Normalization can miss semantically equivalent implementations."
+    },
+    "typescript.eval": {
+      "evaluator": "rust-and-typescript",
+      "implementation": "crates/lmp-core/src/evaluator.rs; packages/evaluator/src/index.ts",
+      "scope": ["supported TypeScript and JavaScript source"],
+      "limitation": "Runtime behavior outside parsed files is not assessed."
+    },
+    "typescript.type-error": {
+      "evaluator": "typescript",
+      "implementation": "packages/evaluator/src/index.ts",
+      "scope": ["tsconfig-included source"],
+      "limitation": "Diagnostics depend on the repository's compiler configuration and installed declarations."
+    },
+    "typescript.unused-variable": {
+      "evaluator": "typescript",
+      "implementation": "packages/evaluator/src/index.ts",
+      "scope": ["initialized non-exported TypeScript bindings"],
+      "limitation": "Intentional side effects and dynamic access may require review."
+    }
+  }
+}
