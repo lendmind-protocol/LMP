@@ -57,7 +57,7 @@ The LMP MCP adapter receives the host request and keeps a persistent Rust sessio
 
 By setting up the protocol this way, the workspace contract remains portable across agent vendors. LMP uses their **file-reading habits** to make the active policy discoverable, and their **MCP capabilities** to pass requests to the local Rust validation rules. The host still needs to consume `.lmp_telemetry/agent-mcp.json`; onboarding does not silently edit global agent settings, and a missing adapter is reported rather than treated as enforcement.
 
-To understand what success looks like under the Lending-Mind Protocol (LMP), we must look at the objective output code. When system forces an AI agent to operate under its constraints, the code changes significantly in architecture, complexity, and performance metrics. Below are three side-by-side, universal examples showing the **Expectation vs. Result** across different tech stacks, highlighting exactly how LMP transforms "internet-average AI code" into elite, production-grade systems architecture.
+To understand what success can look like under the Lending-Mind Protocol (LMP), compare objective code and review evidence. When an agent operates under declared constraints, the resulting patch may change in architecture, complexity, and measured checks. The three side-by-side examples below are illustrative comparisons across different stacks—not universal outcomes or proof that LMP transforms every patch into production-grade software.
 
 ---
 
