@@ -4,7 +4,11 @@ import { execFile } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
-import { OciRegistryClient } from "@lending-mind/internal-registry";
+// This script runs from the repository root, which is not a workspace package
+// and therefore does not receive a root-level pnpm link for the private registry
+// package. Import the built package by its workspace-relative path so the same
+// command works locally and in the release workflow after the documented build.
+import { OciRegistryClient } from "../packages/registry/dist/index.js";
 
 const root = resolve(import.meta.dirname, "..");
 const registry = process.env.LMP_OCI_REGISTRY ?? "https://ghcr.io";
