@@ -7,12 +7,14 @@
   "description": "Initialize Lending-Mind Protocol in a workspace.",
   "license": "Apache-2.0",
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "prepack": "pnpm build",
     "test": "node --test bin.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
-  "files": ["bin.ts", "README.md", "profiles"],
+  "files": ["dist", "README.md", "profiles"],
   "bin": {
-    "create-lmp": "bin.ts"
+    "create-lmp": "dist/bin.js"
   },
   "engines": {
     "node": ">=22"

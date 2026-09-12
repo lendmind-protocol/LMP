@@ -34,7 +34,11 @@ for (const [relative, expectedName] of packages) {
       cwd: directory,
       encoding: "utf8",
     });
-    pack = JSON.parse(output) as typeof pack;
+    // pnpm prints lifecycle-script output before its JSON payload (notably
+    // when create-lmp runs its prepack build). Parse the structured payload
+    // from the final JSON object rather than assuming stdout is JSON-only.
+    const payloadStart = output.lastIndexOf("\n{");
+    pack = JSON.parse(output.slice(payloadStart >= 0 ? payloadStart + 1 : 0)) as typeof pack;
     const packedManifest = JSON.parse(
       execFileSync("tar", ["-xOf", pack.filename, "package/package.json"], {
         encoding: "utf8",
@@ -55,7 +59,7 @@ for (const [relative, expectedName] of packages) {
   if (bad.length) failures.push(`${relative}: release contains test/build files: ${bad.join(", ")}`);
   if (!files.includes("package.json")) failures.push(`${relative}: package.json is missing from release`);
   const hasRuntime = expectedName === "create-lmp" || expectedName === "lmp"
-    ? files.includes("bin.ts")
+    ? files.includes("bin.ts") || files.includes("dist/bin.js")
     : files.some((path) => path.startsWith("dist/"));
   if (!hasRuntime) failures.push(`${relative}: runtime output is missing from release`);
   verified.push({ name: manifest.name, version: manifest.version, files: files.length });

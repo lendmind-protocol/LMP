@@ -11,8 +11,13 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const packageRoot = dirname(fileURLToPath(import.meta.url));
-const profileRoot = process.env.LMP_PROFILE_ROOT ?? join(packageRoot, "profiles");
-const packageManifest = JSON.parse(await readFile(join(packageRoot, "package.json"), "utf8"));
+const packageDataRoot = existsSync(join(packageRoot, "package.json"))
+  ? packageRoot
+  : dirname(packageRoot);
+const profileRoot = process.env.LMP_PROFILE_ROOT ?? join(packageDataRoot, "profiles");
+const packageManifest = JSON.parse(
+  await readFile(join(packageDataRoot, "package.json"), "utf8"),
+);
 const args = process.argv.slice(2);
 const valueFlags = new Set(["--agent", "--mind", "--stack", "--strategy"]);
 const workspaceArg = args.find((value, index) => !value.startsWith("--") && !valueFlags.has(args[index - 1]));
