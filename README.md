@@ -15,6 +15,9 @@ LMP turns explicit engineering preferences into signed Mind Packages, bounded ev
 </div>
 
 > [!WARNING]
+> The hosted Website and Documentation links are configured release targets, not a current availability claim. The last verified probe on 2026-09-12 returned HTTP 404 for the hosted root and `/registry.json`; use the repository documentation until deployment evidence is published.
+
+> [!WARNING]
 > LMP is a local-first control plane, not a claim that static analysis proves software quality. Signatures establish content integrity and key possession; they do not prove authorship, correctness, or good policy. Human review remains part of the boundary.
 
 ## The short version

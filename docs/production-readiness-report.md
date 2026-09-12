@@ -34,6 +34,10 @@ outcomes beyond a strong ordinary engineering stack.
 
 ## Production qualification
 
+The configured hosted target `https://lmp-six.vercel.app/` was probed on
+2026-09-12; both `/` and `/registry.json` returned HTTP 404. The target is
+therefore not counted as deployed evidence.
+
 The local checkout currently returns `LOCAL_QUALIFIED` from its deliberately
 bounded core-runtime scope:
 
