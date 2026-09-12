@@ -8,6 +8,7 @@ const packages = [
   ["packages/core", "@lending-mind/sdk"],
   ["packages/skill-schema", "@lending-mind/skill"],
   ["packages/cli", "@lending-mind/lmp"],
+  ["packages/lmp", "lmp"],
   ["packages/mcp-server", "@lending-mind/mcp"],
   ["packages/create-lmp", "create-lmp"],
 ];
@@ -31,7 +32,7 @@ for (const [relative, expectedName] of packages) {
   const bad = files.filter((path) => forbiddenPath.test(path));
   if (bad.length) failures.push(`${relative}: release contains test/build files: ${bad.join(", ")}`);
   if (!files.includes("package.json")) failures.push(`${relative}: package.json is missing from release`);
-  const hasRuntime = expectedName === "create-lmp"
+  const hasRuntime = expectedName === "create-lmp" || expectedName === "lmp"
     ? files.includes("bin.js")
     : files.some((path) => path.startsWith("dist/"));
   if (!hasRuntime) failures.push(`${relative}: runtime output is missing from release`);

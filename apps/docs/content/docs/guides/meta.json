@@ -2,11 +2,12 @@
   "title": "Guides",
   "description": "Task-oriented implementation guides.",
   "pages": [
+    "ai-project-onboarding",
+    "community-marketplace",
     "mcp-integration",
     "author-a-mind",
     "mind-harvesting",
     "installation",
-    "release",
     "ci",
     "playground"
   ]

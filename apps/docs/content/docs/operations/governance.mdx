@@ -1,0 +1,35 @@
+---
+title: Governance
+description: How LMP policies, packages, and protocol changes are reviewed.
+---
+
+Governance keeps Mind evolution reviewable, attributable, and reproducible. A signed package authenticates its bytes; it does not make every policy claim universally correct.
+
+When the implementation itself changes, use the [self-governance and trust
+loop](/docs/operations/self-governance) to verify the Rust parser, signatures,
+sandbox configuration, and repository-level audit before making a release claim.
+
+## Proposal process
+
+Material changes should:
+
+1. State the problem and target scope.
+2. Identify the affected Mind, schema, evaluator, or integration.
+3. Provide source material and provenance.
+4. Describe rules, trade-offs, compatibility impact, and migration.
+5. Add compliant and violating fixtures.
+6. Run the relevant evaluation and benchmark suite.
+7. Obtain the required review.
+8. Release a versioned, signed artifact.
+
+Missing or mismatched evidence must prevent an accepted state. The CLI should not silently promote a proposal when its artifacts are absent, blocked, or in error.
+
+## Review boundaries
+
+- Mind authors own provenance, interpretation, rationale, and fixtures.
+- Core maintainers own schemas, evaluators, and compatibility guarantees.
+- Security reviewers assess trust boundaries, execution, secrets, and supply-chain changes.
+- Release maintainers sign and publish approved artifacts.
+- Consumers pin versions and decide whether to adopt updates.
+
+For the complete policy, see the repository’s [governance document](https://github.com/lendmind-protocol/LMP/blob/main/docs/governance.md).

@@ -1,5 +1,9 @@
-> [!NOTE]
-> This File Contain a explaination of Lending-mind Protocol why this is different and how this looks like.
+> [!WARNING]
+> This is a legacy explanatory draft. It mixes current implementation details
+> with aspirational examples and must not be used as a product capability
+> contract. For the current behavior, read the [canonical overview](../apps/docs/content/docs/concepts/overview.mdx),
+> [capability inventory](../apps/docs/content/docs/operations/capability-inventory.mdx),
+> and [release status](../apps/docs/content/docs/operations/roadmap.mdx).
 
 Right now, if you use Claude Code, Pi Agent, or standard developer tools, they all suffer from the exact same flaw: **They are brilliant juniors, but they have absolutely no common sense**.
 
@@ -299,7 +303,7 @@ func HandleMetricsDownload(w http.ResponseWriter, r *http.Request) {
 
 # Development Status
 
-- Level 1 — Style (**current state MVP**)
+- Level 1: Style (**current state MVP**)
 <p>Naming, formatting, dependency preference.</p>
 
 ```
@@ -308,7 +312,7 @@ Mind selection
 Context alignment
   ↓
 ```
-- Level 2 — Rules (Next Milestone)
+- Level 2: Rules (Next Milestone)
 <p>AST checks, complexity, required tests, banned patterns.</p>
 
 ```
@@ -317,7 +321,7 @@ Plan shaped by Mind
 Tool use shaped by Mind
   ↓
 ```
-- Level 3 — Methodology (Future Hardening Delivery)
+- Level 3: Methodology (Future Hardening Delivery)
 <p>Architecture boundaries, decision trees, trade-offs, review logic.</p>
 
 ```
@@ -326,14 +330,14 @@ Code generated under Mind
 Static / dynamic / semantic evaluation
   ↓
 ```
-- Level 4 — Behavioral loop (Future Hardening Delivery)
+- Level 4: Behavioral loop (Future Hardening Delivery)
 <p>Agent planning, tool usage, validation sequence, remediation.</p>
 
 ```
 Deviation detected
   ↓
 ```
-- Level 5 — Evidence memory (Future Hardening Delivery)
+- Level 5: Evidence memory (Future Hardening Delivery)
 <p>Artifacts, successful patterns, failures, exceptions, reviewer outcomes.</p>
 
 ```
@@ -341,7 +345,7 @@ Critique and remediation
   ↓
 ```
 
-- Level 6 — High-fidelity Mind (The Main Vision)
+- Level 6: High-fidelity Mind (The Main Vision)
 <p>Verified author or organization contributes source material, reviews behavior, signs releases, and continuously calibrates the Mind.</p>
 
 ```

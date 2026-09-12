@@ -21,6 +21,7 @@ LMP does not clone a person, reproduce private reasoning, update model weights, 
 | `lmp-mcp` | Rust stdio MCP adapter over the shared core |
 | `lmp-sync` | Offline validated profile synchronization |
 | `orchestrator/` | Python 3.11+ sandbox, benchmark, metrics, and plotting orchestration |
+| `packages/lmp` | Unscoped `npx lmp` launcher for the maintained Node.js CLI |
 | `packages/create-lmp` | TypeScript/Node.js onboarding wrapper for agent configuration files |
 
 All adapters use the shared `lmp-core` behavior. They must not implement a second evaluator or profile interpretation.
@@ -36,6 +37,16 @@ cargo run --bin lmp -- init --install-baseline
 cargo run --bin lmp -- instructions --mind skills/baseline
 cargo run --bin lmp -- evaluate --mind skills/baseline --workspace . --mode advisory --artifact-dir .lending-mind/artifacts
 ```
+
+For the packaged developer workflow, use the public launcher:
+
+```bash
+npx lmp init --baseline
+```
+
+The launcher forwards to `@lending-mind/lmp`; it does not implement a second
+evaluator. Use `npx create-lmp` when you also need agent-host configuration and
+verified runtime asset onboarding.
 
 Evaluation is advisory by default, offline, non-mutating, and does not execute commands. Enforced mode returns a non-zero status for blocking findings.
 

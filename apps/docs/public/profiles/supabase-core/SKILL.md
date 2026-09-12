@@ -1,4 +1,4 @@
-# Supabase Core — Community Archetype
+# Supabase Core: Community Archetype
 
 Apply this community archetype when data isolation and database-bound authorization are the active concerns.
 

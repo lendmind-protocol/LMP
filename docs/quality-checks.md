@@ -114,7 +114,7 @@ Use this checklist for every LMP demo, regardless of whether the target is a CLI
 - [ ] Functions, modules, and public interfaces are understandable in context.
 - [ ] Complexity, nesting, file growth, and dependency growth are measured when relevant.
 - [ ] The implementation is easy to test, modify, and delete.
-- [ ] Comments explain non-obvious intent, trade-offs, or constraints—not obvious syntax.
+- [ ] Comments explain non-obvious intent, trade-offs, or constraints, not obvious syntax.
 - [ ] The change improves or at least does not regress the repository’s code health.
 
 **Required evidence:** static findings, complexity/dependency delta when configured, and explanation of deliberate exceptions.
@@ -257,7 +257,7 @@ Use this only when claiming that LMP improves AI-assisted code generation qualit
 - [ ] The baseline condition is documented clearly.
 - [ ] The LMP condition identifies the exact Mind and evaluation loop.
 - [ ] Multiple runs account for model nondeterminism.
-- [ ] Success is evaluated with independent tests, review, security checks, or later outcomes—not only LMP's internal score.
+- [ ] Success is evaluated with independent tests, review, security checks, or later outcomes, not only LMP's internal score.
 - [ ] Cost, latency, failed runs, and agent iteration count are reported.
 - [ ] Negative or inconclusive results are published.
 - [ ] The conclusion is limited to the measured tasks, models, repositories, and conditions.

@@ -1,0 +1,23 @@
+---
+title: Quality checks
+description: The evidence checklist behind a trustworthy LMP result.
+---
+
+A passing LMP result means the configured checks and evidence requirements passed. It does not guarantee defect-free code, complete security, or production readiness without human accountability.
+
+## Evidence dimensions
+
+LMP evaluates a change across task fit, behavior correctness, repository fit, maintainability, security and privacy, reliability, performance, delivery safety, and evidence integrity.
+
+## Minimum checklist
+
+- Use a real repository or an explicitly labeled fixture.
+- Pin the repository revision and name the selected Mind and version.
+- Record acceptance criteria, scope, errors, and important edge cases.
+- Distinguish source evidence from interpretation and executable rules.
+- Show the changed files and affected package scope.
+- Test both compliant and violating examples for hard rules.
+- Run relevant tests, type checks, builds, and independent review.
+- Record skipped checks, failures, latency, resource use, and known limitations.
+
+The strongest claim should be no stronger than the evidence supports. For the full checklist, see the repository’s [quality-checks document](https://github.com/lendmind-protocol/LMP/blob/main/docs/quality-checks.md).

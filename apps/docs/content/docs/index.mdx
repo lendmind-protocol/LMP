@@ -7,13 +7,45 @@ Lending-Mind Protocol (LMP) is a local-first protocol for turning explicit engin
 
 If you are deciding whether LMP belongs in your workflow, start with one question: can another person see which engineering preference affected a generated change and reproduce the check that accepted or rejected it? LMP is designed to make that answer concrete.
 
-## Choose a path
+## Start here
 
-- **New to LMP:** Start with [the protocol model](/docs/concepts/overview), then follow the [Getting started onboarding](/docs/getting-started).
-- **Integrating an agent:** Read [MCP integration](/docs/guides/mcp-integration), including the host lifecycle and JSON-RPC contract.
-- **Authoring a profile:** Follow [author a Mind package](/docs/guides/author-a-mind).
-- **Evaluating a brownfield repository:** Read the [systems architecture](/docs/architecture/overview) and [benchmark analytics](/docs/operations/benchmark-analytics).
-- **Contributing:** Use the repository engineering documents alongside this product guide.
+Choose the page that matches the decision you need to make:
+
+| If you want to… | Start with | You will leave with |
+| --- | --- | --- |
+| Understand the protocol | [What is LMP?](/docs/concepts/overview) | The policy loop, boundaries, and evidence model |
+| Run LMP in a project | [Getting started](/docs/getting-started) | A local installation and first evaluation |
+| Connect an agent | [MCP integration](/docs/guides/mcp-integration) | A working local JSON-RPC connection |
+| Select a point of view | [Mind Vault](/docs/reference/mind-vault) | A profile with visible provenance and install state |
+| Add guidance to a hosted AI project | [AI project onboarding](/docs/guides/ai-project-onboarding) | A one-click plain-English context file |
+| Assess a repository | [Systems architecture](/docs/architecture/overview) | The scope, isolation, and runtime boundaries |
+| Check the evidence | [Evaluation results](/docs/reference/results) | A reproducible interpretation of a result |
+| Operate a deployment | [Deployment verification](/docs/operations/deployment-verification) | A verified portal and registry check |
+
+The portal is organized around those jobs. Concepts explain the model. Guides
+help you perform a task. Architecture explains implementation boundaries.
+Reference defines stable contracts. Operations describes evidence, release state,
+and system limits.
+
+## Which page is canonical?
+
+The portal keeps one authoritative page for each kind of decision:
+
+- [What is LMP?](/docs/concepts/overview) owns the problem, protocol loop,
+  evidence trail, and claim boundaries.
+- [Mind Vault](/docs/reference/mind-vault) owns the package schema, review
+  order, provenance, and distribution contract.
+- [Systems architecture](/docs/architecture/overview) owns component
+  boundaries, changed-file evaluation, isolation, and scaling mechanics.
+- [Evaluation results](/docs/reference/results) owns metrics, interpretation,
+  the proof matrix, and real-world demos.
+- [Versioning and release notes](/docs/reference/versioning) owns release
+  versions, notes, and the fail-closed publication decision.
+- [Deployment verification](/docs/operations/deployment-verification) owns
+  portal, registry, and release verification steps.
+
+Short legacy concept pages point back to these canonical pages so the same rule
+is not maintained in multiple places.
 
 ## A short version of the workflow
 
@@ -47,4 +79,4 @@ When a page says that LMP "proves" something, look for the command, fixture, or 
 
 ## What to read next
 
-If the terms are new, read [What is LMP?](/docs/concepts/overview). If you want to run it now, use the [Getting started onboarding](/docs/getting-started). If you are building an agent adapter, go to [MCP integration](/docs/guides/mcp-integration). The [release readiness](/docs/operations/release-readiness) page explains what still needs evidence before a public release.
+If the terms are new, read [What is LMP?](/docs/concepts/overview). If you want to run it now, use the [Getting started onboarding](/docs/getting-started). If you are building an agent adapter, go to [MCP integration](/docs/guides/mcp-integration). The [versioning and release notes](/docs/reference/versioning) page explains what still needs evidence before a public release.

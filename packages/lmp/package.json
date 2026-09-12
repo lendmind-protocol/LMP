@@ -1,0 +1,25 @@
+{
+  "name": "lmp",
+  "version": "0.1.0",
+  "description": "The npx launcher for the Lending-Mind Protocol CLI.",
+  "type": "module",
+  "bin": {
+    "lmp": "bin.js"
+  },
+  "files": ["bin.js", "README.md"],
+  "dependencies": {
+    "@lending-mind/lmp": "workspace:*"
+  },
+  "scripts": {
+    "test": "node --test bin.test.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lendmind-protocol/LMP.git",
+    "directory": "packages/lmp"
+  },
+  "license": "Apache-2.0"
+}

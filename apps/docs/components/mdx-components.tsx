@@ -1,4 +1,4 @@
-import { Mermaid } from "@/components/mdx/mermaid";
+import { ProtocolDiagram } from "@/components/mdx/protocol-diagram";
 import {
   BenchmarkDashboard,
   MindVault,
@@ -18,7 +18,7 @@ export function getMdxComponents(components?: MDXComponents): MDXComponents {
     Steps,
     Badge,
     ...Tabs,
-    Mermaid,
+    Mermaid: ProtocolDiagram,
     BenchmarkDashboard,
     MindVault,
     OnboardingSelector,

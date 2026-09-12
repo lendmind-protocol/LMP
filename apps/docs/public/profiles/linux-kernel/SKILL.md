@@ -1,4 +1,4 @@
-# Linux Kernel Defensive Systems — Community Archetype
+# Linux Kernel Defensive Systems: Community Archetype
 
 Apply this community archetype when low-level ownership, allocation, and complexity are central concerns.
 

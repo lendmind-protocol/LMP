@@ -7,6 +7,11 @@ The repository includes `install.sh` as an idempotent local bootstrap. It
 provisions missing directories, builds the real Rust workspace, builds the
 required Docker sandbox image, and runs the 38-check qualification matrix.
 
+**This is the contributor/operator verification path, not the normal user
+onboarding path.** A project user should start with [Getting started](/docs/getting-started)
+and run `npx create-lmp`; use this page when you are validating the LMP
+checkout itself or preparing local benchmark evidence.
+
 It does not replace `Cargo.toml`, `.gitignore`, Mind Packages, policies, or
 documentation. That is intentional: an installer must not destroy an existing
 checkout or silently replace the rules it is supposed to verify.
@@ -19,7 +24,9 @@ From the repository root:
 ./install.sh
 ```
 
-The command requires Cargo, Python 3, Git, and a running Docker daemon. It
+The command requires [Cargo](https://doc.rust-lang.org/cargo/), [Python 3](https://docs.python.org/3/),
+[Git](https://git-scm.com/book/en/v2), and a running [Docker](https://docs.docker.com/engine/containers/resource_constraints/)
+daemon. It
 creates ignored qualification output under `lmp-test-results/` and exits
 non-zero if the Rust build, Docker setup, or qualification gate fails.
 

@@ -1,0 +1,115 @@
+---
+title: Self-governance and trust
+description: How to verify LMP when its first implementation was produced with AI assistance.
+---
+
+# Self-governance and trust
+
+LMP should not be trusted because an AI model wrote its first version. It should
+be trusted only to the extent that a person can inspect the source, run the
+checks, and reproduce the recorded result.
+
+This is the protocol's bootstrapping loop:
+
+```text
+LMP source
+  -> Rust compiler and tests
+  -> Rust evaluator audits selected LMP files
+  -> signature and sandbox checks
+  -> reviewable evidence artifact
+```
+
+The loop moves trust from the origin of a change to the evidence for that
+change. It does not make the code infallible, and a passing check is never a
+claim that the whole repository is safe.
+
+## What each layer proves
+
+| Layer | Implementation | Proves | Does not prove |
+| --- | --- | --- | --- |
+| Rust parser | `crates/lmp-core/src/ast.rs`, using `syn` | The selected Rust source can be parsed and the configured AST rules produce deterministic findings | That every design or security property is represented by a rule |
+| Rust compiler | `cargo test --workspace` | The workspace compiles and its checked-in Rust tests pass on the recorded toolchain | That untested inputs, dependencies, or policies are correct |
+| Signature gate | `crates/lmp-core/src/crypto.rs`, using Ed25519 | The exact signed bytes verify against the supplied public key and revocation rules | That the signer is a good author or that the policy is safe |
+| Sandbox boundary | `orchestrator/sandbox.py` | The requested Docker command is configured with no network, read-only mounts, dropped capabilities, and resource limits | That Docker ran successfully unless the qualification artifact says so |
+| Self-audit | `orchestrator/self_audit.py` | The listed local checks produced a pass/blocked/failed report | Production readiness, human review, or universal correctness |
+
+## Run the audit on LMP itself
+
+From a checkout with the required toolchains installed:
+
+```bash
+pnpm verify:self-audit
+```
+
+The command writes `lmp-test-results/self-audit.json`. The result is
+fail-closed:
+
+- `pass` means every required local check passed.
+- `blocked` means a prerequisite was unavailable, such as an incompatible
+  Cargo toolchain or missing Docker evidence.
+- `failed` means a required check ran and found a failure.
+
+The report records the repository revision, commands, output tails, and limits.
+Do not replace a blocked or failed report with a prose assertion.
+
+The self-audit includes the Rust workspace tests, Python orchestration tests,
+the published TypeScript CLI typecheck, the Docker policy inspection, and a
+Rust audit of `crates/lmp-core` using the baseline profile. The final audit is
+read-only. It does not mutate source, install dependencies, publish packages,
+or claim that Docker runtime evidence exists.
+
+## Full bootstrapping gate
+
+To apply a profile to a working copy before running the audit, activate the
+profile locally and then evaluate the selected scope:
+
+```bash
+npx lmp use linux-kernel
+npx lmp evaluate --mind linux-kernel --workspace . --mode enforced --json
+```
+
+`use` selects an installed local profile; it does not download, sign, or
+silently change source. The enforced evaluation returns a non-zero exit when a
+required finding or integrity boundary blocks acceptance. Keep the resulting
+artifact and rerun it after every source, profile, or evaluator change.
+
+For a release candidate, run the stronger gates after the local self-audit:
+
+```bash
+cargo build --workspace
+cargo test --workspace
+python3 -m unittest discover -s orchestrator -p 'test_*.py'
+docker build -t lmp-sandbox:local orchestrator
+python3 orchestrator/qualification_suite.py \
+  --lmp target/debug/lmp \
+  --lmpd target/debug/lmpd \
+  --mcp target/debug/lmp-mcp \
+  --output lmp-test-results/qualification-result.json
+```
+
+To evaluate the repository with the runtime directly:
+
+```bash
+target/debug/lmp evaluate \
+  --mind skills/baseline \
+  --workspace crates/lmp-core \
+  --mode audit \
+  --json > lmp-test-results/lmp-self-evaluation.json
+```
+
+An audit result is scoped evidence. If the selected files, profile, runtime,
+or toolchain changes, rerun it and keep the new artifact with the new revision.
+
+## Safe interpretation of the paradox
+
+AI assistance can generate a starting point. It cannot supply independent
+assurance. Independent assurance comes from:
+
+1. readable source and a pinned revision;
+2. deterministic parser, schema, and signature tests;
+3. negative fixtures that prove tampering and policy violations are rejected;
+4. bounded Docker qualification when runtime claims matter; and
+5. human review of the claims the checks do not encode.
+
+The honest verdict is therefore conditional: LMP is verifiable where an
+artifact says the relevant check passed, and unproven everywhere else.

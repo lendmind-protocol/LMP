@@ -25,7 +25,18 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className={cn("font-sans", geist.variable)}>
       <body>
-        <RootProvider search={{ options: { type: "static" } }}>{children}</RootProvider>
+        <RootProvider
+          search={{ options: { type: "static" } }}
+          theme={{
+            attribute: "class",
+            defaultTheme: "system",
+            disableTransitionOnChange: true,
+            enableSystem: true,
+            storageKey: "lmp-theme",
+          }}
+        >
+          {children}
+        </RootProvider>
       </body>
     </html>
   );

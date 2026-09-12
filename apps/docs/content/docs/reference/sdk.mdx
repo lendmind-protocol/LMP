@@ -1,0 +1,214 @@
+---
+title: TypeScript SDK
+description: Hash, sign, verify, redact, and work with Mind packages from Node.js.
+---
+
+# TypeScript SDK
+
+The `@lending-mind/sdk` package is the Node.js and TypeScript library for the
+data and integrity layer of LMP. It gives application code a shared set of
+protocol types and deterministic helpers for working with Mind packages and
+evaluation artifacts.
+
+The SDK is not the policy evaluator. The Rust runtime remains authoritative for
+scope resolution, evaluation, enforcement, and the final policy decision. Use
+the SDK when you are building tooling around that runtime: package publishers,
+registries, CI adapters, agent integrations, dashboards, and test fixtures.
+
+## Install
+
+```bash
+npm install @lending-mind/sdk
+```
+
+The package is ESM-only and exports its public API from one entry point:
+
+```ts
+import {
+  type EvaluationArtifact,
+  type MindPackage,
+  computePackageDigest,
+  redactSecrets,
+  sha256,
+  signEd25519,
+  verifyEd25519,
+} from "@lending-mind/sdk";
+```
+
+## Public API
+
+The package exports these stable groups from `@lending-mind/sdk`:
+
+| Export | Parameters | Returns | Use |
+| --- | --- | --- | --- |
+| `canonicalJson(value)` | JSON-compatible value | `string` | Serialize objects with sorted keys before hashing or signing |
+| `sha256(payload)` | String, bytes, or JSON value | `string` | Create a `sha256:<hex>` digest |
+| `computePackageDigest(path)` | Package directory path | `Promise<string>` | Digest a complete package manifest |
+| `generateEd25519KeyPair()` | None | Key objects | Create an in-memory signing pair |
+| `signEd25519(payload, privateKey)` | Payload and private key | `string` | Create a detached signature |
+| `verifyEd25519(payload, signature, publicKey)` | Payload, signature, public key | `boolean` | Check detached signature validity |
+| `createKeyPair(directory)` | Output directory | `Promise<{ privatePath, publicPath }>` | Write PEM key files with a protected private key |
+| `signMindPackage(path, privateKeyPath)` | Package path and key path | Digest and signature | Sign a package directory |
+| `rotateMindPackageKey(path, currentKeyPath, nextKeyDirectory)` | Package path and current/next key paths | Rotation record | Rotate a package signer after verifying the current signature |
+| `verifyMindPackage(path, publicKeyPath?)` | Package path and optional key path | Verification result | Validate package integrity and signature state |
+| `redactSecrets(value)` | JSON-compatible value | Redacted value | Remove credential-like object fields |
+| `redactText(value)` | Text | Redacted text | Remove credential-like values from logs |
+| `workspaceConfig(input?, cwd?)` | Partial config and base path | `WorkspaceConfig` | Normalize workspace metadata |
+| `readWorkspaceConfig(path)` | JSON config path | `Promise<WorkspaceConfig>` | Read and normalize workspace metadata |
+
+The type exports include `MindPackage`, `RuleDefinition`, `RuleResult`,
+`EvaluationArtifact`, `EvaluationState`, `EvaluationSummary`,
+`RegistryReference`, `PromotionRecord`, and `PromotionProposal`. An artifact
+state can be `pass`, `needs_revision`, `blocked`, or `evaluation_error`; the
+last state is fail-closed and never means acceptance. The SDK does not export
+the Rust evaluator or silently invoke an agent host.
+
+## What it is for
+
+| Capability | Use it for |
+| --- | --- |
+| Shared types | Keep Mind packages, findings, evaluation artifacts, registry entries, and promotion records consistent across tools. |
+| Canonical JSON | Produce stable serialized bytes before hashing or signing. |
+| Digests | Identify exact content with SHA-256, including complete package manifests. |
+| Ed25519 integrity | Create and verify detached signatures for package content. |
+| Redaction | Remove credential-like values before writing logs or evidence. |
+| Workspace metadata | Resolve a workspace configuration for Node-based tooling. |
+
+It is useful when a Node process needs to prepare or inspect protocol data, but
+it must not be used as a substitute for `lmp evaluate` or the Rust MCP server.
+Those paths provide the actual evaluation and enforcement boundary.
+
+## Hash a Mind package
+
+Use `sha256` for a stable digest of a JSON value, string, or byte sequence. The
+SDK canonicalizes JSON objects by sorting their keys, so equivalent objects
+produce the same digest.
+
+```ts
+import { sha256, type MindPackage } from "@lending-mind/sdk";
+
+const mind: MindPackage = {
+  id: "lmp:mind:example",
+  version: "1.0.0",
+  name: "Example Mind",
+  rules: [{ id: "errors.keep-cause", severity: "error" }],
+};
+
+const digest = sha256(mind as Parameters<typeof sha256>[0]);
+console.log(digest); // sha256:...
+```
+
+For a package on disk, `computePackageDigest` hashes the complete file
+manifest. It excludes local state such as `.git`, `node_modules`, signatures,
+and private key files.
+
+```ts
+import { computePackageDigest } from "@lending-mind/sdk";
+
+const digest = await computePackageDigest("./skills/baseline");
+```
+
+## Sign and verify content
+
+Use Ed25519 when publishing or checking a detached integrity record. Signing
+proves that the verified bytes came from the holder of the private key; it does
+not prove that the policy itself is correct or safe.
+
+```ts
+import {
+  generateEd25519KeyPair,
+  signEd25519,
+  verifyEd25519,
+} from "@lending-mind/sdk";
+
+const { publicKey, privateKey } = generateEd25519KeyPair();
+const payload = { packageId: "lmp:mind:example", version: "1.0.0" };
+const signature = signEd25519(payload, privateKey);
+
+const valid = verifyEd25519(payload, signature, publicKey);
+console.log(valid); // true
+```
+
+For a package directory, use the higher-level helpers. They create and check
+the package's detached signature files and enforce the package-manifest flow
+used by the CLI:
+
+```ts
+import {
+  createKeyPair,
+  signMindPackage,
+  verifyMindPackage,
+} from "@lending-mind/sdk";
+
+await createKeyPair("./.lending-mind/keys");
+await signMindPackage(
+  "./skills/baseline",
+  "./.lending-mind/keys/private-key.pem",
+);
+
+const result = await verifyMindPackage(
+  "./skills/baseline",
+  "./skills/baseline/signatures/public-key.pem",
+);
+console.log(result.signatureStatus); // verified, invalid, or another status
+```
+
+Keep private keys outside committed package content. Rotate a signer only from
+an already verified package with `rotateMindPackageKey`; the CLI exposes that
+same operation as `lmp skill rotate-key`.
+
+## Redact logs and evidence
+
+Redaction is intended for command output, telemetry, and evidence metadata. It
+does not encrypt data and it should not be treated as a secret store.
+
+```ts
+import { redactSecrets, redactText } from "@lending-mind/sdk";
+
+const safeMetadata = redactSecrets({
+  command: "lmp evaluate",
+  apiToken: "do-not-write-this",
+});
+
+const safeOutput = redactText("token=do-not-write-this");
+```
+
+## Workspace configuration
+
+Node tooling can normalize a workspace-relative configuration or read one from
+disk:
+
+```ts
+import { readWorkspaceConfig, workspaceConfig } from "@lending-mind/sdk";
+
+const config = workspaceConfig({
+  workspacePath: ".",
+  environment: "ci",
+});
+
+const fromDisk = await readWorkspaceConfig(".lending-mind/sdk.json");
+```
+
+## SDK versus CLI and runtime
+
+Choose the layer that owns the job:
+
+| Need | Use |
+| --- | --- |
+| Build, validate, sign, or inspect package data in a Node tool | `@lending-mind/sdk` |
+| Run an evaluation and produce an evidence artifact | `lmp evaluate` |
+| Connect an agent host over Model Context Protocol | `lmp-mcp` or `@lending-mind/mcp` |
+| Compile and validate the Mind schema | `@lending-mind/skill` and the CLI |
+| Enforce policy decisions | Rust runtime |
+
+The SDK is therefore the integration layer around LMP, not a second evaluator.
+An integration should use it for typed data, stable hashes, signatures, and
+safe serialization, then hand evaluation and enforcement to the native runtime.
+
+## Stability and trust
+
+The package follows the protocol version published with the repository. A
+valid TypeScript type or cryptographic signature does not make a Mind package
+trusted by itself: consumers must still validate the schema, inspect
+provenance, verify the signer against an operator trust root, and evaluate the
+selected workspace scope with the Rust runtime.

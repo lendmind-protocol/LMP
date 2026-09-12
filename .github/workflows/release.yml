@@ -33,8 +33,12 @@ jobs:
         run: |
           pnpm sync:public-registry
           git diff --exit-code -- registry/registry.json apps/docs/public/registry.json apps/docs/public/profiles
+      - name: Verify the product release version
+        run: python3 orchestrator/release_version_gate.py "${GITHUB_REF_NAME}"
       - name: Lint JavaScript workspace
         run: pnpm lint
+      - name: Verify documentation structure and internal routes
+        run: pnpm verify:docs
       - name: Verify publishable package boundaries
         run: pnpm verify:public-packages
       - name: Typecheck JavaScript workspace
@@ -45,6 +49,8 @@ jobs:
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace
       - run: cargo build --release --workspace
+      - name: Run the local LMP self-governance audit
+        run: pnpm verify:self-audit
       - name: Verify Rust and Node onboarding integration
         run: bash orchestrator/integration_test.sh
       - name: Measure greenfield and brownfield onboarding target
@@ -222,12 +228,13 @@ jobs:
           pnpm --filter @lending-mind/sdk build
           pnpm --filter @lending-mind/skill build
           pnpm --filter @lending-mind/lmp build
+          pnpm --filter lmp pack --dry-run
           pnpm --filter @lending-mind/mcp build
           pnpm verify:public-packages
       - name: Publish public package set in dependency order
         run: |
           test -n "$NPM_TOKEN" || { echo "NPM_TOKEN is required when PUBLISH_NPM=true" >&2; exit 1; }
-          for package in packages/core packages/skill-schema packages/cli packages/mcp-server packages/create-lmp; do
+          for package in packages/core packages/skill-schema packages/cli packages/lmp packages/mcp-server packages/create-lmp; do
             pnpm --dir "$package" publish --access public --no-git-checks
           done
         env:

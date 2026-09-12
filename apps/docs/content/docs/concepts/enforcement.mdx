@@ -5,6 +5,11 @@ description: How LMP turns an explicit engineering stance into measurable policy
 
 # Guidance, enforcement, and code quality
 
+This is a focused reference. For the complete explanation in one continuous
+reading path, start with [What is LMP?](/docs/concepts/overview), which owns the
+canonical problem statement, policy loop, enforcement boundaries, and evidence
+interpretation.
+
 LMP has two control surfaces:
 
 - **Guidance** changes the agent's available instructions before generation.
@@ -62,13 +67,14 @@ flowchart LR
   E --> B
 ```
 
-**Gate 1 — structural check.** Resolve the Mind, verify integrity, select Git
+**Gate 1: structural check.** Resolve the Mind, verify integrity, select Git
 or workspace scope, parse supported files, and emit rule IDs, locations,
 severity, evidence, and remediation.
 
 The Rust evaluator records this parser boundary in each artifact. Rust uses
-`syn-2` for Rust 2021 syntax. The TypeScript evaluator uses
-`ts-morph/typescript-compiler-api` for TypeScript and JavaScript AST traversal.
+[`syn-2`](https://docs.rs/syn/latest/syn/) for Rust 2021 syntax. The TypeScript
+evaluator uses the [TypeScript compiler API](https://github.com/microsoft/TypeScript/wiki/Using-the-Compiler-API)
+for TypeScript and JavaScript AST traversal.
 The standalone Rust path uses its deterministic `line-policy-v1` adapter for
 configured TypeScript/JavaScript lexical rules; it does not silently claim
 TypeScript compiler coverage when the Node evaluator is not running. Common Go, Python,
@@ -77,13 +83,14 @@ unsupported rather than silently counted as checked. A result with an
 unsupported language is bounded evidence, not proof that the whole repository
 was analyzed.
 
-**Gate 2 — execution check.** The Python `DockerSandbox` is an explicit step
+**Gate 2: execution check.** The Python `DockerSandbox` is an explicit step
 for scenarios that need runtime evidence. It uses read-only mounts, disabled
 networking, dropped capabilities, bounded output, CPU and PID limits, and a 128
-MiB memory ceiling. If Docker or the required image is unavailable, the
-end-to-end benchmark is blocked—not complete.
+MiB memory ceiling, following Docker's documented [resource-constraint model](https://docs.docker.com/engine/containers/resource_constraints/).
+If Docker or the required image is unavailable, the
+end-to-end benchmark is blocked, not complete.
 
-**Gate 3 — correction context.** A failed run returns the failing rule, source
+**Gate 3: correction context.** A failed run returns the failing rule, source
 location, observed value, expected constraint, and remediation. The host may
 ask for a revision, but it cannot rewrite a failed result into a pass. A
 revision is a new run with a new evidence record.
@@ -123,5 +130,5 @@ implementation is accepted. This pair is more useful than a large rule list
 with no negative case.
 
 For the reproducible benchmark against public repositories, see [Proof matrix
-and real-world demos](/docs/reference/proof-matrix). For the serialized
+and real-world demos](/docs/reference/results). For the serialized
 evidence contract, see [Reading results](/docs/reference/results).

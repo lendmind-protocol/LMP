@@ -81,7 +81,7 @@ on the same local verification and immutable-install boundary.
 - **Author/Culture:** Community-contributed UI composition pattern
 - **Primary Axioms:** Prefer accessible copy-and-paste primitives, small
   composable components, and explicit interaction states over opaque bundles.
-- **Trust Anchor:** Not published in this checkout — contribution required.
+- **Trust Anchor:** Not published in this checkout; contribution required.
 
 ### `vercel-edge`
 
@@ -89,7 +89,7 @@ on the same local verification and immutable-install boundary.
 - **Author/Culture:** Community-contributed edge-runtime pattern
 - **Primary Axioms:** Keep request paths small, isolate runtime assumptions,
   and measure cold-start behavior rather than assuming it.
-- **Trust Anchor:** Not published in this checkout — contribution required.
+- **Trust Anchor:** Not published in this checkout; contribution required.
 
 ## Backend, databases, & infrastructure
 
@@ -109,7 +109,7 @@ on the same local verification and immutable-install boundary.
 - **Author/Culture:** Community-contributed immutable-infrastructure pattern
 - **Primary Axioms:** Prefer declarative, reproducible infrastructure and make
   operational drift visible instead of relying on manual click-ops.
-- **Trust Anchor:** Not published in this checkout — contribution required.
+- **Trust Anchor:** Not published in this checkout; contribution required.
 
 ## Systems engineering & languages
 
@@ -129,7 +129,7 @@ on the same local verification and immutable-install boundary.
 - **Author/Culture:** Community-contributed Go simplicity pattern
 - **Primary Axioms:** Prefer composition, explicit error propagation, and
   readability over clever abstraction.
-- **Trust Anchor:** Not published in this checkout — contribution required.
+- **Trust Anchor:** Not published in this checkout; contribution required.
 
 ## Package standard
 

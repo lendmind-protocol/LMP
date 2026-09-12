@@ -3,7 +3,10 @@ title: CLI reference
 description: The command-line surface for compilation and evaluation.
 ---
 
-The exact command set is authoritative in `lmp --help`. The unified `@lending-mind/lmp` package is the beginner-facing Node.js command surface; Rust remains the authority for evaluation, AST checks, signatures, and daemon execution.
+The exact command set is authoritative in `lmp --help`. The unscoped `lmp`
+package is the `npx` launcher for the maintained `@lending-mind/lmp` command
+surface; Rust remains the authority for evaluation, AST checks, signatures, and
+daemon execution.
 
 The examples below use `cargo run` because they assume a checkout of the repository. Once you install a released binary, replace `cargo run --bin lmp --` with `lmp`. The flags and result states remain the same for that release.
 
@@ -155,9 +158,11 @@ documented exception.
 The wrapper also writes `.lmp_telemetry/agent-mcp.json`,
 `.lmp_telemetry/host-integrations.json`, and `.lmp_telemetry/runtime.json`.
 When a verified sidecar is available, it adds a workspace-scoped MCP entry for
-Claude Code, Cursor, Cline, or Roo Code without replacing existing servers. It
-does not mutate global agent settings or claim that a Rust sidecar is installed
-when release binaries are unavailable.
+Claude Code, Cursor, Cline, or Roo Code without replacing existing servers. For
+Claude Desktop it writes `.lmp_telemetry/claude-desktop-mcp.json` for the user
+to copy into the desktop application's own MCP settings. It does not mutate
+global agent settings or claim that a Rust sidecar is installed when release
+binaries are unavailable.
 
 ## Exit behavior
 

@@ -55,7 +55,7 @@ def render(artifact: dict[str, object]) -> str:
     if skipped:
         for item in skipped:
             if isinstance(item, dict):
-                lines.append(f"- `{text(item.get('checkId'))}` — {text(item.get('reason'))}")
+                lines.append(f"- `{text(item.get('checkId'))}`: {text(item.get('reason'))}")
     else:
         lines.append("None recorded.")
     lines.extend(["", "### Limitations", ""])

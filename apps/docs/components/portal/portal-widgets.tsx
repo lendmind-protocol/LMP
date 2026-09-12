@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   benchmarkScenarios,
+  mindInstructionsMarkdown,
   mindProfiles,
   proofSummary,
   sourceReferences,
@@ -14,12 +15,12 @@ import {
   Check,
   Copy,
   Database,
+  Download,
   Gauge,
   type LucideIcon,
-  Package,
   ShieldCheck,
+  SlidersHorizontal,
   Terminal,
-  Timer,
   Workflow,
   Zap,
 } from "lucide-react";
@@ -31,11 +32,11 @@ type PlaygroundProfile = {
   icon: LucideIcon;
   principle: string;
   baseline: string;
-  enforced: string;
-  complexity: number;
-  bundleBytes: number;
-  latencyMs: number;
-  compliant: boolean;
+  reference: string;
+  rule: string;
+  threshold: string;
+  fixtureResult: "pass" | "needs_revision";
+  finding: string;
 };
 
 const playgroundProfiles: PlaygroundProfile[] = [
@@ -45,11 +46,11 @@ const playgroundProfiles: PlaygroundProfile[] = [
     icon: Bot,
     principle: "Internet-average output with no active architectural policy.",
     baseline: `import express from "express";\nimport lodash from "lodash";\n\nconst app = express();\napp.get("/api", (req, res) => {\n  const rows = lodash.filter(loadRows(), (row) => row.tenantId === req.query.tenant);\n  res.json(rows);\n});`,
-    enforced: `import express from "express";\nimport lodash from "lodash";\n\nconst app = express();\napp.get("/api", (req, res) => {\n  const rows = lodash.filter(loadRows(), (row) => row.tenantId === req.query.tenant);\n  res.json(rows);\n});`,
-    complexity: 9,
-    bundleBytes: 2_400_000,
-    latencyMs: 142,
-    compliant: false,
+    reference: `import express from "express";\nimport lodash from "lodash";\n\nconst app = express();\napp.get("/api", (req, res) => {\n  const rows = lodash.filter(loadRows(), (row) => row.tenantId === req.query.tenant);\n  res.json(rows);\n});`,
+    rule: "No active Mind selected",
+    threshold: "Not applicable",
+    fixtureResult: "needs_revision",
+    finding: "No policy package is available to evaluate this candidate.",
   },
   {
     id: "vercel",
@@ -57,11 +58,11 @@ const playgroundProfiles: PlaygroundProfile[] = [
     icon: Zap,
     principle: "Keep request paths small, native, and runtime-aware.",
     baseline: `import express from "express";\nimport lodash from "lodash";\n\nconst app = express();\napp.get("/api", (req, res) => {\n  const rows = lodash.filter(loadRows(), (row) => row.tenantId === req.query.tenant);\n  res.json(rows);\n});`,
-    enforced: `import polka from "polka";\nimport { request } from "undici";\n\nconst app = polka();\napp.get("/api", async (req, res) => {\n  const response = await request(process.env.DATA_URL);\n  res.end(await response.body.text());\n});`,
-    complexity: 3,
-    bundleBytes: 12_000,
-    latencyMs: 8.5,
-    compliant: true,
+    reference: `import polka from "polka";\nimport { request } from "undici";\n\nconst app = polka();\napp.get("/api", async (req, res) => {\n  const response = await request(process.env.DATA_URL);\n  res.end(await response.body.text());\n});`,
+    rule: "EDGE_RUNTIME_BOUNDARY",
+    threshold: "Request path must use the declared edge runtime contract",
+    fixtureResult: "pass",
+    finding: "The reference fixture satisfies the declared rule shape.",
   },
   {
     id: "supabase",
@@ -69,28 +70,20 @@ const playgroundProfiles: PlaygroundProfile[] = [
     icon: Database,
     principle: "Move tenant authorization to the database boundary with RLS.",
     baseline: `const rows = await db\n  .from("invoices")\n  .select("*")\n  .eq("tenant_id", request.headers.get("x-tenant"));\nreturn Response.json(rows);`,
-    enforced: `-- Policy is evaluated where the data lives.\ncreate policy "tenant isolation"\non public.invoices\nfor select using (tenant_id = auth.jwt() ->> 'tenant_id');\n\nconst { data } = await db.from("invoices").select("*");\nreturn Response.json(data);`,
-    complexity: 2,
-    bundleBytes: 0,
-    latencyMs: 1.4,
-    compliant: true,
+    reference: `-- Policy is evaluated where the data lives.\ncreate policy "tenant isolation"\non public.invoices\nfor select using (tenant_id = auth.jwt() ->> 'tenant_id');\n\nconst { data } = await db.from("invoices").select("*");\nreturn Response.json(data);`,
+    rule: "DATABASE_AUTHORIZATION_BOUNDARY",
+    threshold: "Tenant authorization must be declared at the data boundary",
+    fixtureResult: "pass",
+    finding: "The reference fixture places tenant authorization in the database policy.",
   },
 ];
-
-const meterWidth = (value: number, maximum: number) =>
-  `${Math.min(100, Math.max(4, (value / maximum) * 100))}%`;
-
-function formatBytes(bytes: number) {
-  if (bytes === 0) return "0 KB (native)";
-  if (bytes >= 1_000_000) return `${(bytes / 1_000_000).toFixed(1)} MB`;
-  return `${Math.round(bytes / 1_000)} KB`;
-}
 
 const onboardingOptions = [
   {
     label: "Agent framework",
     options: [
       ["claudecode", "Claude Code"],
+      ["claudedesktop", "Claude Desktop"],
       ["cursor", "Cursor"],
       ["cline", "Roo Code / Cline"],
     ],
@@ -118,46 +111,12 @@ export function ProtocolPlayground() {
   const selected =
     playgroundProfiles.find((profile) => profile.id === activeId) ?? playgroundProfiles[0];
   const edited = code !== selected.baseline;
-  const complexity = Math.min(10, Math.max(1, selected.complexity + (edited ? -1 : 0)));
-  const bundleBytes =
-    selected.compliant && edited ? Math.max(0, selected.bundleBytes - 2_000) : selected.bundleBytes;
-  const latencyMs =
-    selected.compliant && edited ? Math.max(0.8, selected.latencyMs - 0.5) : selected.latencyMs;
-  const isCompliant = selected.compliant && edited;
+  const fixtureResult = edited ? "not evaluated" : selected.fixtureResult;
   const selectProfile = (id: string) => {
     const next = playgroundProfiles.find((profile) => profile.id === id) ?? playgroundProfiles[0];
     setActiveId(next.id);
     setCode(next.baseline);
   };
-  const telemetryRows: Array<{
-    label: string;
-    value: string;
-    width: string;
-    good: boolean;
-    icon: LucideIcon;
-  }> = [
-    {
-      label: "Logic complexity ceiling",
-      value: `${complexity}/10`,
-      width: meterWidth(complexity, 10),
-      good: complexity <= 4,
-      icon: Gauge,
-    },
-    {
-      label: "Bundle weight footprint",
-      value: formatBytes(bundleBytes),
-      width: meterWidth(bundleBytes, 2_400_000),
-      good: bundleBytes <= 20_000,
-      icon: Package,
-    },
-    {
-      label: "Edge cold-start latency",
-      value: `${latencyMs} ms`,
-      width: meterWidth(latencyMs, 142),
-      good: latencyMs <= 10,
-      icon: Timer,
-    },
-  ];
   return (
     <Card className="not-prose my-8 overflow-hidden border-slate-800 bg-slate-950 text-slate-100 shadow-2xl dark">
       <CardHeader className="border-b border-slate-800 bg-slate-950">
@@ -168,15 +127,15 @@ export function ProtocolPlayground() {
               Lending-Mind Protocol Playground
             </CardTitle>
             <CardDescription className="mt-2 max-w-2xl text-slate-400">
-              A deterministic browser simulation of the policy decision: compare an unguided
-              candidate with the enforced result and watch the telemetry shift.
+              A bounded fixture walkthrough. Select a profile to inspect the rule, candidate,
+              reference shape, and result that a real local evaluation would record.
             </CardDescription>
           </div>
           <Badge variant="outline" className="border-slate-700 text-slate-300">
-            Browser simulation
+            Fixture walkthrough
           </Badge>
         </div>
-        <div className="mt-5 grid gap-2 sm:grid-cols-3" role="tablist" aria-label="Mind archetypes">
+        <div className="mt-5 grid gap-2 sm:grid-cols-3" role="tablist" aria-label="Policy contexts">
           {playgroundProfiles.map((profile) => {
             const Icon = profile.icon;
             const active = profile.id === activeId;
@@ -203,13 +162,13 @@ export function ProtocolPlayground() {
       </CardHeader>
       <CardContent className="space-y-6 p-4 sm:p-6">
         <div>
-          <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-200">
               <Terminal className="size-4 text-cyan-300" />
               Workspace code contrast
             </div>
-            <span className="text-xs text-slate-500">
-              Edit the left pane to simulate a changed candidate
+            <span className="max-w-full text-xs leading-5 text-slate-500">
+              Editing marks the fixture as not evaluated; run the CLI for a real result
             </span>
           </div>
           <div className="grid overflow-hidden rounded-xl border border-slate-800 lg:grid-cols-2">
@@ -231,10 +190,10 @@ export function ProtocolPlayground() {
             </label>
             <div>
               <div className="flex items-center gap-2 border-b border-slate-800 bg-emerald-950/30 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-emerald-200">
-                <Check className="size-3.5" aria-hidden="true" /> LMP enforced code
+                <Check className="size-3.5" aria-hidden="true" /> Reference shape
               </div>
-              <pre className="min-h-72 overflow-x-auto bg-slate-950 p-4 font-mono text-xs leading-6 text-emerald-100">
-                <code>{selected.enforced}</code>
+              <pre className="min-h-72 whitespace-pre-wrap break-words bg-slate-950 p-4 font-mono text-xs leading-6 text-emerald-100">
+                <code>{selected.reference}</code>
               </pre>
             </div>
           </div>
@@ -242,54 +201,46 @@ export function ProtocolPlayground() {
         <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-4 sm:p-5">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-200">
-              <Gauge className="size-4 text-cyan-300" /> Live telemetry profiler
+              <ShieldCheck className="size-4 text-cyan-300" /> Decision record preview
             </div>
             <Badge
               variant="outline"
               className={
-                isCompliant
+                fixtureResult === "pass"
                   ? "border-emerald-500/50 text-emerald-300"
-                  : "border-rose-500/50 text-rose-300"
+                  : fixtureResult === "needs_revision"
+                    ? "border-rose-500/50 text-rose-300"
+                    : "border-amber-500/50 text-amber-300"
               }
             >
-              {isCompliant
-                ? "STATUS: VERIFIED SECURE & OPTIMIZED"
-                : "STATUS: CRITICAL_AXIOM_VIOLATION"}
+              {fixtureResult === "pass"
+                ? "FIXTURE: PASS"
+                : fixtureResult === "needs_revision"
+                  ? "FIXTURE: NEEDS REVISION"
+                  : "EDITED: NOT EVALUATED"}
             </Badge>
           </div>
-          <div className="grid gap-5 md:grid-cols-3">
-            {telemetryRows.map(({ label, value, width, good, icon: Icon }) => (
-              <div key={label}>
-                <div className="mb-2 flex items-center justify-between gap-2 text-xs">
-                  <span className="flex items-center gap-2 text-slate-400">
-                    <Icon className="size-3.5" />
-                    {label}
-                  </span>
-                  <span className={good ? "font-mono text-emerald-300" : "font-mono text-rose-300"}>
-                    {value}
-                  </span>
+          <div className="grid gap-3 text-sm sm:grid-cols-2">
+            {[
+              ["Profile", selected.name],
+              ["Rule", selected.rule],
+              ["Declared threshold", selected.threshold],
+              ["Scope", "Browser fixture only; no workspace files"],
+              ["Finding", edited ? "Run the CLI or MCP evaluator after editing" : selected.finding],
+              ["Runtime telemetry", "Not collected in the browser"],
+            ].map(([label, value]) => (
+              <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-3" key={label}>
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  {label}
                 </div>
-                <div
-                  className="h-2 overflow-hidden rounded-full bg-slate-800"
-                  role="progressbar"
-                  tabIndex={0}
-                  aria-label={label}
-                  aria-valuenow={good ? 25 : 90}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                >
-                  <div
-                    className={`h-full rounded-full transition-all duration-500 ${good ? "bg-emerald-400" : "bg-rose-400"}`}
-                    style={{ width }}
-                  />
-                </div>
+                <div className="mt-1 text-slate-200">{value}</div>
               </div>
             ))}
           </div>
           <div className="mt-5 flex items-start gap-2 border-t border-slate-800 pt-4 text-xs text-slate-400">
-            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-cyan-300" />
-            {selected.principle} The Rust daemon and Docker sandbox remain the production authority;
-            this browser view is a deterministic visual explorer.
+            <Terminal className="mt-0.5 size-4 shrink-0 text-cyan-300" />
+            {selected.principle} This page does not rewrite code, run a parser, measure bundle size,
+            or start Docker. The Rust CLI, daemon, and MCP server remain the decision authority.
           </div>
         </div>
       </CardContent>
@@ -299,46 +250,130 @@ export function ProtocolPlayground() {
 
 export function MindVault() {
   const [query, setQuery] = useState("");
+  const [availability, setAvailability] = useState("all");
+  const [language, setLanguage] = useState("all");
+  const [discipline, setDiscipline] = useState("all");
+  const [copied, setCopied] = useState<string | null>(null);
   const sourceById = new Map(sourceReferences.map((source) => [source.id, source]));
-  const filtered = mindProfiles.filter((mind) =>
-    `${mind.name} ${mind.id} ${mind.focus}`.toLowerCase().includes(query.toLowerCase()),
+  const languages = [...new Set(mindProfiles.flatMap((mind) => mind.languages))].sort();
+  const disciplines = [...new Set(mindProfiles.map((mind) => mind.discipline))].sort();
+  const filtered = mindProfiles.filter(
+    (mind) =>
+      `${mind.name} ${mind.id} ${mind.focus}`.toLowerCase().includes(query.toLowerCase()) &&
+      (availability === "all" || mind.availability === availability) &&
+      (discipline === "all" || mind.discipline === discipline) &&
+      (language === "all" || mind.languages.includes(language)),
   );
+  const downloadInstructions = (mind: (typeof mindProfiles)[number]) => {
+    const blob = new Blob([mindInstructionsMarkdown(mind)], {
+      type: "text/markdown;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${mind.id.replace("lmp:mind:", "lmp-")}-INSTRUCTIONS.md`;
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  };
   return (
     <div className="not-prose my-8 space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h3 className="text-lg font-semibold">Mind Vault</h3>
-          <p className="text-sm text-muted-foreground">
-            {mindProfiles.length} profiles ·{" "}
-            {mindProfiles.filter((mind) => mind.availability === "Public registry").length} public
-            registry ·{" "}
-            {mindProfiles.filter((mind) => mind.availability === "Bundled locally").length} bundled
-            locally ·{" "}
-            {mindProfiles.filter((mind) => mind.availability === "Catalog proposal").length} catalog
-            proposals
-          </p>
+      <div className="rounded-xl border bg-card p-4 shadow-sm sm:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h3 className="flex items-center gap-2 text-lg font-semibold">
+              <SlidersHorizontal className="size-4" aria-hidden="true" /> Find a Mind
+            </h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Browse profiles by purpose, language, and implementation state.
+            </p>
+          </div>
+          <span className="font-mono text-xs text-muted-foreground">
+            {filtered.length} / {mindProfiles.length} profiles
+          </span>
         </div>
-        <input
-          aria-label="Search mind profiles"
-          placeholder="Search profiles"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          className="h-9 w-full rounded-lg border bg-background px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:w-64"
-        />
+        <div className="mt-5 grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <label className="grid min-w-0 gap-2 text-sm font-medium" htmlFor="mind-vault-search">
+            Search
+            <input
+              id="mind-vault-search"
+              name="mind-search"
+              type="search"
+              autoComplete="off"
+              aria-label="Search mind profiles"
+              placeholder="Search by name, language, or focus…"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              className="h-10 min-w-0 w-full rounded-lg border bg-background px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            />
+          </label>
+          <label className="grid min-w-0 gap-2 text-sm font-medium" htmlFor="mind-vault-discipline">
+            Discipline
+            <select
+              id="mind-vault-discipline"
+              name="mind-discipline"
+              value={discipline}
+              onChange={(event) => setDiscipline(event.target.value)}
+              className="h-10 min-w-0 w-full rounded-lg border bg-background px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              <option value="all">All disciplines</option>
+              {disciplines.map((item) => (
+                <option key={item}>{item}</option>
+              ))}
+            </select>
+          </label>
+          <label className="grid min-w-0 gap-2 text-sm font-medium" htmlFor="mind-vault-availability">
+            Availability
+            <select
+              id="mind-vault-availability"
+              name="mind-availability"
+              value={availability}
+              onChange={(event) => setAvailability(event.target.value)}
+              className="h-10 min-w-0 w-full rounded-lg border bg-background px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              <option value="all">All states</option>
+              <option>Public registry</option>
+              <option>Bundled locally</option>
+              <option>Catalog proposal</option>
+            </select>
+          </label>
+          <label className="grid min-w-0 gap-2 text-sm font-medium" htmlFor="mind-vault-language">
+            Language
+            <select
+              id="mind-vault-language"
+              name="mind-language"
+              value={language}
+              onChange={(event) => setLanguage(event.target.value)}
+              className="h-10 min-w-0 w-full rounded-lg border bg-background px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              <option value="all">All languages</option>
+              {languages.map((item) => (
+                <option key={item}>{item}</option>
+              ))}
+            </select>
+          </label>
+        </div>
       </div>
+      {filtered.length === 0 ? (
+        <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+          No profiles match those filters. Clear a filter or search for another language.
+        </div>
+      ) : null}
       <div className="grid gap-4 lg:grid-cols-2">
         {filtered.map((mind) => (
-          <Card key={mind.id}>
+          <Card id={mind.id.replace("lmp:mind:", "")} key={mind.id}>
             <CardHeader>
-              <div className="flex items-start justify-between gap-3">
-                <div>
+              <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
                   <CardTitle>{mind.name}</CardTitle>
                   <CardDescription className="mt-1 font-mono text-xs">
                     {mind.id} · v{mind.version}
                   </CardDescription>
                 </div>
-                <div className="flex flex-wrap justify-end gap-2">
+                <div className="flex max-w-full flex-wrap justify-start gap-2 sm:justify-end">
                   <Badge variant="secondary">{mind.availability}</Badge>
+                  <Badge variant="outline">{mind.discipline}</Badge>
                   <Badge variant="outline">{mind.verification}</Badge>
                 </div>
               </div>
@@ -404,6 +439,40 @@ export function MindVault() {
                   by the referenced maintainers or organizations.
                 </p>
               </div>
+              <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/40 p-3">
+                <code className="min-w-0 flex-1 break-all text-xs">
+                  lmp use {mind.id.replace("lmp:mind:", "")}
+                </code>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  aria-label={`Copy ${mind.name} install command`}
+                  onClick={() => {
+                    const command = `lmp use ${mind.id.replace("lmp:mind:", "")}`;
+                    void navigator.clipboard?.writeText(command);
+                    setCopied(mind.id);
+                  }}
+                >
+                  <Copy className="size-4" aria-hidden="true" />
+                </Button>
+                {copied === mind.id ? (
+                  <span
+                    className="text-xs text-emerald-700 dark:text-emerald-400"
+                    aria-live="polite"
+                  >
+                    Copied
+                  </span>
+                ) : null}
+                <Button
+                  type="button"
+                  size="sm"
+                  className="w-full sm:w-auto"
+                  onClick={() => downloadInstructions(mind)}
+                >
+                  <Download className="size-4" aria-hidden="true" />
+                  Export for AI Project
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ))}
@@ -427,7 +496,7 @@ export function BenchmarkDashboard() {
               release-clean artifact or a universal leaderboard claim.
             </CardDescription>
           </div>
-          <Badge variant="outline">Technical benchmark verified</Badge>
+          <Badge variant="outline">Technical run retained</Badge>
         </div>
       </CardHeader>
       <CardContent className="p-5">
@@ -446,8 +515,8 @@ export function BenchmarkDashboard() {
             <div className="text-xs uppercase tracking-wider text-muted-foreground">
               Current status
             </div>
-            <div className="mt-1 text-2xl font-semibold">64/64 verified</div>
-            <div className="text-xs text-muted-foreground">dirty checkout; no release claim</div>
+            <div className="mt-1 text-2xl font-semibold">64/64 technical</div>
+            <div className="text-xs text-muted-foreground">release claim still gated</div>
           </div>
         </div>
         <div className="mb-5 grid gap-3 sm:grid-cols-3">
@@ -477,8 +546,8 @@ export function BenchmarkDashboard() {
             </div>
           </div>
         </div>
-        <div className="overflow-x-auto rounded-lg border">
-          <table className="w-full text-left text-sm">
+        <div className="min-w-0 overflow-hidden rounded-lg border">
+          <table className="w-full table-fixed text-left text-sm">
             <caption className="border-b px-3 py-2 text-left text-xs text-muted-foreground">
               Representative sample: 8 task/repository pairs from the complete 64-scenario OSS
               benchmark.
@@ -493,9 +562,9 @@ export function BenchmarkDashboard() {
             <tbody>
               {benchmarkScenarios.map(([repo, task]) => (
                 <tr className="border-t" key={repo}>
-                  <td className="p-3 font-medium">{repo}</td>
-                  <td className="p-3">{task}</td>
-                  <td className="p-3 text-muted-foreground">
+                  <td className="break-words p-3 font-medium">{repo}</td>
+                  <td className="break-words p-3">{task}</td>
+                  <td className="break-words p-3 text-muted-foreground">
                     Pinned revision, source digest, baseline and guided result
                   </td>
                 </tr>
@@ -504,10 +573,7 @@ export function BenchmarkDashboard() {
           </table>
         </div>
         <p className="mt-4 text-sm">
-          <a
-            className="font-medium underline underline-offset-2"
-            href="/docs/reference/proof-matrix"
-          >
+          <a className="font-medium underline underline-offset-2" href="/docs/reference/results">
             View the complete qualification, OSS benchmark, and internal demo matrix →
           </a>
         </p>
@@ -538,7 +604,7 @@ export function OnboardingSelector() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid gap-3 lg:grid-cols-3">
           {onboardingOptions.map(({ label, options }, index) => {
             const value = index === 0 ? agent : index === 1 ? strategy : mind;
             const setter = index === 0 ? setAgent : index === 1 ? setStrategy : setMind;
@@ -562,10 +628,12 @@ export function OnboardingSelector() {
         </div>
         <div className="rounded-lg bg-muted p-4">
           <div className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Generated command · verified selector interface
+            Generated command preview
           </div>
           <div className="flex items-center gap-2">
-            <code className="min-w-0 flex-1 overflow-x-auto text-xs">{command}</code>
+            <code className="min-w-0 flex-1 break-words text-xs whitespace-pre-wrap">
+              {command}
+            </code>
             <Button
               size="icon"
               variant="outline"

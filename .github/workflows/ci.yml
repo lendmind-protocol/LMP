@@ -21,6 +21,8 @@ jobs:
       - run: pnpm lint
       - run: pnpm test
       - run: pnpm typecheck
+      - name: Verify documentation structure and internal routes
+        run: pnpm verify:docs
       - name: Verify generated public registry assets are current
         run: |
           pnpm sync:public-registry
@@ -33,6 +35,8 @@ jobs:
       - run: cargo check --workspace
       - run: cargo test --workspace
       - run: cargo build --release --workspace
+      - name: Run the local LMP self-governance audit
+        run: pnpm verify:self-audit
       - name: Verify Rust and Node onboarding integration
         run: bash orchestrator/integration_test.sh
       - name: Measure greenfield and brownfield onboarding target

@@ -1,4 +1,4 @@
-# Test-Driven Development — LMP
+# Test-Driven Development: LMP
 
 ## Principle
 

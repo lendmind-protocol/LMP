@@ -48,6 +48,285 @@
 
 body {
   font-feature-settings: "ss01" 1, "cv11" 1;
+  min-width: 0;
+  overflow-x: clip;
+}
+
+html,
+body {
+  max-width: 100%;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+pre,
+code,
+table {
+  max-width: 100%;
+}
+
+pre {
+  overflow-x: auto;
+  overflow-wrap: anywhere;
+}
+
+.lmp-carousel-track {
+  animation: lmp-agent-marquee 28s linear infinite;
+  will-change: transform;
+}
+
+@keyframes lmp-agent-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-50% - 0.25rem));
+  }
+}
+
+.lmp-carousel-viewport:hover .lmp-carousel-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lmp-carousel-track {
+    animation: none;
+  }
+}
+
+.lmp-landing {
+  --lmp-bg: oklch(0.99 0 0);
+  --lmp-ink: oklch(0.145 0 0);
+  --lmp-border: oklch(0.145 0 0 / 14%);
+  --lmp-panel: oklch(0.965 0 0);
+  --lmp-panel-soft: oklch(0.145 0 0 / 4%);
+  --lmp-muted: oklch(0.145 0 0 / 62%);
+  --lmp-subtle: oklch(0.145 0 0 / 42%);
+  background: var(--lmp-bg) !important;
+  color: var(--lmp-ink) !important;
+}
+
+.dark .lmp-landing {
+  --lmp-bg: #090a0b;
+  --lmp-ink: #f3f4f3;
+  --lmp-border: rgb(255 255 255 / 10%);
+  --lmp-panel: #0d0f10;
+  --lmp-panel-soft: rgb(255 255 255 / 2.5%);
+  --lmp-muted: rgb(255 255 255 / 60%);
+  --lmp-subtle: rgb(255 255 255 / 35%);
+}
+
+.lmp-landing [class*="border-white/"] {
+  border-color: var(--lmp-border);
+}
+
+.lmp-landing [class*="bg-white/"] {
+  background-color: var(--lmp-panel-soft);
+}
+
+.lmp-landing [class*="text-white"] {
+  color: var(--lmp-muted);
+}
+
+.lmp-landing .bg-\[\#0d0f10\] {
+  background-color: transparent;
+}
+
+.lmp-landing .text-\[\#f3f4f3\] {
+  color: var(--lmp-ink);
+}
+
+.lmp-landing .lmp-vendor-label {
+  color: rgb(21 23 24 / 0.72) !important;
+}
+.lmp-landing .lmp-vendor-caption {
+  color: rgb(21 23 24 / 0.45) !important;
+}
+.lmp-landing .lmp-brain-meta {
+  color: rgb(53 44 117 / 0.78) !important;
+}
+.lmp-landing .lmp-brain-control {
+  border-color: rgb(53 44 117 / 0.3);
+  color: rgb(53 44 117 / 0.9) !important;
+}
+.lmp-landing .lmp-brain-control:hover {
+  border-color: rgb(53 44 117 / 0.7);
+  color: #151718 !important;
+}
+
+.lmp-landing .hover\:text-white:hover {
+  color: var(--lmp-ink);
+}
+
+/* Documentation shell: keep the navigation persistent while giving the article
+ * a readable measure and a quiet, OpenAI-style information hierarchy. */
+#nd-docs-layout {
+  --fd-sidebar-width: 264px;
+  --fd-toc-width: 236px;
+  background: var(--background);
+  min-width: 0;
+  max-width: 100%;
+}
+
+#nd-docs-layout [data-layout-main],
+#nd-docs-layout [data-layout-content],
+#nd-docs-layout main,
+#nd-docs-layout article {
+  min-width: 0;
+  max-width: 100%;
+}
+
+#nd-sidebar {
+  background: var(--background);
+  border-color: var(--border);
+}
+
+#nd-sidebar [data-search-full] {
+  border-color: var(--border);
+  background: transparent;
+  border-radius: 0.375rem;
+}
+
+#nd-sidebar a,
+#nd-sidebar button {
+  border-radius: 0.375rem;
+}
+
+#nd-sidebar a[data-active="true"] {
+  background: color-mix(in oklab, var(--primary) 8%, transparent);
+  color: var(--primary);
+}
+
+#nd-page {
+  width: min(100%, 800px);
+  min-width: 0;
+  max-width: 100%;
+  padding: 3.5rem clamp(1rem, 3vw, 2rem) 5rem;
+}
+
+#nd-page > *,
+#nd-page .prose > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+#nd-page > h1 {
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+}
+
+#nd-page > p {
+  max-width: 46rem;
+  line-height: 1.65;
+}
+
+#nd-page > .prose {
+  max-width: 760px;
+}
+
+#nd-page .prose > :where(h2, h3) {
+  scroll-margin-top: 5rem;
+  letter-spacing: -0.025em;
+}
+
+#nd-page .prose > :where(p, li) {
+  line-height: 1.75;
+}
+
+#nd-page .prose pre,
+#nd-page .prose figure,
+#nd-page .prose table {
+  max-width: 100%;
+}
+
+#nd-page .prose table {
+  display: block;
+  width: max-content;
+  min-width: 100%;
+  overflow-x: auto;
+}
+
+#nd-page .lmp-diagram {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+#nd-toc {
+  border-inline-start: 1px solid var(--border);
+  padding-inline-start: 1.25rem;
+  padding-inline-end: 1rem;
+}
+
+#nd-toc a {
+  color: var(--muted-foreground);
+  line-height: 1.4;
+}
+
+#nd-toc a:hover,
+#nd-toc a[data-active="true"] {
+  color: var(--foreground);
+}
+
+@media (max-width: 1279px) {
+  #nd-page {
+    width: min(100%, 900px);
+  }
+}
+
+@media (max-width: 767px) {
+  #nd-docs-layout {
+    --fd-sidebar-width: 100%;
+    --fd-toc-width: 100%;
+  }
+
+  #nd-sidebar {
+    max-width: 100vw;
+  }
+
+  #nd-toc {
+    display: none;
+  }
+
+  #nd-page {
+    width: 100%;
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  #nd-page > h1 {
+    font-size: clamp(1.75rem, 8vw, 2rem);
+  }
+
+  #nd-page .prose pre,
+  #nd-page .prose code {
+    font-size: 0.8125rem;
+  }
+
+  #nd-page .lmp-diagram {
+    padding: 0.75rem;
+  }
+}
+
+@media (max-width: 479px) {
+  .lmp-landing .grid {
+    min-width: 0;
+  }
+
+  .lmp-landing h2 {
+    font-size: clamp(1.7rem, 9vw, 2.25rem);
+  }
+
+  .lmp-landing .font-mono {
+    overflow-wrap: anywhere;
+  }
+}
+
+.dark #nd-sidebar [data-search-full] {
+  background: transparent;
 }
 
 @theme inline {

@@ -1,216 +1,344 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { HomeLayout } from "fumadocs-ui/layouts/home";
-import { ArrowRight, BookOpen, Check, Code2, GitBranch, ShieldCheck } from "lucide-react";
+import { AgentVendorCarousel } from "@/components/landing/agent-vendor-carousel";
+import { BrainField } from "@/components/landing/brain-field";
+import { CommandCopy } from "@/components/landing/command-copy";
+import { FaqAccordion } from "@/components/landing/faq-accordion";
+import { MindVaultPreview } from "@/components/landing/mind-vault-preview";
+import { ArrowRight, ArrowUpRight, Terminal } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
-import { baseOptions } from "./layout.config";
+import type { ReactNode } from "react";
 
-const sections = [
-  {
-    title: "Understand LMP",
-    href: "/docs/concepts/overview",
-    description: "Learn the protocol model, package lifecycle, and enforcement boundary.",
-  },
-  {
-    title: "Build with LMP",
-    href: "/docs/getting-started",
-    description: "Install the toolchain, create a Mind package, and run your first evaluation.",
-  },
-  {
-    title: "Look up the details",
-    href: "/docs/reference/cli",
-    description: "Find CLI commands, schemas, exit states, and integration contracts.",
-  },
-  {
-    title: "Operate with evidence",
-    href: "/docs/operations/benchmark-analytics",
-    description: "Run benchmarks, manage caches, secure signing, and investigate failures.",
-  },
-] as const;
-
-const portalLayers = [
+const disciplines = [
+  ["Rust", "Ownership, systems safety, and bounded complexity", "/docs/architecture/overview"],
+  ["TypeScript", "Strict contracts and maintainable application code", "/docs/guides/installation"],
+  ["Go", "Readable composition and explicit error handling", "/docs/reference/mind-vault"],
   [
-    "Manifesto",
-    "/docs/concepts/problem-space",
-    "The fluency-versus-wisdom problem and the evidence trail.",
-  ],
-  [
-    "Protocol playground",
-    "/docs/guides/playground",
-    "Compare Mind constraints and inspect a deterministic preview.",
-  ],
-  [
-    "Mind Vault",
+    "Databases",
+    "Data locality, authorization, and migration discipline",
     "/docs/reference/mind-vault",
-    "Browse checked-in profiles, guardrails, and provenance.",
   ],
   [
-    "Architecture",
+    "Infrastructure",
+    "Reproducible systems and visible operational drift",
     "/docs/architecture/overview",
-    "Trace Rust, Python orchestration, Docker, and MCP.",
   ],
   [
-    "Benchmark analytics",
-    "/docs/operations/benchmark-analytics",
-    "Understand what a trustworthy paired benchmark must contain.",
-  ],
-  [
-    "Getting started onboarding",
-    "/docs/getting-started",
-    "Choose an agent, baseline, and target Mind.",
+    "Agent integration",
+    "A local connection with a visible decision boundary",
+    "/docs/guides/mcp-integration",
   ],
 ] as const;
+
+function ExternalMark() {
+  return <ArrowUpRight aria-hidden="true" className="size-3.5" />;
+}
+
+function SectionLabel({ children }: { children: ReactNode }) {
+  return (
+    <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-emerald-400">
+      {children}
+    </div>
+  );
+}
+
+function CodeQualityDiffPreview() {
+  return (
+    <div className="min-w-0 border-t border-white/10 pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <SectionLabel>Code-quality diff</SectionLabel>
+          <p className="mt-2 text-sm text-white/45">
+            The same review becomes explicit, scoped, and recorded.
+          </p>
+        </div>
+        <span className="shrink-0 font-mono text-[9px] uppercase tracking-[0.14em] text-emerald-400">
+          Selected scope
+        </span>
+      </div>
+      <div className="mt-5 grid min-w-0 border border-white/10 sm:grid-cols-2">
+        <div className="min-w-0 border-b border-white/10 p-4 sm:border-b-0 sm:border-r">
+          <div className="flex items-center justify-between gap-3 font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">
+            <span>Without LMP</span>
+            <span className="text-white/30">Implicit</span>
+          </div>
+          <pre className="mt-4 overflow-hidden whitespace-pre-wrap break-words font-mono text-[11px] leading-6 text-white/55">
+            <code>
+              <span className="text-red-600">- return check(files);</span>
+              {"\n"}
+              <span className="text-red-600">{"- // scope and rule evidence are implicit"}</span>
+            </code>
+          </pre>
+        </div>
+        <div className="min-w-0 p-4">
+          <div className="flex items-center justify-between gap-3 font-mono text-[9px] uppercase tracking-[0.14em] text-white/45">
+            <span>With LMP</span>
+            <span className="text-emerald-400">Recorded</span>
+          </div>
+          <pre className="mt-4 overflow-hidden whitespace-pre-wrap break-words font-mono text-[11px] leading-6 text-white/75">
+            <code>
+              <span className="text-emerald-600">
+                + const findings = check(selectedFiles, policy);
+              </span>
+              {"\n"}
+              <span className="text-emerald-600">
+                {"+ // evidence is serialized with the result"}
+              </span>
+            </code>
+          </pre>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function HomePage() {
   return (
-    <HomeLayout {...baseOptions()}>
-      <main className="mx-auto w-full max-w-6xl px-6 py-20 md:py-28">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="secondary">Lending-Mind Protocol</Badge>
-          <span className="text-sm text-muted-foreground">Documentation</span>
-        </div>
-        <h1 className="mt-6 max-w-4xl text-5xl font-semibold tracking-tight md:text-7xl">
-          Make code-quality preferences executable.
-        </h1>
-        <p className="mt-7 max-w-3xl text-xl leading-8 text-muted-foreground">
-          LMP compiles explicit engineering philosophies, trade-offs, and rules into signed policy
-          artifacts that agents and local tooling can evaluate deterministically.
-        </p>
-        <div className="mt-10 flex flex-wrap gap-3">
-          <Button nativeButton={false} size="lg" render={<Link href="/docs/getting-started" />}>
-            Start building <ArrowRight data-icon="inline-end" />
-          </Button>
-          <Button
-            nativeButton={false}
-            size="lg"
-            variant="outline"
-            render={<Link href="/docs/concepts/overview" />}
+    <main className="lmp-landing min-h-svh overflow-x-hidden bg-[#090a0b] text-[#f3f4f3]">
+      <header>
+        <div className="mx-auto flex min-h-16 min-w-0 max-w-[1180px] items-center justify-between gap-3 px-[clamp(1rem,4vw,2rem)]">
+          <Link
+            href="/"
+            aria-label="LMP home"
+            className="inline-flex min-h-11 items-center gap-3 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
           >
-            Understand the protocol
-          </Button>
-        </div>
-
-        <div className="mt-20 grid gap-4 md:grid-cols-3">
-          <Card className="md:col-span-2">
-            <CardHeader>
-              <div className="mb-3 flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <ShieldCheck aria-hidden="true" />
-              </div>
-              <CardTitle>Policy becomes evidence</CardTitle>
-              <CardDescription>
-                A Mind package turns preferences into explicit rules that can be validated, signed,
-                and evaluated.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              No hidden prompt assumptions. The protocol records what was loaded, which rules
-              applied, and why a result passed or failed.
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <div className="mb-3 flex size-10 items-center justify-center rounded-lg bg-secondary">
-                <GitBranch aria-hidden="true" />
-              </div>
-              <CardTitle>Delta-aware</CardTitle>
-              <CardDescription>
-                Evaluate changed code without reprocessing the entire repository.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </div>
-
-        <Separator className="my-16" />
-        <div className="grid gap-4 md:grid-cols-2">
-          {sections.map((section) => (
+            <Image
+              src="/logo.png"
+              alt=""
+              width={25}
+              height={25}
+              className="size-[25px] rounded-md"
+              style={{ width: 25, height: 25 }}
+              priority
+            />
+            <span className="font-mono text-sm font-semibold">lending-mind</span>
+            <span className="hidden font-mono text-[10px] uppercase tracking-[0.14em] text-white/40 sm:inline">
+              protocol / 0.1.0
+            </span>
+          </Link>
+          <nav
+            aria-label="Primary"
+            className="flex min-w-0 items-center gap-0.5 border-0 font-mono text-[clamp(0.625rem,1.7vw,0.6875rem)] uppercase tracking-[0.1em] text-white/55"
+          >
             <Link
-              className="group block cursor-pointer rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-              href={section.href}
-              key={section.href}
+              href="/docs"
+              className="inline-flex min-h-11 items-center rounded-sm px-[clamp(0.5rem,2vw,0.75rem)] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
             >
-              <Card className="h-full transition-colors duration-200 group-hover:bg-muted/50">
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    {section.title}
-                    <ArrowRight
-                      aria-hidden="true"
-                      className="size-4 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5"
-                    />
-                  </CardTitle>
-                  <CardDescription>{section.description}</CardDescription>
-                </CardHeader>
-              </Card>
+              Docs
             </Link>
-          ))}
+            <Link
+              href="/docs/reference/mind-vault"
+              className="hidden min-h-11 items-center rounded-sm px-[clamp(0.5rem,2vw,0.75rem)] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 sm:inline-flex"
+            >
+              Mind Vault
+            </Link>
+            <a
+              href="https://github.com/lendmind-protocol/LMP"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex min-h-11 items-center gap-1 rounded-sm px-[clamp(0.5rem,2vw,0.75rem)] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+            >
+              <img
+                src="https://cdn.simpleicons.org/github/000000"
+                alt=""
+                className="size-3.5 object-contain"
+                loading="lazy"
+              />
+              GitHub <ExternalMark />
+            </a>
+          </nav>
         </div>
+      </header>
 
-        <div className="mt-20">
-          <div className="flex flex-wrap items-end justify-between gap-4">
+      <section className="border-b border-white/10 px-[clamp(1rem,4vw,2rem)] py-[clamp(3rem,9vw,6rem)]">
+        <div className="mx-auto grid min-w-0 max-w-[1180px] gap-[clamp(3rem,7vw,4rem)] lg:grid-cols-[minmax(0,1fr)_minmax(0,480px)] lg:items-end">
+          <div className="min-w-0">
+            <h1 className="mt-0 max-w-4xl text-pretty font-mono text-[clamp(2.35rem,10vw,6.2rem)] font-medium leading-[0.94] tracking-[-0.08em]">
+              Make engineering judgment executable.
+            </h1>
+            <p className="mt-7 max-w-2xl text-pretty text-base leading-7 text-white/60 sm:text-lg">
+              LMP turns explicit engineering preferences, trade-offs, and source evidence into
+              signed policy packages that local agent workflows can evaluate.
+            </p>
+            <div className="mt-9 flex min-h-14 max-w-xl items-center gap-3 border border-white/15 bg-white/[0.035] px-4 text-left shadow-2xl shadow-black/20">
+              <Terminal aria-hidden="true" className="size-4 shrink-0 text-emerald-400" />
+              <code className="min-w-0 flex-1 break-all font-mono text-sm text-white/90">
+                npx lmp init
+              </code>
+              <CommandCopy command="npx lmp init" />
+            </div>
+            <AgentVendorCarousel />
+          </div>
+          <div className="min-w-0 lg:pb-2">
+            <div aria-label="Animated mind portrait">
+              <BrainField />
+            </div>
             <div>
-              <Badge variant="outline">Portal blueprint</Badge>
-              <h2 className="mt-3 text-3xl font-semibold tracking-tight">
-                See the whole protocol, not just the markdown
-              </h2>
-              <p className="mt-3 max-w-2xl text-muted-foreground">
-                Six connected surfaces explain the problem, let you explore the loop, expose the
-                registry, and show exactly what evidence is available.
+              <SectionLabel>What LMP changes</SectionLabel>
+              <p className="mt-4 font-mono text-xl leading-8 text-white/85">
+                A preference becomes a package, a decision becomes a result, and a result keeps its
+                evidence.
               </p>
+              <Link
+                href="/docs/concepts/overview"
+                className="mt-6 inline-flex min-h-11 items-center gap-2 font-mono text-[11px] uppercase tracking-[0.12em] text-emerald-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+              >
+                Read the protocol <ArrowRight aria-hidden="true" className="size-3.5" />
+              </Link>
             </div>
           </div>
-          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {portalLayers.map(([title, href, description]) => (
+        </div>
+      </section>
+
+      <section className="border-b border-white/10 bg-white/[0.02]">
+        <div className="mx-auto grid min-w-0 max-w-[1180px] grid-cols-2 divide-x divide-white/10 sm:grid-cols-5">
+          {[
+            ["VERSION", "0.1.0"],
+            ["AUTHORITY", "RUST CORE"],
+            ["STORAGE", "LOCAL-FIRST"],
+            ["INTEGRITY", "SIGNED"],
+            ["OUTPUT", "EVIDENCE"],
+          ].map(([label, value]) => (
+            <div
+              key={label}
+              className="min-w-0 border-b border-white/10 px-[clamp(1rem,4vw,1.5rem)] py-4 last:border-b-0 sm:border-b-0"
+            >
+              <div className="font-mono text-[9px] tracking-[0.16em] text-white/35">{label}</div>
+              <div className="mt-2 font-mono text-[11px] text-emerald-400">{value}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-[1180px] border-x border-b border-white/10">
+        <div className="grid min-w-0 gap-8 p-[clamp(1rem,4vw,2rem)] lg:grid-cols-[minmax(0,0.8fr)_minmax(0,0.8fr)_minmax(0,1.6fr)] lg:gap-0">
+          <div className="min-w-0 lg:pr-8">
+            <SectionLabel>The distinction</SectionLabel>
+            <h2 className="mt-4 font-mono text-3xl tracking-[-0.05em]">
+              From preference to decision.
+            </h2>
+            <p className="mt-5 max-w-xl text-sm leading-7 text-white/55">
+              LMP makes a declared policy and its selected scope inspectable, so the result can
+              carry its evidence.
+            </p>
+          </div>
+          <div className="min-w-0 border-t border-white/10 pt-5 lg:border-l lg:border-t-0 lg:px-8 lg:pt-0">
+            <SectionLabel>Last fixture run</SectionLabel>
+            <h2 className="mt-4 font-mono text-2xl tracking-[-0.05em]">Inspect the record.</h2>
+            <p className="mt-4 text-sm leading-7 text-white/55">
+              See what was loaded, checked, and recorded.
+            </p>
+            <Link
+              href="/docs/reference/results"
+              className="mt-6 inline-flex min-h-11 items-center gap-2 font-mono text-[11px] uppercase tracking-[0.12em] text-emerald-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+            >
+              Read results <ExternalMark />
+            </Link>
+          </div>
+          <CodeQualityDiffPreview />
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-[1180px] border-x border-b border-white/10">
+        <MindVaultPreview />
+      </section>
+
+      <section className="mx-auto max-w-[1180px] border-x border-b border-white/10">
+        <div className="p-5 sm:p-8">
+          <div className="flex items-end justify-between gap-5">
+            <div>
+              <SectionLabel>Browse by practice</SectionLabel>
+              <h2 className="mt-4 font-mono text-3xl tracking-[-0.05em]">
+                Find the discipline you need.
+              </h2>
+            </div>
+            <Link
+              href="/docs/reference/mind-vault"
+              className="hidden min-h-11 items-center gap-2 font-mono text-[11px] uppercase tracking-[0.12em] text-white/55 hover:text-emerald-400 sm:inline-flex"
+            >
+              All topics <ExternalMark />
+            </Link>
+          </div>
+          <div className="mt-8 grid border-l border-t border-white/10 sm:grid-cols-2 lg:grid-cols-3">
+            {disciplines.map(([title, description, href]) => (
               <Link
-                className="group block cursor-pointer rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                 href={href}
-                key={href}
+                key={title}
+                className="group min-h-40 border-b border-r border-white/10 p-5 transition-colors duration-200 hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400"
               >
-                <Card className="h-full transition-colors duration-200 group-hover:bg-muted/50">
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between text-base">
-                      {title}
-                      <ArrowRight
-                        aria-hidden="true"
-                        className="size-4 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5"
-                      />
-                    </CardTitle>
-                    <CardDescription>{description}</CardDescription>
-                  </CardHeader>
-                </Card>
+                <span className="font-mono text-sm text-white/80">{title}</span>
+                <p className="mt-3 text-sm leading-6 text-white/45">{description}</p>
+                <span className="mt-5 inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-emerald-400 opacity-70 transition-opacity group-hover:opacity-100">
+                  Explore <ArrowRight aria-hidden="true" className="size-3" />
+                </span>
               </Link>
             ))}
           </div>
         </div>
-
-        <div className="mt-16 rounded-xl border bg-muted/30 p-6 md:p-8">
-          <div className="flex items-start gap-4">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-background ring-1 ring-border">
-              <Code2 className="size-5" />
-            </div>
-            <div>
-              <h2 className="font-semibold">A predictable path from philosophy to proof</h2>
-              <div className="mt-4 grid gap-3 text-sm text-muted-foreground md:grid-cols-3">
-                {[
-                  "Define preferences and source evidence.",
-                  "Compile and validate a Mind package.",
-                  "Evaluate changes and inspect results.",
-                ].map((step) => (
-                  <div className="flex gap-2" key={step}>
-                    <Check aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary" />
-                    <span>{step}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+      </section>
+      <section className="mx-auto max-w-[1180px] border-x border-b border-white/10">
+        <div className="grid divide-y divide-white/10 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+          <Link
+            href="/docs/concepts/overview"
+            className="group p-5 transition-colors hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400 sm:p-6"
+          >
+            <span className="font-mono text-sm text-white/80">Evaluate LMP</span>
+            <p className="mt-3 text-sm leading-6 text-white/45">
+              Understand the protocol, boundaries, and evidence model.
+            </p>
+            <span className="mt-6 inline-flex min-h-11 items-center gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-emerald-400">
+              Start here <ArrowRight aria-hidden="true" className="size-3" />
+            </span>
+          </Link>
+          <Link
+            href="/docs/guides/installation"
+            className="group p-5 transition-colors hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400 sm:p-6"
+          >
+            <span className="font-mono text-sm text-white/80">Integrate LMP</span>
+            <p className="mt-3 text-sm leading-6 text-white/45">
+              Install the toolchain and connect a local agent.
+            </p>
+            <span className="mt-6 inline-flex min-h-11 items-center gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-emerald-400">
+              Start here <ArrowRight aria-hidden="true" className="size-3" />
+            </span>
+          </Link>
+          <Link
+            href="/docs/concepts/mind-packages"
+            className="group p-5 transition-colors hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400 sm:p-6"
+          >
+            <span className="font-mono text-sm text-white/80">Author a Mind</span>
+            <p className="mt-3 text-sm leading-6 text-white/45">
+              Collect evidence, define rules, and sign a package.
+            </p>
+            <span className="mt-6 inline-flex min-h-11 items-center gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-emerald-400">
+              Start here <ArrowRight aria-hidden="true" className="size-3" />
+            </span>
+          </Link>
         </div>
+      </section>
+      <FaqAccordion />
 
-        <p className="mt-10 flex items-center gap-2 text-sm text-muted-foreground">
-          <BookOpen aria-hidden="true" className="size-4" />
-          Read the protocol from concepts through operations.
-        </p>
-      </main>
-    </HomeLayout>
+      <footer className="mx-auto flex max-w-[1180px] flex-wrap items-center justify-between gap-4 px-[clamp(1rem,4vw,2rem)] py-8 font-mono text-[10px] uppercase tracking-[0.12em] text-white/35">
+        <span>Local-first policy runtime / v0.1.0</span>
+        <div className="flex flex-wrap gap-x-5 gap-y-2">
+          <Link href="/docs/operations/roadmap" className="hover:text-white">
+            Roadmap
+          </Link>
+          <Link href="/docs/operations/security" className="hover:text-white">
+            Security
+          </Link>
+          <Link href="/docs/reference/versioning" className="hover:text-white">
+            Release notes
+          </Link>
+          <a
+            href="https://github.com/lendmind-protocol/LMP"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 hover:text-white"
+          >
+            GitHub <ExternalMark />
+          </a>
+        </div>
+      </footer>
+    </main>
   );
 }

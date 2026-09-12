@@ -1,4 +1,4 @@
-# TJ Holowaychuk Minimalism — Community Archetype
+# TJ Holowaychuk Minimalism: Community Archetype
 
 Use this as a public, reviewable engineering preference, not as a reproduction of private reasoning.
 

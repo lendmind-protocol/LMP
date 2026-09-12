@@ -1,0 +1,70 @@
+---
+title: Monitoring and runbook boundaries
+description: Understand what LMP records locally, what operators can inspect, and what production monitoring still requires.
+---
+
+# Monitoring and runbook boundaries
+
+LMP records evidence for a decision. It is not currently a hosted monitoring
+service and does not provide a production alerting backend.
+
+## What is recorded locally
+
+An evaluation artifact can retain:
+
+- package identity, version, digest, and signature status;
+- evaluator version and mode;
+- workspace identity and Git state;
+- selected and excluded scope;
+- findings, severities, rationale, remediation, and limitations;
+- skipped checks and parser boundaries;
+- remediation loop transitions;
+- privacy metadata and command-execution results.
+
+The artifact is the primary investigation record. Store it with the review or
+CI run and keep the exact profile and source revision alongside it.
+
+## Daemon health
+
+For a supervised local daemon, use its PID-file lifecycle commands:
+
+```bash
+lmpd --pid-file /tmp/lmpd.pid --status
+lmpd --pid-file /tmp/lmpd.pid --reload
+lmpd --pid-file /tmp/lmpd.pid --stop
+```
+
+`--reload` requests a fresh evaluation. `--stop` requests clean shutdown and
+PID-file cleanup. A process that cannot report status or remove its PID file is
+an operational failure, not a healthy idle state.
+
+The resource gate measures bounded idle RSS and CPU for the daemon. It is a
+qualification check, not a long-running production service-level objective.
+
+## Failure triage
+
+1. Preserve the artifact and command that produced the failure.
+2. Classify the result as `pass`, `needs_revision`, `blocked`, or
+   `evaluation_error`.
+3. For `blocked`, repair package integrity, scope, runtime, or execution
+   prerequisites before interpreting policy findings.
+4. For `needs_revision`, inspect the rule ID, selected file, evidence, and
+   remediation before changing the code or policy.
+5. For `evaluation_error`, preserve the runtime error and input artifact, repair
+   the evaluator boundary, and rerun before interpreting any findings.
+6. Re-run with the same package digest and deliberate scope change, then compare
+   the new artifact with the previous one.
+
+Transport errors, malformed MCP requests, and unavailable processes are boundary
+errors. They are not evidence that the source violated a policy rule.
+
+## Production monitoring gap
+
+The repository does not currently ship hosted metrics, alert routing, retention
+policies, or automatic rollback. A production operator must provide those
+systems and record their relationship to LMP artifacts before claiming
+continuous monitoring or operational observability.
+
+The existing qualification and benchmark reports are strong local evidence, but
+they do not replace uptime monitoring, alert tests, incident records, or
+long-running workload measurements.

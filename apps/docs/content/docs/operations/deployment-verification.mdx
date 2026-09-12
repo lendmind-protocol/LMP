@@ -1,0 +1,74 @@
+---
+title: Deployment verification
+description: Verify the documentation portal and registry assets without confusing reachability with release readiness.
+---
+
+# Deployment verification
+
+The public portal is a static-first Next.js application. A successful page
+request proves that a deployment responds; it does not prove that the registry,
+package signatures, or release artifacts are correct.
+
+## Local preflight
+
+Run these checks from the repository root before inspecting a deployment:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm lint
+pnpm typecheck
+pnpm verify:docs
+pnpm sync:public-registry
+git diff --exit-code -- registry/registry.json apps/docs/public/registry.json apps/docs/public/profiles
+pnpm --filter @lending-mind/docs build
+```
+
+The generated registry diff must be empty. If it is not, the checked-in public
+assets are stale and the deployment must not be treated as an exact view of the
+source registry.
+
+## Verify a deployed portal
+
+The release workflow uses the repository verifier rather than relying on a
+browser page alone:
+
+```bash
+python3 orchestrator/verify_static_deployment.py \
+  https://your-deployed-host.example \
+  --expected-registry registry/registry.json \
+  --check-manifests \
+  --require-https
+```
+
+The verifier checks the portal response, the registry index, package manifests,
+digests, signatures, and the expected HTTPS boundary. A reachable page with a
+stale registry or mismatched package bytes fails verification.
+
+## Release path
+
+The release workflow in [`.github/workflows/release.yml`](https://github.com/lendmind-protocol/LMP/blob/main/.github/workflows/release.yml)
+performs the following gates before publishing release artifacts:
+
+1. Validate the tagged version and generated public registry assets.
+2. Run lint, typecheck, documentation checks, Rust tests, and package gates.
+3. Build the release binaries and required Docker image.
+4. Run onboarding, profile, evaluator, qualification, and benchmark evidence.
+5. Verify signatures, registry manifests, immutable CIDs, and the deployed portal.
+6. Compose the fail-closed release readiness decision.
+
+The final decision is published as `ready` only when every required check passes.
+Missing deployment, registry, benchmark, or human-adoption evidence remains
+`blocked`; it is not converted into a successful release by a passing local
+build.
+
+## What this does not verify
+
+Deployment verification does not prove:
+
+- that every generated change is correct;
+- that a Mind is suitable for every repository;
+- that a source author endorses a profile;
+- that public distribution has operational retention or recovery;
+- or that a human can adopt the workflow without maintainer help.
+
+Those claims require their own artifacts and review boundaries.

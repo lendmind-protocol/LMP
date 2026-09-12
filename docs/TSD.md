@@ -1,4 +1,4 @@
-# Technical Specification Document — Lending-Mind Protocol
+# Technical Specification Document: Lending-Mind Protocol
 
 ## 1. Scope
 

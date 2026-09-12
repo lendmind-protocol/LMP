@@ -1,6 +1,6 @@
 ---
 title: Evaluation results
-description: How to interpret a pass, rejection, or execution failure.
+description: How to interpret evaluation decisions, proof evidence, benchmarks, and real-world demos.
 ---
 
 An evaluation result should make its decision explainable without access to the agent's private context.
@@ -11,10 +11,29 @@ That does not mean the result should record private prompts or hidden reasoning.
 | --- | --- | --- |
 | `pass` | Required checks passed for the selected scope | Continue the workflow |
 | `needs_revision` | A policy finding requires a change | Fix the change and rerun |
-| `invalid_input` | Profile, workspace, or request is not valid | Correct the input |
-| `execution_error` | The evaluator could not complete | Repair the environment and rerun |
+| `blocked` | Integrity or execution boundary prevented an accepted decision | Repair the boundary and rerun |
+| `evaluation_error` | The evaluator could not produce a trustworthy result after evaluation began | Preserve the error, repair the evaluator, and rerun |
 
 The result should include the profile digest, scope, findings, evaluator version, and timestamps. A pass is scoped evidence, not a universal quality certificate.
+
+Malformed requests, missing packages, unknown tools, and transport failures are
+reported by the CLI or MCP boundary as errors. They are not evaluator states
+and must not be counted as policy findings. `evaluation_error` is the
+evaluator's fail-closed state when it cannot produce a trustworthy artifact
+after the evaluation path begins.
+
+## What the benchmark proves
+
+The retained technical benchmark is a reproducible engineering fixture, not a
+general claim about every model or repository. The current clean artifact
+records 64 paired scenarios, 128 Docker gates, 128 compiler-control checks, and
+15 verified source references. It also records its repository revision and
+whether the checkout was dirty.
+
+It does not prove that every agent output improves, that ordinary project tests
+and lint passed, that a source author endorses a Mind, or that the system has
+long-running production telemetry. Independent review and human adoption remain
+release gates.
 
 ## Reading a finding
 
@@ -46,3 +65,108 @@ Do not solve a required finding by deleting the file from the scope. If the scop
 ```
 
 The exact serialization can evolve with the protocol version. The important property is that a person can connect the state to a rule and a file without asking the agent what it meant to do.
+
+## Proof matrix and real-world demos
+
+This is the catalog of LMP proof work. It distinguishes runtime qualification,
+real-OSS paired scenarios, and internal repository demonstrations. A scenario
+listed here is implemented in an executable runner; it does not mean the latest
+run passed. A release claim must link to the generated JSON artifact for the
+exact commit, profile, and machine that produced it.
+
+| Evidence lane | Coverage | What it proves | Source of truth |
+| --- | ---: | --- | --- |
+| Runtime qualification | 38 required checks | Core protocol behavior, failure handling, and disagreement blocking | `orchestrator/qualification_suite.py` |
+| Real-OSS benchmark | 64 paired scenarios | Eight repositories, eight task classes, and baseline-to-guided transitions | `orchestrator/real_world_benchmark.py` |
+| Internal Mind demo | 3 paired repository demos | Onboarding, explicit trade-offs, and Mind-level evidence | `orchestrator/internal_demo.py` |
+| Human adoption pilot | 5+ independent people required for release | Whether a developer can adopt and explain the workflow | `docs/release-pilot.md` |
+
+Docker coverage is mandatory. If the daemon or `lmp-sandbox:local` image is
+unavailable, the result is `blocked`, not `complete`.
+
+### Runtime qualification
+
+The qualification suite covers clean and prohibited source, malformed syntax,
+mixed Rust and TypeScript workspaces, invalid signatures, missing policy layers,
+deterministic compilation, changed and untracked Git files, non-Git fallback,
+oversized or symlinked inputs, advisory and audit modes, MCP initialization and
+JSON-RPC errors, daemon watching, 5,000-file brownfield scans, 32 profile
+definitions, and selected-path Docker mounts.
+
+```bash
+cargo build --workspace
+docker build -t lmp-sandbox:local orchestrator
+python3 orchestrator/qualification_suite.py \
+  --output ./lmp-test-results/qualification-result.json
+python3 -m unittest discover -s orchestrator -p 'test_*.py'
+```
+
+### Real-OSS benchmark
+
+The executable benchmark creates paired baseline and guided candidates across
+eight public repositories and eight task classes: 64 scenarios in total. Each
+scenario records its public URL, resolved revision, task, cited source,
+baseline result, guided result, compiler-control result, rule IDs, and privacy
+metadata.
+
+| Repository | Scenarios |
+| --- | ---: |
+| Express | 8 |
+| Hono | 8 |
+| create-t3-app | 8 |
+| Supabase | 8 |
+| codex-security | 8 |
+| Microsoft TypeScript | 8 |
+| Swagger UI | 8 |
+| Cal.com | 8 |
+
+The task classes are API behavior, dependency choice, input validation,
+security boundary, regression testing, performance judgment, CLI workflow, and
+architecture/refactoring. Every class is paired with a cited public source
+describing the relevant method, philosophy, or trade-off. That citation proves
+provenance, not endorsement or access to private reasoning.
+
+```bash
+cargo build --workspace
+python3 orchestrator/real_world_benchmark.py \
+  --lmp target/debug/lmp \
+  --output ./lmp-test-results
+```
+
+A complete technical benchmark requires `status: "complete"`, exactly 64
+scenarios, all 128 paired Docker gates passing, all 128 compiler-control checks
+passing, `allTransitionsPassed: true`, and every source verification entry
+marked `verified: true`. A partial, failed, or blocked run is not a completed
+benchmark. The raw JSON artifact remains the source of truth; dashboards are
+views over that artifact.
+
+### Internal repository demos
+
+The internal demo applies the onboarding and Mind workflow to three pinned
+public repositories:
+
+| Repository | Demonstrated decision |
+| --- | --- |
+| `t3-oss/create-t3-app` | Small typed implementation instead of a new dependency |
+| `supabase/supabase` | Existing dependency and ownership boundaries |
+| `openai/codex-security` | Explicit validation and no hidden execution |
+
+```bash
+cargo build --workspace --target-dir /tmp/lmp-internal-demo-target
+python3 orchestrator/internal_demo.py \
+  --lmp /tmp/lmp-internal-demo-target/debug/lmp \
+  --output ./lmp-internal-oss-matrix
+```
+
+A successful run requires all three baseline-to-guided transitions to pass.
+The report preserves the Mind digest, checked-file count, selected and
+rejected options, source revision, and privacy fields.
+
+### Evidence limits
+
+These demos prove that the implemented LMP loop can load a selected profile,
+inspect a bounded workspace, produce deterministic findings, and record an
+explainable transition for tested candidates. They do not prove that every
+model output improves, that a Mind is universally correct, or that static
+evaluation replaces human review. The independent human pilot remains a
+separate release requirement.

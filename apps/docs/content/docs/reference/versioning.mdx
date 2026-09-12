@@ -11,6 +11,10 @@ development state, not a claim that a stable public release has been published.
 The checkout currently has no Git release tag, so treat the commit you are
 using as the exact source of truth.
 
+The first public product release is **`v0.1.0`**. A `v1.0.0` tag is reserved
+for a later production milestone after the end-to-end release evidence is
+complete.
+
 ## Current release state
 
 | Field | Current value |
@@ -19,7 +23,7 @@ using as the exact source of truth.
 | Release channel | Pre-release / qualification in progress |
 | Git release tag | None recorded in this checkout |
 | Compatibility promise | Not stable yet; pin the commit when reproducibility matters |
-| Release evidence | [Release readiness](/docs/operations/release-readiness) |
+| Release evidence | This page's release readiness section |
 
 The version badge at the top of this page is intentionally explicit. When a
 release is published, it must be changed together with the package manifests,
@@ -32,9 +36,9 @@ LMP has several versioned layers with different compatibility boundaries:
 
 - **Runtime and workspace packages**: the Rust workspace and the published
   JavaScript-facing packages currently use the `0.1.0` development line.
-- **Mind Packages**: each profile has its own version, such as `1.0.0`, and
-  must be identified by its Mind ID, version, digest, and signature. A Mind
-  Package version is not the LMP runtime version.
+- **Mind Packages**: each profile has its own version and must be identified by
+  its Mind ID, version, digest, and signature. A Mind Package version is not the
+  LMP runtime version and does not determine the product release tag.
 - **Artifacts and results**: evaluation artifacts record the evaluator version,
   profile identity, profile digest, source revision, and selected scope so a
   decision can be reproduced later.
@@ -59,7 +63,7 @@ which claims were tested, which were simulated, and which remain unproven.
 
 ## Release notes
 
-### v0.1.0 — pre-release development line
+### v0.1.0: pre-release development line
 
 This line contains the initial integrated protocol foundation:
 
@@ -71,7 +75,7 @@ This line contains the initial integrated protocol foundation:
 
 This release line still requires qualification evidence and an independent
 human adoption pilot before it should be described as stable or generally
-production-ready. See [release readiness](/docs/operations/release-readiness)
+production-ready. See the [release readiness section on this page](/docs/reference/versioning#release-readiness)
 for the required evidence boundary.
 
 ## How to identify an exact version
@@ -88,3 +92,113 @@ For a reproducible run, record all of the following with the result artifact:
 When installing a published release, use the release tag and matching package
 versions. When working from source, pin the commit and do not report the run as
 a published release merely because the workspace builds successfully.
+
+## Release readiness
+
+Do not publish on the basis of a passing unit-test suite alone. A release
+candidate needs a clean Rust build and test run, schema and signature rejection
+fixtures, CLI and MCP smoke tests, isolated brownfield benchmark results,
+evidence that guidance changes the agent-facing input, evidence that
+enforcement changes the final decision, documented limitations, and commands
+that another person can rerun.
+
+The machine-readable gates must be complete, not merely present:
+
+- `qualification-result.json` reports `status: "complete"` with 38 of 38 checks
+  and Docker required;
+- `real-world-benchmark.json` reports `status: "complete"` with 64 of 64
+  scenarios, 128 paired Docker gates, 128 compiler-control checks, verified
+  provenance, and independent reviewer annotations;
+- `onboarding-current.json` contains measured greenfield and brownfield runs
+  of `packages/create-lmp/bin.js`, each below the 3,000 ms target without source
+  code or secrets in the artifact.
+
+`blocked`, `failed`, `incomplete`, missing, or stale artifacts stop the release
+decision. A benchmark that did not build or execute the required Docker image
+is not an end-to-end result.
+
+The deployment gate must compare the hosted `registry.json` with the checked-in
+index and verify each manifest's digest and identity. The release archive gate
+must verify every target archive against `SHA256SUMS`, reject unsafe paths, and
+require the expected binaries. A reachable page alone is not deployment proof.
+
+The release workflow applies the same aggregate decision immediately before
+publishing archives. It requires independent annotations for the measured
+commit and a validated, redacted human adoption report. Neither is inferred
+from the benchmark itself.
+
+### One report for the whole decision
+
+Compose the gates into one fail-closed report. The command exits with status 2
+until every required local and external evidence item is present:
+
+```bash
+python3 orchestrator/release_readiness.py \
+  --qualification lmp-test-results/qualification-result.json \
+  --benchmark lmp-test-results/real-world-clean-current/real-world-benchmark.json \
+  --registry registry/registry.json \
+  --deployment https://your-deployed-host.example \
+  --expected-registry registry/registry.json \
+  --check-manifests \
+  --verify-cids \
+  --release-artifacts ./release-artifacts \
+  --resource-report lmp-test-results/resource-gate.json \
+  --onboarding lmp-test-results/onboarding-current.json \
+  --human-pilot-report lmp-test-results/human-adoption-pilot.json \
+  --require-clean \
+  --output lmp-test-results/release-readiness.json
+```
+
+Each blocked check identifies whether its boundary is local, external, or
+human. The release note must state what was proven, what was simulated, and
+what still requires an independent adoption pilot.
+
+## Prepare a signed release
+
+Use `orchestrator/git_release.sh` to prepare a release. The default command is
+read-only and prints the manifests it would synchronize. Applying changes,
+creating a signed tag, and pushing to the remote are separate explicit steps.
+
+### Review the release plan
+
+```bash
+./orchestrator/git_release.sh v0.1.0
+```
+
+This validates the version shape and existing Git references without changing
+files, commits, tags, or remotes.
+
+### Prepare and sign
+
+```bash
+./orchestrator/git_release.sh v0.1.0 --apply --tag
+```
+
+Before changing versions, the script requires a clean working tree. It then
+runs formatting, tests, release builds, integration checks, the Docker-backed
+qualification matrix, registry and deployment gates, version synchronization,
+the 64-scenario real-OSS benchmark, and the final signed Lore-format commit.
+The tag is created only after the required evidence passes for the exact
+revision that will be tagged.
+
+The tag operation requires a configured Git signing key. If signing is not
+available, the command fails rather than silently creating an unsigned tag.
+
+After the tag is pushed, the GitHub release workflow builds Linux, macOS, and
+Windows archives and verifies their contents and `SHA256SUMS`. A local tag is
+not release evidence until the hosted matrix completes.
+
+### Push after review
+
+```bash
+./orchestrator/git_release.sh v0.1.0 --apply --tag --push
+```
+
+`--push` requires `--tag` and pushes the current `HEAD` plus the signed tag to
+`origin`. Review the generated commit and evidence artifacts before using it.
+The release script has no benchmark bypass. Missing Docker, qualification, or
+benchmark evidence is a blocked or failed release, not a successful one.
+
+The script synchronizes Rust crate manifests and Node package manifests. It
+does not rewrite protected design documents, generated lockfiles by hand, or
+unrelated working-tree changes.

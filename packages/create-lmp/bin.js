@@ -26,6 +26,7 @@ await mkdir(workspace, { recursive: true });
 
 const agents = [
   ["claudecode", "Claude Code"],
+  ["claudedesktop", "Claude Desktop"],
   ["cursor", "Cursor"],
   ["cline", "Roo Code / Cline"],
 ];
@@ -497,6 +498,23 @@ if (adapter.available) {
     path: ".lmp_telemetry/agent-mcp.json",
     status: "runtime-unavailable",
     reason: "Install or build lmp-mcp before enabling host configuration.",
+  });
+}
+if (selectedAgent === "claudedesktop") {
+  const desktopConfigPath = join(telemetryDirectory, "claude-desktop-mcp.json");
+  await writeFile(desktopConfigPath, `${JSON.stringify({
+    mcpServers: {
+      "lending-mind": {
+        command: adapter.command,
+        args: [],
+        env: { LMP_WORKSPACE_ROOT: workspace },
+      },
+    },
+  }, null, 2)}\n`);
+  hostIntegrations.push({
+    path: ".lmp_telemetry/claude-desktop-mcp.json",
+    status: adapter.available ? "config-artifact-written" : "runtime-unavailable",
+    note: "Claude Desktop uses user-owned application configuration; copy this verified project entry into its MCP settings without replacing other servers.",
   });
 }
 await writeFile(join(telemetryDirectory, "host-integrations.json"), `${JSON.stringify({ agent: selectedAgent, integrations: hostIntegrations }, null, 2)}\n`);

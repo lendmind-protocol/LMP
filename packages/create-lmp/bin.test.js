@@ -154,6 +154,24 @@ test("configures project-scoped Cline and Roo MCP settings without touching glob
   assert.equal(JSON.parse(await readFile(join(workspace, ".lmp_telemetry/agent-mcp.json"), "utf8")).available, true);
 });
 
+test("writes a copy-ready Claude Desktop MCP entry without touching global settings", async () => {
+  const root = await mkdtemp(join(tmpdir(), "lmp-claude-desktop-"));
+  const workspace = join(root, "workspace");
+  const lmpd = join(root, "lmpd");
+  const mcp = join(root, "lmp-mcp");
+  await writeFile(lmpd, "fake lmpd");
+  await writeFile(mcp, "fake lmp-mcp");
+  const result = await runBootstrapper(workspace, "greenfield", {
+    LMPD_BIN: lmpd,
+    LMP_MCP_BIN: mcp,
+  }, "claudedesktop");
+  assert.equal(result.code, 0, result.output);
+  const config = JSON.parse(await readFile(join(workspace, ".lmp_telemetry/claude-desktop-mcp.json"), "utf8"));
+  assert.match(config.mcpServers["lending-mind"].command, /\.lmp_telemetry[\\/]bin[\\/]lmp-mcp/);
+  const integrations = JSON.parse(await readFile(join(workspace, ".lmp_telemetry/host-integrations.json"), "utf8"));
+  assert.equal(integrations.integrations[0].status, "config-artifact-written");
+});
+
 test("downloads and verifies a matching Rust runtime release asset", async () => {
   const root = await mkdtemp(join(tmpdir(), "lmp-runtime-download-"));
   const payload = join(root, "payload");

@@ -25,6 +25,25 @@ The public catalog standard is maintained in [`registry/README.md`](https://gith
 
 <MindVault />
 
+## Export a Mind for an AI project
+
+Every card includes **Export for AI Project**. It downloads one plain-English
+`LMP_INSTRUCTIONS.md` file containing the selected profile's focus, boundaries,
+guardrails, source links, and a short verification checklist. The bundle is
+generated from the profile shown in the card, so it does not invent a remote
+package, IPFS address, signature, or maintainer endorsement.
+
+Use the downloaded file as project context:
+
+1. Open the [visual integration guide](/docs/guides/ai-project-onboarding).
+2. Drop the file into the tool's project knowledge or workspace context.
+3. Ask the AI to summarize the active boundaries before it changes code.
+4. Keep running the project's tests and use the native LMP CLI or MCP evaluator
+   when you need a recorded policy decision.
+
+The exported file is guidance for an AI project, not a replacement for signed
+Mind Package verification or the Rust evaluation runtime.
+
 ## What a card means
 
 - **Axiom matrix** is the positive direction the profile asks a generator to follow.
@@ -110,7 +129,7 @@ and source records when it retrieves a profile.
 ## Serverless distribution
 
 The public Mind Vault does not require a custom backend. The static
-[`registry.json`](https://lmp-six.vercel.app/registry.json) index maps a Mind
+[`registry.json`](/registry.json) index maps a Mind
 identifier and version to a manifest URL, content digest, signature metadata,
 and optional IPFS CID. An entry may also carry `packageFiles`, a list of
 relative paths with static URLs and SHA-256 digests for the complete package.
@@ -186,4 +205,4 @@ for compatibility fixtures.
 
 For the complete 38-scenario qualification suite, 64-scenario real-OSS benchmark, and
 three internal repository demonstrations, see [Proof matrix and real-world
-demos](/docs/reference/proof-matrix).
+demos](/docs/reference/results).

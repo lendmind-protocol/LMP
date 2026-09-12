@@ -5,18 +5,11 @@ description: Why LMP turns engineering preferences into inspectable, enforceable
 
 # Fluency is not wisdom
 
-An AI coding tool can produce syntactically valid code quickly. That is useful, but it is not the same as making a good architectural decision. A repository also has constraints that are easy to miss in a prompt: dependency budgets, ownership boundaries, security placement, test expectations, and the reasons a team rejected a tempting shortcut.
+This topic is now part of the canonical [What is LMP?](/docs/concepts/overview)
+page. That page owns the problem definition, the distinction between
+preference, guidance, and enforcement, the evidence trail, and the boundary
+between LMP and an agent host.
 
-## The gap LMP addresses
-
-Unguided generation tends toward an internet-average solution. It may add a familiar dependency, duplicate an abstraction, or place a security decision in the wrong layer. The result can compile and still be expensive to operate or difficult to maintain.
-
-LMP makes those preferences explicit. A Mind Package is compiled into a stable instruction and policy set. The agent receives the visible guidance, while the Rust evaluator checks the changed workspace and records the decision in an artifact. The goal is not to claim that one person is universally right. The goal is to make a chosen engineering stance repeatable, inspectable, and testable.
-
-<ProtocolPlayground />
-
-## A claim must have a trail
-
-Sources in `registry/provenance/real-sources.json` identify the publisher, URL, source kind, and claim. LMP stores provenance metadata and digests rather than copying a person’s private material or presenting a source as an endorsement. A benchmark can therefore answer: what source informed this rule, what profile was active, which files were checked, and what changed between baseline and guided candidates?
-
-That trail is the difference between “the model seemed to like this style” and an engineering decision another person can review.
+Use [Inspect a policy fixture](/docs/guides/playground) for the interactive
+browser preview. It is intentionally a deterministic illustration, not a
+runtime measurement.

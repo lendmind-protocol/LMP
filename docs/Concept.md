@@ -1,3 +1,19 @@
+# Legacy concept draft — non-canonical
+
+> This file is historical design material, not a description of shipped
+> behavior. It contains speculative architecture, prompt-oriented examples,
+> and claims that are not all implemented or independently verified. Use the
+> [canonical product overview](../apps/docs/content/docs/concepts/overview.mdx),
+> [capability inventory](../apps/docs/content/docs/operations/capability-inventory.mdx),
+> and [release status](../apps/docs/content/docs/operations/roadmap.mdx) for
+> current, evidence-backed behavior.
+
+The current LMP runtime evaluates declared policy against a bounded scope. It
+does not claim universal pre-write interception, infallible agent control,
+hardware-level enforcement, or production readiness.
+
+---
+
 We will call this the Lending-Mind Protocol (LMP). It operates as an engine sitting between an AI Developer Agent (like Cline, Roo Code, or an autonomous DevOps swarm) and the target repository, enforcing architectural and behavioral constraints via a decentralized, version-controlled Semantic State Machine.
 ------------------------------
 ## The Lending-Mind Protocol (LMP) Specification
@@ -1950,5 +1966,4 @@ Specification & Docs: https://lendingmind.org
 
 By focusing on structural compiler verification, physical sandbox constraints, and native MCP support, your innovation delivers immediate, practical value to elite software engineers—generating organic community traction entirely on technical merit.
 The entire system—including the core systems code, security layers, cross-platform release automation, native MCP integration servers, and community launch assets—is fully engineered, packaged, and ready for release.
-
 

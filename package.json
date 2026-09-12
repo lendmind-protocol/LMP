@@ -22,6 +22,8 @@
     "verify:profile-fixtures": "pnpm --filter @lending-mind/sdk build && pnpm --filter @lending-mind/internal-evaluator build && node orchestrator/profile_fixture_gate.mjs",
     "verify:evaluator-integration": "pnpm --filter @lending-mind/sdk build && pnpm --filter @lending-mind/internal-evaluator build && node orchestrator/evaluator_integration_evidence.mjs",
     "verify:public-packages": "node orchestrator/public_package_gate.mjs",
+    "verify:docs": "python3 orchestrator/docs_quality_gate.py",
+    "verify:self-audit": "python3 orchestrator/self_audit.py",
     "benchmark:onboarding": "python3 orchestrator/onboarding_benchmark.py --output lmp-test-results/onboarding-current.json",
     "sync:public-registry": "node scripts/sync-public-registry.mjs",
     "generate:docs": "tsx scripts/generate-docs.ts",

@@ -1,0 +1,51 @@
+---
+title: Community marketplace
+description: Browse, review, and contribute source-backed Mind proposals without confusing a catalog with a release.
+---
+
+# Community marketplace
+
+The Mind Vault is the public catalog surface for LMP profiles. It groups
+profiles by the discipline they help you explore:
+
+| Discipline | Good starting points | What to check |
+| --- | --- | --- |
+| Frontend | TypeScript Maintainer Practice, shadcn/ui Composition | accessibility, input narrowing, and owned UI boundaries |
+| Databases | Supabase Data Isolation | authorization at the data boundary and migration evidence |
+| Cloud infrastructure | Vercel Edge Delivery, HashiCorp Immutable Infrastructure | measured runtime assumptions and reproducible state |
+| Systems | Linux Kernel Defensive Systems, Rust Systems Maintainer Practice | ownership, unsafe boundaries, and complexity limits |
+| Runtime | TJ Ponytail Minimalism, Go Core Simplicity | dependency choices, explicit errors, and small interfaces |
+
+Use the filters in [Mind Vault](/docs/reference/mind-vault) to browse the
+catalog and export a plain-English context file for an AI project. A profile
+marked **Catalog proposal** is a reviewable idea, not an installable public
+package.
+
+## Contribute a profile
+
+1. Start from the [authoring guide](/docs/guides/author-a-mind).
+2. Keep source references public, specific, and permission-aware.
+3. Add the canonical manifest, guidance, rules, fixtures, release metadata, and
+   detached signature required by the registry contract.
+4. Run the local registry gate and include its JSON result in the pull request.
+5. Open the pull request against the registry definition directory.
+
+The repository's Registry Verification Bot validates the proposed package from
+the trusted base checkout. It checks signatures, schema, registry parity, the
+Rust validator, and orchestration tests. Same-repository pull requests may be
+offered repository-controlled squash auto-merge after those checks pass. This
+is not a promise of a five-minute merge: GitHub permissions, required reviews,
+queue time, and the external immutable release gate still control publication.
+
+## What the bot does not do
+
+- It does not turn a proposal into an official maintainer profile.
+- It does not invent a signature, IPFS CID, OCI digest, or source permission.
+- It does not publish a package whose immutable transport references are still
+  missing.
+- It does not replace human review of the engineering judgment encoded by a
+  profile.
+
+These boundaries keep the marketplace useful to both casual creators and
+systems engineers: discovery is easy, while installation and release remain
+verifiable.

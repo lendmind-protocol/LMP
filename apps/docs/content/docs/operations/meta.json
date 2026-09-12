@@ -4,9 +4,12 @@
   "pages": [
     "capability-inventory",
     "roadmap",
-    "benchmark-analytics",
     "security",
+    "governance",
+    "self-governance",
+    "quality-checks",
     "troubleshooting",
-    "release-readiness"
+    "deployment-verification",
+    "monitoring"
   ]
 }

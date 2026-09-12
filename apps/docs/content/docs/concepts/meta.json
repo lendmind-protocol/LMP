@@ -1,5 +1,5 @@
 {
   "title": "Concepts",
   "description": "The model behind LMP.",
-  "pages": ["overview", "mind-packages", "enforcement", "why-lmp"]
+  "pages": ["overview", "enforcement", "mind-packages"]
 }

@@ -1,4 +1,4 @@
-# Spec-Driven Development — LMP
+# Spec-Driven Development: LMP
 
 ## Rule
 

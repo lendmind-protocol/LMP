@@ -1,4 +1,4 @@
-# Product Requirements Document — LMP
+# Product Requirements Document: LMP
 
 ## Vision
 

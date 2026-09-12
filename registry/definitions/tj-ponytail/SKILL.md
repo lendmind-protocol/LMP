@@ -1,4 +1,4 @@
-# TJ Ponytail Minimalism — Community Archetype
+# TJ Ponytail Minimalism: Community Archetype
 
 Apply this community archetype as an explicit, reviewable engineering preference.
 
