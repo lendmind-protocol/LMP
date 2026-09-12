@@ -7,9 +7,10 @@ active profile under `.lending-mind/mind`, writes agent-discovery guidance, and
 creates a local MCP adapter manifest under `.lmp_telemetry`.
 
 The package does not download source code, install dependencies, or claim that
-a workspace is correct. Git hooks are never installed implicitly; pass
-`--install-hooks` to explicitly create a fail-closed project-local
-`.git/hooks/pre-commit` gate. It can install the matching
+a workspace is correct. In a Git workspace the wizard installs a fail-closed
+project-local `.git/hooks/pre-commit` gate by default; `--install-hooks` makes
+that boundary explicit for callers and is required for a requested hook in a
+Git workspace when using the non-interactive path. It can install the matching
 precompiled Rust runtime from a release archive, but only after verifying the
 archive against the release `SHA256SUMS` file. Build the Rust runtime
 separately when no compatible release asset is available:
@@ -35,9 +36,10 @@ Code (`.mcp.json`) or Cursor (`.cursor/mcp.json`) without replacing existing
 servers. Cline and Roo Code receive project-scoped entries in `.cline/mcp.json`
 and `.roo/mcp.json`; global host settings are never modified. The generated
 `host-integrations.json` records each project-scoped result and any conflict.
-When `--install-hooks` is used, the matching Rust `lmp` CLI is also required
+When the Git boundary is enabled, the matching Rust `lmp` CLI is also required
 and installed from the same checksum-verified archive, so the commit gate does
-not depend on an unrelated global installation.
+not depend on an unrelated global installation. Non-Git directories remain
+advisory because there is no commit boundary to install.
 
 To request the commit-boundary gate during onboarding:
 
