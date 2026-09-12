@@ -60,6 +60,44 @@ fn source_language(path: &Path) -> Option<SourceLanguage> {
     }
 }
 
+fn contains_secret_assignment(line: &str) -> bool {
+    const SECRET_NAMES: [&str; 9] = [
+        "apikey",
+        "api_key",
+        "api-key",
+        "secret",
+        "password",
+        "token",
+        "private_key",
+        "private-key",
+        "client_secret",
+    ];
+
+    let lower = line.to_ascii_lowercase();
+    SECRET_NAMES.iter().any(|name| {
+        let mut offset = 0;
+        while let Some(found) = lower[offset..].find(name) {
+            let start = offset + found;
+            let end = start + name.len();
+            let before = lower[..start].chars().next_back();
+            let after = lower[end..].chars().next();
+            let identifier_boundary = |character: Option<char>| {
+                character.is_none_or(|value| !(value.is_ascii_alphanumeric() || value == '_'))
+            };
+            if identifier_boundary(before) && identifier_boundary(after) {
+                let remainder = lower[end..].trim_start();
+                if (remainder.starts_with('=') || remainder.starts_with(':'))
+                    && (remainder.contains('"') || remainder.contains('\''))
+                {
+                    return true;
+                }
+            }
+            offset = end;
+        }
+        false
+    })
+}
+
 fn unsupported_source_language(path: &Path) -> Option<&'static str> {
     match path
         .extension()?
@@ -299,22 +337,7 @@ fn source_findings(
             && (flags.get("errorHardcodedSecret").copied().unwrap_or(false)
                 || flags.get("warnHardcodedSecret").copied().unwrap_or(false))
         {
-            let lower = line.to_ascii_lowercase();
-            let secret_name = [
-                "apikey",
-                "api_key",
-                "api-key",
-                "secret",
-                "password",
-                "token",
-                "private_key",
-                "private-key",
-                "client_secret",
-            ]
-            .iter()
-            .any(|name| lower.contains(name));
-            let literal = line.contains('"') || line.contains('\'');
-            if secret_name && literal && (line.contains('=') || line.contains(':')) {
+            if contains_secret_assignment(line) {
                 findings.push(push(
                     "security.hardcoded-secret",
                     "Secret-shaped value is hardcoded in source.",
@@ -739,8 +762,24 @@ fn blocked_signature_evaluation(
 
 #[cfg(test)]
 mod tests {
-    use super::evaluate;
+    use super::{contains_secret_assignment, evaluate};
     use std::{fs, path::PathBuf};
+
+    #[test]
+    fn hardcoded_secret_match_requires_assignment_boundary() {
+        assert!(!contains_secret_assignment(
+            "argument.getOperatorToken().getText() === \"+\""
+        ));
+        assert!(contains_secret_assignment(
+            "const apiKey = \"live-key-value-123\";"
+        ));
+        assert!(contains_secret_assignment(
+            "{ password: 'live-password-value' }"
+        ));
+        assert!(!contains_secret_assignment(
+            "const tokenCount = \"ordinary-value\";"
+        ));
+    }
 
     #[test]
     fn enforced_evaluation_blocks_denied_dependencies() {
