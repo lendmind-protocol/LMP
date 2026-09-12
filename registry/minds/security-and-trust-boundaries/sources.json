@@ -3,7 +3,7 @@
     {
       "id": "lmp-implementation",
       "title": "LMP implementation documented in the public repository README",
-      "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/README.md",
+      "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/146a2df4c6b222634acbac4419fabce81249431e/README.md",
       "sourceType": "documentation",
       "accessMethod": "public-http",
       "contentDigest": "sha256:1031c93b138bca12d75d12afc4760e18dbb88bfa77ba0542b3b3a58ba66a41aa",

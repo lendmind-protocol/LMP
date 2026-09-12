@@ -20,7 +20,7 @@
     "sources": [
       {
         "title": "LMP implementation documented in the public repository README",
-        "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/README.md",
+        "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/146a2df4c6b222634acbac4419fabce81249431e/README.md",
         "licenseNote": "Public repository documentation reference; no external endorsement claimed.",
         "evidenceTier": "primary",
         "rights": "public-documentation",
