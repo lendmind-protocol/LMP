@@ -132,6 +132,11 @@ fn discover_minds(root: &std::path::Path) -> Vec<String> {
                 continue;
             }
             if path.is_dir() {
+                if path.file_name().and_then(|name| name.to_str()) == Some(".lending-mind")
+                    || path.file_name().and_then(|name| name.to_str()) == Some("workspaces")
+                {
+                    continue;
+                }
                 visit(root, &path, found);
                 continue;
             }
