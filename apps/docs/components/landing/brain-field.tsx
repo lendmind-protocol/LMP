@@ -1,5 +1,5 @@
-import Image from "next/image";
 import { sitePath } from "@/lib/site";
+import Image from "next/image";
 
 export function BrainField() {
   return (

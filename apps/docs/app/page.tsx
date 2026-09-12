@@ -229,7 +229,7 @@ export default function HomePage() {
               See what was loaded, checked, and recorded.
             </p>
             <Link
-                href={sitePath("/docs/reference/results")}
+              href={sitePath("/docs/reference/results")}
               className="mt-6 inline-flex min-h-11 items-center gap-2 font-mono text-[11px] uppercase tracking-[0.12em] text-emerald-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
             >
               Read results <ExternalMark />
@@ -253,7 +253,7 @@ export default function HomePage() {
               </h2>
             </div>
             <Link
-                href={sitePath("/docs/reference/mind-vault")}
+              href={sitePath("/docs/reference/mind-vault")}
               className="hidden min-h-11 items-center gap-2 font-mono text-[11px] uppercase tracking-[0.12em] text-white/55 hover:text-emerald-400 sm:inline-flex"
             >
               All topics <ExternalMark />
@@ -279,7 +279,7 @@ export default function HomePage() {
       <section className="mx-auto max-w-[1180px] border-x border-b border-white/10">
         <div className="grid divide-y divide-white/10 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
           <Link
-              href={sitePath("/docs/concepts/overview")}
+            href={sitePath("/docs/concepts/overview")}
             className="group p-5 transition-colors hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400 sm:p-6"
           >
             <span className="font-mono text-sm text-white/80">Evaluate LMP</span>
@@ -291,7 +291,7 @@ export default function HomePage() {
             </span>
           </Link>
           <Link
-              href={sitePath("/docs/guides/installation")}
+            href={sitePath("/docs/guides/installation")}
             className="group p-5 transition-colors hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400 sm:p-6"
           >
             <span className="font-mono text-sm text-white/80">Integrate LMP</span>
@@ -303,7 +303,7 @@ export default function HomePage() {
             </span>
           </Link>
           <Link
-              href={sitePath("/docs/concepts/mind-packages")}
+            href={sitePath("/docs/concepts/mind-packages")}
             className="group p-5 transition-colors hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400 sm:p-6"
           >
             <span className="font-mono text-sm text-white/80">Author a Mind</span>

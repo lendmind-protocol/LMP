@@ -1,7 +1,7 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
 import { sitePath } from "@/lib/site";
+import { ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
 
@@ -59,7 +59,8 @@ const faqs = [
         missing or unperformed evidence rather than convert it into a pass. Network controls,
         protected branches, CI, dependency review, and human approval remain necessary for stronger
         operational guarantees.{" "}
-        <Citation href={sitePath("/docs/operations/security")}>Read the security boundary</Citation>.
+        <Citation href={sitePath("/docs/operations/security")}>Read the security boundary</Citation>
+        .
       </>
     ),
   },
@@ -85,7 +86,10 @@ const faqs = [
         supported parser and rule exist, but they cannot infer intent, prove architecture quality,
         or make an arbitrary engineering preference objective. The exact rule, parser, scope, and
         evidence artifact matter.{" "}
-        <Citation href={sitePath("/docs/concepts/enforcement")}>See what enforcement means in LMP</Citation>.
+        <Citation href={sitePath("/docs/concepts/enforcement")}>
+          See what enforcement means in LMP
+        </Citation>
+        .
       </>
     ),
   },
@@ -98,7 +102,10 @@ const faqs = [
         themselves, establish maintainability, security, correctness, or production readiness. Any
         telemetry claim needs a reproducible fixture, workload definition, environment, variance,
         and a record of what was not measured.{" "}
-        <Citation href={sitePath("/docs/operations/monitoring")}>See the monitoring limits</Citation>.
+        <Citation href={sitePath("/docs/operations/monitoring")}>
+          See the monitoring limits
+        </Citation>
+        .
       </>
     ),
   },
@@ -124,7 +131,10 @@ const faqs = [
         <Highlight>visible provenance, declared scope, review, and version history</Highlight>, plus
         a way to reject or replace them. The system should make judgment inspectable, not hide
         judgment behind a green check.{" "}
-        <Citation href={sitePath("/docs/operations/governance")}>Read the governance model</Citation>.
+        <Citation href={sitePath("/docs/operations/governance")}>
+          Read the governance model
+        </Citation>
+        .
       </>
     ),
   },
@@ -136,7 +146,10 @@ const faqs = [
         improving decisions. The meaningful test is whether LMP catches issues reviewers care about
         with <Highlight>lower noise than the existing toolchain</Highlight>. That requires fixed
         tasks, repeated runs, latency reporting, and negative results—not a demo score.{" "}
-        <Citation href={sitePath("/docs/operations/roadmap")}>See what still needs evidence</Citation>.
+        <Citation href={sitePath("/docs/operations/roadmap")}>
+          See what still needs evidence
+        </Citation>
+        .
       </>
     ),
   },
@@ -148,7 +161,8 @@ const faqs = [
         replace domain ownership, independent tests, security review, deployment controls, or final
         human and CI authority. If a page says otherwise, it is overselling the protocol rather than
         describing its current evidence boundary.{" "}
-        <Citation href={sitePath("/docs/concepts/overview")}>Read what LMP does not claim</Citation>.
+        <Citation href={sitePath("/docs/concepts/overview")}>Read what LMP does not claim</Citation>
+        .
       </>
     ),
   },
@@ -161,7 +175,10 @@ const faqs = [
         cost and latency numbers, failure cases, and artifacts anyone can inspect. The strongest
         claim should be no stronger than the result proves. “Designed to” and “under test” are more
         credible than calling an unverified capability hardware-enforced.{" "}
-        <Citation href={sitePath("/docs/operations/quality-checks")}>Review the quality checklist</Citation>.
+        <Citation href={sitePath("/docs/operations/quality-checks")}>
+          Review the quality checklist
+        </Citation>
+        .
       </>
     ),
   },

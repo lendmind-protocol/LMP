@@ -1,7 +1,7 @@
 "use client";
 
-import { Search } from "lucide-react";
 import { sitePath } from "@/lib/site";
+import { Search } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 

@@ -2,9 +2,9 @@ import { RootProvider } from "fumadocs-ui/provider/next";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./global.css";
+import { sitePath } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { Geist } from "next/font/google";
-import { sitePath } from "@/lib/site";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 

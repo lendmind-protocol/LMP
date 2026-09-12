@@ -10,6 +10,7 @@ import {
   proofSummary,
   sourceReferences,
 } from "@/lib/portal-data";
+import { sitePath } from "@/lib/site";
 import {
   Bot,
   Check,
@@ -24,7 +25,6 @@ import {
   Workflow,
   Zap,
 } from "lucide-react";
-import { sitePath } from "@/lib/site";
 import { useState } from "react";
 
 type PlaygroundProfile = {
@@ -577,7 +577,10 @@ export function BenchmarkDashboard() {
           </table>
         </div>
         <p className="mt-4 text-sm">
-          <a className="font-medium underline underline-offset-2" href={sitePath("/docs/reference/results")}>
+          <a
+            className="font-medium underline underline-offset-2"
+            href={sitePath("/docs/reference/results")}
+          >
             View the complete qualification, OSS benchmark, and internal demo matrix →
           </a>
         </p>
