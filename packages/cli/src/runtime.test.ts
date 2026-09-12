@@ -138,9 +138,7 @@ describe("CLI runtime", () => {
       const hookContents = await readFile(hook, "utf8");
       expect(hookContents).toContain('root="$(git rev-parse --show-toplevel)"');
       expect(hookContents).toContain('exec node "$root/packages/lmp/bin.js"');
-      expect(hookContents).toContain(
-        "self-govern --mind linux-kernel --workspace crates/lmp-core",
-      );
+      expect(hookContents).toContain("self-govern --mind linux-kernel --workspace crates/lmp-core");
       expect((await stat(hook)).mode & 0o111).not.toBe(0);
     } finally {
       await rm(directory, { recursive: true, force: true });
