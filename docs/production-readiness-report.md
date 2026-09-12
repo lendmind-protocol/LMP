@@ -61,7 +61,7 @@ supplied. The command never emits an unbounded “production-ready” claim.
 
 ## Quality improvement evidence
 
-> A reproducible 64-scenario technical benchmark exists and its configured execution controls passed. It is not a causal quality study: it uses fixed candidate patches, does not execute repository-owned lint/test/CI commands, and has no independent reviewer annotations. LMP therefore has not demonstrated that it improves AI-generated code quality beyond a strong combination of instructions, skills, testing, CI, static analysis, and human review.
+> Hosted benchmark run [34715884624](https://github.com/lendmind-protocol/LMP/actions/runs/34715884624) completed successfully for commit `adc936c11e11bdba358a8dc84a36ad1b0ed29066`. It verified 64/64 scenarios and transitions, 128/128 Docker gates, 128/128 ordinary compiler controls, and 15/15 provenance sources. The runner uses bounded command timeouts and a 20-minute job ceiling. This is a reproducible technical control result, not a causal quality study: it uses fixed candidate patches, does not execute repository-owned lint/test/CI commands, and has no independent reviewer annotations. LMP therefore has not demonstrated that it improves AI-generated code quality beyond a strong combination of instructions, skills, testing, CI, static analysis, and human review.
 
 ## Final truth statement
 
