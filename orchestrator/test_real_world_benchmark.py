@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 
@@ -67,6 +68,11 @@ class RealWorldBenchmarkTests(unittest.TestCase):
     def test_control_state_is_explicit(self) -> None:
         self.assertEqual(MODULE.control_state(0), "pass")
         self.assertEqual(MODULE.control_state(1), "needs_revision")
+
+    def test_benchmark_commands_are_time_bounded(self) -> None:
+        with patch.object(MODULE, "COMMAND_TIMEOUT_SECONDS", 0.01):
+            with self.assertRaises(subprocess.TimeoutExpired):
+                MODULE.run([sys.executable, "-c", "import time; time.sleep(1)"], check=False)
 
 
 if __name__ == "__main__":
