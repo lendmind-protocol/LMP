@@ -73,7 +73,7 @@ class LMPTestBedOrchestrator:
         suite_results = []
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         lmp_binary = os.environ.get("LMP_BIN", os.path.join(project_root, "target", "debug", "lmp"))
-        mind_path = os.path.join(project_root, "skills", "typescript-minimal")
+        mind_path = os.path.join(project_root, "profiles", "typescript-minimal")
         if not os.path.isfile(lmp_binary):
             raise RuntimeError(f"Rust evaluator binary not found: {lmp_binary}")
         
@@ -103,7 +103,17 @@ class LMPTestBedOrchestrator:
             if completed.returncode not in (0, 1):
                 raise RuntimeError(completed.stderr.strip() or "Rust evaluator failed")
             elapsed_time_ms = (time.perf_counter() - started) * 1000
-            artifact = json.loads(completed.stdout)
+            if not completed.stdout.strip():
+                raise RuntimeError(
+                    f"LMP evaluation produced no JSON for {repo_name} "
+                    f"(exit {completed.returncode}): {completed.stderr.strip()}"
+                )
+            try:
+                artifact = json.loads(completed.stdout)
+            except json.JSONDecodeError as error:
+                raise RuntimeError(
+                    f"LMP evaluation produced invalid JSON for {repo_name}: {error}"
+                ) from error
             findings = artifact.get("checks", [])
             violations = [finding.get("ruleId") for finding in findings if not finding.get("passed", False)]
             passed = artifact.get("state") == "pass"
