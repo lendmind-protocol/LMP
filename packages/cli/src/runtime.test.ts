@@ -158,12 +158,12 @@ describe("CLI runtime", () => {
       process.chdir(directory);
       await mkdir(join(directory, ".git"), { recursive: true });
       expect(await runCli(["init", "--install-baseline"])).toBe(0);
-      await expect(readFile(join(directory, ".git", "hooks", "pre-commit"), "utf8")).resolves.toContain(
-        "self-govern --mind baseline",
-      );
-      await expect(readFile(join(directory, ".lending-mind", "config.json"), "utf8")).resolves.toContain(
-        '"defaultMode": "enforced"',
-      );
+      await expect(
+        readFile(join(directory, ".git", "hooks", "pre-commit"), "utf8"),
+      ).resolves.toContain("self-govern --mind baseline");
+      await expect(
+        readFile(join(directory, ".lending-mind", "config.json"), "utf8"),
+      ).resolves.toContain('"defaultMode": "enforced"');
     } finally {
       process.chdir(originalCwd);
       await rm(directory, { recursive: true, force: true });
