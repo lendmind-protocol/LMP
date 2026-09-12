@@ -45,8 +45,9 @@ To request the commit-boundary gate during onboarding:
 npx @lending-mind/create-lending-mind --yes --install-hooks /path/to/project
 ```
 
-The gate invokes `lmp self-govern` in enforced mode and exits nonzero when the
-active Mind reports a finding. If no verified CLI runtime is available, it
+The gate invokes the installed runtime’s `evaluate` command in enforced mode
+against `.lending-mind/mind` and exits nonzero when the active Mind reports a
+finding. If no verified CLI runtime is available, it
 fails closed with an actionable error; `.lmp_telemetry/enforcement.json`
 records the boundary and installation status. This is a Git commit control,
 not a universal filesystem pre-write interceptor.

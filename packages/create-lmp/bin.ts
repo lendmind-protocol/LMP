@@ -109,13 +109,13 @@ set -eu
 root="$(git rev-parse --show-toplevel)"
 cd "$root"
 if command -v lmp >/dev/null 2>&1; then
-  exec lmp self-govern --mind ${mind} --workspace . --artifact-dir .lending-mind/artifacts --changed-only
+  exec lmp evaluate --mind .lending-mind/mind --workspace . --mode enforced --artifact-dir .lending-mind/artifacts --changed-only
 fi
 if [ -x "$root/.lmp_telemetry/bin/lmp" ]; then
-  exec "$root/.lmp_telemetry/bin/lmp" self-govern --mind ${mind} --workspace . --artifact-dir .lending-mind/artifacts --changed-only
+  exec "$root/.lmp_telemetry/bin/lmp" evaluate --mind .lending-mind/mind --workspace . --mode enforced --artifact-dir .lending-mind/artifacts --changed-only
 fi
 if command -v npx >/dev/null 2>&1; then
-  exec npx --no-install @lending-mind/lmp self-govern --mind ${mind} --workspace . --artifact-dir .lending-mind/artifacts --changed-only
+  exec npx --no-install @lending-mind/lmp evaluate --mind .lending-mind/mind --workspace . --mode enforced --artifact-dir .lending-mind/artifacts --changed-only
 fi
 echo "LMP enforcement unavailable: install @lending-mind/lmp or provide .lmp_telemetry/bin/lmp" >&2
 exit 3

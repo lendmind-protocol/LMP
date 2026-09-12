@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
-import { cp, mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { chmod, cp, mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -195,16 +195,30 @@ test("writes a copy-ready Claude Desktop MCP entry without touching global setti
 test("installs a fail-closed project commit gate when explicitly requested", async () => {
   const root = await mkdtemp(join(tmpdir(), "lmp-hooks-"));
   const workspace = join(root, "workspace");
-  await mkdir(join(workspace, ".git", "hooks"), { recursive: true });
-  const result = await runBootstrapper(workspace, "greenfield", {}, "cursor", ["--install-hooks"]);
+  await mkdir(workspace, { recursive: true });
+  execFileSync("git", ["init", "--quiet"], { cwd: workspace });
+  const lmp = join(root, "lmp");
+  const lmpd = join(root, "lmpd");
+  const mcp = join(root, "lmp-mcp");
+  await writeFile(lmp, "#!/bin/sh\nexit 0\n");
+  await writeFile(lmpd, "fake lmpd");
+  await writeFile(mcp, "fake lmp-mcp");
+  await chmod(lmp, 0o755);
+  const result = await runBootstrapper(workspace, "greenfield", {
+    LMP_BIN: lmp,
+    LMPD_BIN: lmpd,
+    LMP_MCP_BIN: mcp,
+  }, "cursor", ["--install-hooks"]);
   assert.equal(result.code, 0, result.output);
-  const hook = await readFile(join(workspace, ".git/hooks/pre-commit"), "utf8");
-  assert.match(hook, /self-govern --mind tj-ponytail/);
-  assert.match(hook, /npx --no-install @lending-mind\/lmp self-govern/);
+  const hookPath = join(workspace, ".git/hooks/pre-commit");
+  const hook = await readFile(hookPath, "utf8");
+  assert.match(hook, /evaluate --mind \.lending-mind\/mind --workspace \. --mode enforced/);
+  assert.match(hook, /npx --no-install @lending-mind\/lmp evaluate/);
   assert.match(hook, /LMP enforcement unavailable/);
   const enforcement = JSON.parse(await readFile(join(workspace, ".lmp_telemetry/enforcement.json"), "utf8"));
   assert.equal(enforcement.status, "installed");
   assert.equal(enforcement.boundary, "git-pre-commit");
+  execFileSync(hookPath, [], { cwd: workspace, env: { ...process.env, PATH: "/usr/bin:/bin" } });
 });
 
 test("rejects hook installation before writing generated state when Git is absent", async () => {
