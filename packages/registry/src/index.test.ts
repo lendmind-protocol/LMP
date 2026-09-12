@@ -5,7 +5,14 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { generateEd25519KeyPair } from "@lending-mind/sdk";
 import { describe, expect, it } from "vitest";
-import { LocalRegistryClient, OciRegistryClient, StaticRegistryClient, syncLocalProfile } from "./index.js";
+import {
+  assertVerifiedProvenanceSources,
+  LocalRegistryClient,
+  OciRegistryClient,
+  StaticRegistryClient,
+  syncLocalProfile,
+  verifyProvenanceSources,
+} from "./index.js";
 
 function packageManifest(id: string, version: string, extra: Record<string, unknown> = {}) {
   return {
@@ -33,6 +40,26 @@ function packageManifest(id: string, version: string, extra: Record<string, unkn
 }
 
 describe("LocalRegistryClient", () => {
+  it("verifies provenance by comparing fetched source bytes to the declared digest", async () => {
+    const body = Buffer.from("canonical source\n");
+    const digest = `sha256:${createHash("sha256").update(body).digest("hex")}`;
+    const packageValue = packageManifest("lmp:source-verification", "1.0.0");
+    packageValue.provenance.sources[0].url = "http://127.0.0.1/source";
+    packageValue.provenance.sources[0].contentDigest = digest;
+    const fetchImpl: typeof globalThis.fetch = async () =>
+      new Response(body, { status: 200 });
+    await expect(assertVerifiedProvenanceSources(packageValue, fetchImpl)).resolves.toMatchObject([
+      { verified: true, actualDigest: digest, status: 200 },
+    ]);
+    packageValue.provenance.sources[0].contentDigest = `sha256:${"0".repeat(64)}`;
+    await expect(verifyProvenanceSources(packageValue, fetchImpl)).resolves.toMatchObject([
+      { verified: false, error: "source content digest mismatch" },
+    ]);
+    await expect(assertVerifiedProvenanceSources(packageValue, fetchImpl)).rejects.toThrow(
+      /provenance source verification failed/,
+    );
+  });
+
   it("installs, lists, resolves, pulls and verifies immutable packages", async () => {
     const root = await mkdtemp(join(tmpdir(), "lmp-registry-"));
     const source = await mkdtemp(join(tmpdir(), "lmp-package-"));

@@ -76,6 +76,16 @@ export interface StaticSyncMetadata extends LocalPackageMetadata {
   provenance: { sourceCount: number; digests: string[] };
 }
 
+export interface ProvenanceSourceVerification {
+  title: string;
+  url: string;
+  expectedDigest: string;
+  verified: boolean;
+  status?: number;
+  actualDigest?: string;
+  error?: string;
+}
+
 interface OciDescriptor {
   mediaType: string;
   digest: string;
@@ -179,6 +189,70 @@ export function verifyProvenance(value: unknown): { sourceCount: number; digests
     digests.push(record.contentDigest);
   }
   return { sourceCount: digests.length, digests };
+}
+
+/** Fetch and byte-verify every declared provenance source without mutating the package. */
+export async function verifyProvenanceSources(
+  value: unknown,
+  fetchImpl: typeof globalThis.fetch = globalThis.fetch,
+): Promise<ProvenanceSourceVerification[]> {
+  const provenance = (value as { provenance?: { sources?: unknown[] } } | undefined)?.provenance;
+  if (!provenance || !Array.isArray(provenance.sources) || provenance.sources.length === 0)
+    throw new Error("package provenance is required for source verification");
+  return Promise.all(
+    provenance.sources.map(async (source): Promise<ProvenanceSourceVerification> => {
+      if (!source || typeof source !== "object")
+        throw new Error("package provenance source is invalid");
+      const record = source as Record<string, unknown>;
+      const title = typeof record.title === "string" ? record.title : "untitled source";
+      const url = typeof record.url === "string" ? record.url : "";
+      const expectedDigest = typeof record.contentDigest === "string" ? record.contentDigest : "";
+      try {
+        if (!url || !expectedDigest) throw new Error("source title, URL, and digest are required");
+        validateTransportUrl(url, "provenance source URL");
+        assertDigest(expectedDigest, `provenance source ${title} digest`);
+        const response = await fetchImpl(url);
+        const bytes = Buffer.from(await response.arrayBuffer());
+        const actualDigest = `sha256:${createHash("sha256").update(bytes).digest("hex")}`;
+        if (!response.ok) throw new Error(`source returned HTTP ${response.status}`);
+        return {
+          title,
+          url,
+          expectedDigest,
+          actualDigest,
+          status: response.status,
+          verified: digestMatches(expectedDigest, actualDigest),
+          ...(digestMatches(expectedDigest, actualDigest)
+            ? {}
+            : { error: "source content digest mismatch" }),
+        };
+      } catch (error) {
+        return {
+          title,
+          url,
+          expectedDigest,
+          verified: false,
+          error: error instanceof Error ? error.message : String(error),
+        };
+      }
+    }),
+  );
+}
+
+/** Require byte-verified provenance before a caller treats a package as source-backed. */
+export async function assertVerifiedProvenanceSources(
+  value: unknown,
+  fetchImpl: typeof globalThis.fetch = globalThis.fetch,
+): Promise<ProvenanceSourceVerification[]> {
+  const results = await verifyProvenanceSources(value, fetchImpl);
+  const failures = results.filter((result) => !result.verified);
+  if (failures.length)
+    throw new Error(
+      `provenance source verification failed: ${failures
+        .map((failure) => `${failure.title}: ${failure.error ?? "digest mismatch"}`)
+        .join("; ")}`,
+    );
+  return results;
 }
 
 type Semver = { major: number; minor: number; patch: number; prerelease: string[] };
