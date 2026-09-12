@@ -661,7 +661,7 @@ fn main() -> Result<()> {
             fs::write(
                 &config,
                 format!(
-                    "{{\n  \"version\": 1,\n  \"defaultMind\": \"{default_mind}\",\n  \"defaultMode\": \"advisory\",\n  \"network\": \"offline\",\n  \"commands\": \"disabled\"\n}}\n"
+                    "{{\n  \"$schema\": \"https://lmp-six.vercel.app/schema/workspace-config-v1.json\",\n  \"version\": 1,\n  \"defaultMind\": \"{default_mind}\",\n  \"defaultMode\": \"advisory\",\n  \"enforcementBoundary\": \"none\",\n  \"excludedPaths\": [\"generated/**\", \"vendor/**\"],\n  \"commandPolicy\": {{\"allowPackageScripts\": false, \"timeoutMs\": 120000}},\n  \"artifactPolicy\": {{\"directory\": \".lending-mind/artifacts\", \"includeSourceCode\": false, \"redactCommandOutput\": true}},\n  \"registry\": {{\"mode\": \"local\", \"remoteEnabled\": false}}\n}}\n"
                 ),
             )?;
             if install_baseline {
