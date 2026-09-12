@@ -354,14 +354,13 @@ fn source_findings(
         if !fixture_literal
             && (flags.get("errorHardcodedSecret").copied().unwrap_or(false)
                 || flags.get("warnHardcodedSecret").copied().unwrap_or(false))
+            && contains_secret_assignment(line)
         {
-            if contains_secret_assignment(line) {
-                findings.push(push(
-                    "security.hardcoded-secret",
-                    "Secret-shaped value is hardcoded in source.",
-                    "Load the value through the approved environment or secret-management boundary and rotate the exposed value.",
-                ));
-            }
+            findings.push(push(
+                "security.hardcoded-secret",
+                "Secret-shaped value is hardcoded in source.",
+                "Load the value through the approved environment or secret-management boundary and rotate the exposed value.",
+            ));
         }
         if !fixture_literal
             && (flags.get("errorEval").copied().unwrap_or(false)
