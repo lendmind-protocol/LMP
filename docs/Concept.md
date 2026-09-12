@@ -449,8 +449,10 @@ if __name__ == "__main__":
         sys.exit(1)
 
 ------------------------------
-## 🎯 Full Loop Architecture (Ready for Benchmarking)
-All components are now fully implemented. Your complete local and decentralized system loop functions exactly like this:
+## 🎯 Full Loop Architecture (Proposal)
+The following describes the intended local and decentralized system loop. The
+current repository implements a bounded local subset; the evidence ledger is
+the authority for what is actually verified:
 
    1. RemoteSyncEngine (Rust) downloads the specific OCI target image containing the master software engineering culture (e.g., lmp:mind:supabase).
    2. PromptInjector (Rust) converts those structural rules into an explicit prompt matrix and injects it straight into your developer AI agent.
@@ -560,7 +562,9 @@ We will implement the complete system architecture for the "Ponytail (TJ)" Minim
 This combined setup showcases the end-to-end flow: first, it forces the AI agent to use its environment tools (like modifying project configuration manifests) to strip away system bloat, and then it parses the agent's real-time testing metrics into structured console validation signatures.
 ------------------------------
 ## 🛠️ 1. The "Ponytail" Workspace Instruction Matrix (tj-ponytail.json)
-This profile represents our production-ready Skill Layer. It explicitly tells the agent to target configuration files, enforce minimalism, and run custom benchmark suites using its command-execution tools.
+This profile represents the proposed Skill Layer. It tells the agent to target
+configuration files, enforce minimalism, and run custom benchmark suites; its
+actual enforcement depends on the selected host, profile, and evaluator path.
 
 {
   "$schema": "https://lendingmind.org",
@@ -1147,7 +1151,7 @@ polka()
   .listen(3000);
 
 ------------------------------
-## 🛡️ 2. How We Guarantee and Determine Code Quality
+## 🛡️ 2. How We Evaluate Code Quality (Bounded)
 The historical proposal described a score-based loop as a way to organize
 evaluation. It cannot mathematically guarantee that generated code is
 excellent; current LMP reports bounded findings and evidence instead:
@@ -1504,7 +1508,9 @@ cargo build --release --bin mind-signer
 
 ------------------------------
 ## 🏁 Summary of the Finished System Core
-You have successfully built an advanced, non-toy, enterprise-grade agent orchestration framework. Let's review what your system now delivers:
+The proposal presents an advanced agent-orchestration framework. The current
+repository delivers the bounded capabilities recorded in the claim ledger;
+enterprise-wide readiness is not established by this document.
 
    1. Dynamic Manifest Mutators: Modifies target config files (package.json, tsconfig.json) to enforce compliance.
    2. Deterministic Quality Metrics Engine: Runs AST analyzers and Docker virtualized sandboxes to profile code latencies down to the nanosecond.
@@ -1973,8 +1979,16 @@ Specification & Docs: https://lendingmind.org
    3. Publish to the Community: Submit the analytical technical announcement essay to Hacker News and active engineering subreddits.
 
 By focusing on structural compiler verification, physical sandbox constraints, and native MCP support, your innovation delivers immediate, practical value to elite software engineers—generating organic community traction entirely on technical merit.
-The entire system—including the core systems code, security layers, cross-platform release automation, native MCP integration servers, and community launch assets—is fully engineered, packaged, and ready for release.
+The launch proposal describes the intended complete system. Current release
+readiness is determined by the machine-checked gates and external evidence,
+not by this historical narrative.
 
 ## Claim boundary for this repository
 
-The launch essay above is historical proposal copy, not verification evidence. Local and CI qualification pass, while the release-candidate gate remains blocked until real cross-platform artifacts, deployment, and independent review are supplied. Benchmark percentages, organization endorsements, universal MCP compatibility, and guaranteed security outcomes require corresponding source evidence and must not be presented as established facts without it.
+The launch essay above is historical proposal copy, not verification evidence.
+Local and CI qualification pass, and the four-target hosted qualification is
+recorded separately, while the release-candidate gate remains blocked until
+immutable package retrieval and independent review are supplied. Benchmark
+percentages, organization endorsements, universal MCP compatibility, and
+guaranteed security outcomes require corresponding source evidence and must
+not be presented as established facts without it.
