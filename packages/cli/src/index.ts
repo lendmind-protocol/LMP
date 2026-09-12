@@ -249,10 +249,10 @@ export function createProgram() {
     .option("--changed-only", "evaluate only files changed from the selected Git base")
     .option("--base <ref>", "Git revision used with --changed-only")
     .action(async (options) => {
-      if (options.runCommands && options.mode === "audit")
-        throw Object.assign(new Error("audit never runs commands"), { exitCode: EXIT.usage });
       const mindPath = options.mind ? await resolveMindPath(options.mind) : undefined;
       const mode = options.mode ?? (await resolveDefaultMode(resolve(options.workspace)));
+      if (options.runCommands && mode === "audit")
+        throw Object.assign(new Error("audit never runs commands"), { exitCode: EXIT.usage });
       const artifact = await evaluate(
         await loadMind(options.mind),
         resolve(options.workspace),
