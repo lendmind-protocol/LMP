@@ -5,7 +5,7 @@
 > [capability inventory](../apps/docs/content/docs/operations/capability-inventory.mdx),
 > and [release status](../apps/docs/content/docs/operations/roadmap.mdx).
 
-Right now, if you use Claude Code, Pi Agent, or standard developer tools, they all suffer from the exact same flaw: **They are brilliant juniors, but they have absolutely no common sense**.
+This legacy draft uses deliberately sharp rhetoric. In practice, AI coding agents can produce plausible changes while missing repository-specific constraints; the degree varies by model, task, tooling, and review process.
 
 If you ask a default AI agent to build a simple web page or an API, it will pull in 50 heavy dependencies, write massive nested loops, and create a codebase that is hard to maintain. It does this because it is just mimicking the average code found on the internet. It does not know why a veteran engineer would choose a lightweight tool instead of a heavy framework. It lacks "battle scars."
 
@@ -44,12 +44,12 @@ The practical limitation of the traditional skill model is **non-invocation**: a
 
 - **Questions**: And How do we Force the AI Use this is there we need to setup or touching like the AI Agents Artifacts control system (config.toml, etc) and how the Agent know the LMP is newly existing in their system like if a greenfield or brownfield user install this AI doesn't have idea what this, so is like when they install this the agent start action it first all needed (e,g. installs, configuration, etc)?
 
-- to use the Lending-Mind Protocol (LMP), we don't need to rebuild or fork them. Instead, we target the precise **extension configuration files** and **instruction injection boundaries** that these agents already read by default. Every modern AI agent reads local workspace manifest files to determine its system instructions and tool constraints. LMP targets these configuration files automatically during installation: **Claude Code**: Reads `CLAUDE.md` and project `settings.json`. **Roo Code / Cline**: Reads `AGENTS.md` and `.roo/rules` inside the workspace directory. **Cursor / Claude Desktop**: Reads a centralized `mcpServers configuration layer`.
+- to use the Lending-Mind Protocol (LMP), we don't need to rebuild or fork an agent. Instead, onboarding writes the supported project-scoped guidance and adapter files for the selected host. Hosts differ in what they read and how they invoke tools; LMP does not assume that every agent consumes every file. Supported integrations are documented for **Claude Code**, **Roo Code / Cline**, **Cursor**, and **Claude Desktop**, with missing or unavailable adapters reported explicitly.
 > The question targets the exact moment of installation: if a user opens a brand-new project (**greenfield**) or an established system repository (**brownfield**), how does the agent discover LMP, and how does the agent instantly bootstrap its own configurations?
 
 The protocol accomplishes this via a two-part workspace contract: **discoverable guidance** and **MCP/tool-backed evidence enforcement**.
 
-- When a user runs `npx create-lmp`, the script checks the environment. Whether the environment is a greenfield or brownfield project, the bootstrapper adds an explicit, marked LMP section to the workspace guidance files without overwriting existing instructions. It installs the local adapter contract and, when available, a checksum-verified Rust sidecar. The evaluator then enforces the selected policy on the scoped change before the result can be treated as passing.
+- When a user runs `npx create-lmp`, the bootstrapper checks the environment. Whether the environment is a greenfield or brownfield project, it adds an explicit, marked LMP section to workspace guidance without overwriting existing instructions. It writes the local adapter contract and, when available, uses a checksum-verified Rust sidecar. The evaluator then enforces the selected policy on the declared scope before that result can be treated as passing.
 
 ### The Lifecycle Stream: What Happens Post-Install
 ``[Agent Initialized] ──► [1. Reads CLAUDE.md/AGENTS.md] ──► [2. Host invokes configured LMP MCP adapter] ──► [3. Candidate evaluated at the connected boundary]``
@@ -69,7 +69,7 @@ To understand what success can look like under the Lending-Mind Protocol (LMP), 
 <table>
 <tr>
 <th>❌ Traditional AI Code (Internet-Average)</th>
-<th>✅ LMP Enforced Code (Professional)</th>
+<th>✅ Example that satisfies the shown checks</th>
 </tr>
 <tr>
 <td>
@@ -139,9 +139,9 @@ export const UserProfileCard = React.forwardRef<
 UserProfileCard.displayName = "UserProfileCard";
 ```
 
-* **Fix:** Blocks the heavy library automatically in `package.json`.
-* **Fix:** Rewrites object lookups into native, modern JavaScript syntax.
-* **Fix:** Uses clean Tailwind CSS styles and access-friendly HTML tags (`<time>`).
+* **Observed check:** A dependency policy can report the heavy library in `package.json`.
+* **Example remediation:** The author rewrites object lookups into native JavaScript syntax.
+* **Example remediation:** The author uses utility styles and access-friendly HTML tags (`<time>`).
 
 </td>
 </tr>
@@ -157,7 +157,7 @@ UserProfileCard.displayName = "UserProfileCard";
 <table>
 <tr>
 <th>❌ Traditional AI Code (Internet-Average)</th>
-<th>✅ LMP Enforced Code (Professional)</th>
+<th>✅ Example that satisfies the shown checks</th>
 </tr>
 <tr>
 <td>
@@ -257,8 +257,8 @@ func HandleMetricsDownload(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-* **Fix:** Enforces a strict code complexity limit, removing massive helper classes.
-* **Fix:** Forces explicit, clear error handling matching professional standards.
+* **Observed check:** A configured complexity rule can report the over-budget implementation.
+* **Example remediation:** The author adds explicit error handling and a narrower boundary.
 
 </td>
 </tr>
