@@ -38,7 +38,6 @@ else
     cargo build --release --workspace --manifest-path "${ROOT_DIR}/Cargo.toml"
 fi
 
-mkdir -p "${TEST_WORKSPACE}/.lmp_telemetry/bin"
 echo "✅ Rust runtime compiled cleanly."
 
 # 1b. Verify the Rust-native onboarding path independently of the Node wrapper.
