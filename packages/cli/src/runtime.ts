@@ -276,12 +276,30 @@ export async function activateMind(id: string, cwd = process.cwd()) {
   } catch {
     /* create a compatible config for projects that have not run init */
   }
+  const generatedHook = join(cwd, ".git/hooks/pre-commit");
+  const shouldSynchronizeEnforcement =
+    config.defaultMode === "enforced" && config.enforcementBoundary === "git-pre-commit";
+  if (shouldSynchronizeEnforcement) {
+    let existingHook = "";
+    try {
+      existingHook = await readFile(generatedHook, "utf8");
+    } catch (error) {
+      if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) throw error;
+    }
+    if (existingHook && !existingHook.includes("LENDING-MIND GENERATED ENFORCEMENT HOOK")) {
+      throw new Error(
+        `cannot switch the enforced Mind: existing hook ${generatedHook} is not LMP-generated`,
+      );
+    }
+  }
   config.version ??= 1;
   config.defaultMode ??= "advisory";
   config.defaultMind = installed.path;
   config.defaultMindId = installed.id;
   await mkdir(root(cwd), { recursive: true });
   await writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`);
+  if (shouldSynchronizeEnforcement)
+    await installEnforcedHook(cwd, installed.id.split(":").pop() ?? id);
   return installed;
 }
 
@@ -302,6 +320,7 @@ export async function installEnforcedHook(
   await writeFile(
     hook,
     `#!/bin/sh
+# LENDING-MIND GENERATED ENFORCEMENT HOOK
 set -eu
 root="$(git rev-parse --show-toplevel)"
 if [ -f "$root/packages/lmp/bin.ts" ]; then

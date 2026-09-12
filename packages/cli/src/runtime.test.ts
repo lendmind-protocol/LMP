@@ -5,6 +5,7 @@ import { createKeyPair } from "@lending-mind/sdk";
 import { describe, expect, it } from "vitest";
 import { runCli } from "./index.js";
 import {
+  activateMind,
   decideProposal,
   ensureGitignore,
   evaluate,
@@ -181,6 +182,47 @@ describe("CLI runtime", () => {
       expect(hookContents).toContain("self-govern --mind linux-kernel --workspace .");
       expect((await stat(hook)).mode & 0o111).not.toBe(0);
     } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("keeps a generated enforced hook aligned when the active Mind changes", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "lmp-cli-mind-switch-"));
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(directory);
+      await mkdir(join(directory, ".git", "hooks"), { recursive: true });
+      await writeFile(
+        join(directory, ".lending-mind", "config.json"),
+        JSON.stringify({
+          version: 1,
+          defaultMode: "enforced",
+          enforcementBoundary: "git-pre-commit",
+        }),
+      ).catch(async () => {
+        await mkdir(join(directory, ".lending-mind"), { recursive: true });
+        await writeFile(
+          join(directory, ".lending-mind", "config.json"),
+          JSON.stringify({
+            version: 1,
+            defaultMode: "enforced",
+            enforcementBoundary: "git-pre-commit",
+          }),
+        );
+      });
+      await installEnforcedHook(directory, "baseline");
+      const profile = join(directory, "mind");
+      await mkdir(profile, { recursive: true });
+      await writeFile(
+        join(profile, "mind.json"),
+        JSON.stringify({ id: "lmp:mind:next", version: "1.0.0", rules: [] }),
+      );
+      await activateMind(profile, directory);
+      await expect(readFile(join(directory, ".git/hooks/pre-commit"), "utf8")).resolves.toContain(
+        "self-govern --mind next",
+      );
+    } finally {
+      process.chdir(originalCwd);
       await rm(directory, { recursive: true, force: true });
     }
   });

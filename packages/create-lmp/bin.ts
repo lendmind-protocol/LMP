@@ -105,6 +105,7 @@ async function installEnforcedHook(mind: string) {
   }
   await mkdir(join(gitDirectory, "hooks"), { recursive: true });
   await writeFile(hook, `#!/bin/sh
+# LENDING-MIND GENERATED ENFORCEMENT HOOK
 set -eu
 root="$(git rev-parse --show-toplevel)"
 cd "$root"
