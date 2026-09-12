@@ -10,6 +10,7 @@ use std::{
 };
 
 const MAX_HTTP_BODY: usize = 1_048_576;
+const SUPPORTED_PROTOCOL_VERSIONS: [&str; 2] = ["2025-06-18", "2025-11-25"];
 
 #[derive(Deserialize)]
 struct Request {
@@ -44,6 +45,25 @@ fn err(id: Value, code: i32, message: &str) -> Response {
         id,
         result: None,
         error: Some(json!({"code":code,"message":message})),
+    }
+}
+
+fn negotiated_protocol_version(request: &Request) -> Result<&'static str, &'static str> {
+    let requested = request
+        .params
+        .as_ref()
+        .and_then(|params| params.get("protocolVersion"))
+        .and_then(Value::as_str);
+    match requested {
+        None => Ok(SUPPORTED_PROTOCOL_VERSIONS[0]),
+        Some(version) if SUPPORTED_PROTOCOL_VERSIONS.contains(&version) => {
+            Ok(if version == SUPPORTED_PROTOCOL_VERSIONS[1] {
+                SUPPORTED_PROTOCOL_VERSIONS[1]
+            } else {
+                SUPPORTED_PROTOCOL_VERSIONS[0]
+            })
+        }
+        Some(_) => Err("Unsupported protocol version"),
     }
 }
 fn tool_result(id: Value, value: Value) -> Response {
@@ -363,22 +383,14 @@ fn handle(request: Request, state: &mut ServerState) -> Option<Response> {
                         .map(|_| err(id, -32602, "initialize params must be an object"));
                 }
             }
-            let requested = request
-                .params
-                .as_ref()
-                .and_then(|params| params.get("protocolVersion"))
-                .and_then(Value::as_str);
-            if let Some(version) = requested {
-                if version != "2025-06-18" {
-                    return request
-                        .id
-                        .map(|_| err(id, -32602, "Unsupported protocol version"));
-                }
-            }
+            let version = match negotiated_protocol_version(&request) {
+                Ok(version) => version,
+                Err(message) => return request.id.map(|_| err(id, -32602, message)),
+            };
             state.initialized = true;
             request.id.map(|_| ok(
                 id,
-                json!({"protocolVersion":"2025-06-18","capabilities":{"tools":{}},"serverInfo":{"name":"lending-mind-mcp","version":env!("CARGO_PKG_VERSION")}}),
+                json!({"protocolVersion":version,"capabilities":{"tools":{}},"serverInfo":{"name":"lending-mind-mcp","version":env!("CARGO_PKG_VERSION")}}),
             ))
         }
         "notifications/initialized" => {
@@ -700,7 +712,7 @@ fn is_accepted_initialize(line: &str) -> bool {
         Some(params) if params.is_object() => params
             .get("protocolVersion")
             .and_then(Value::as_str)
-            .map(|version| version == "2025-06-18")
+            .map(|version| SUPPORTED_PROTOCOL_VERSIONS.contains(&version))
             .unwrap_or(true),
         Some(_) => false,
     }
@@ -926,6 +938,24 @@ mod tests {
         assert!(is_accepted_initialize(
             r#"{"jsonrpc":"2.0","id":3,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}"#
         ));
+        assert!(is_accepted_initialize(
+            r#"{"jsonrpc":"2.0","id":4,"method":"initialize","params":{"protocolVersion":"2025-11-25"}}"#
+        ));
+    }
+
+    #[test]
+    fn initialization_echoes_the_negotiated_protocol_version() {
+        let mut state = ServerState { initialized: false };
+        let response = process_line(
+            r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25"}}"#,
+            &mut state,
+        )
+        .expect("initialize response");
+        assert_eq!(
+            response.result.expect("result")["protocolVersion"],
+            "2025-11-25"
+        );
+        assert!(state.initialized);
     }
 
     #[test]
