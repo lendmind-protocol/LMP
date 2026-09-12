@@ -60,6 +60,24 @@ export const root = (cwd = process.cwd()) => join(cwd, ".lending-mind");
 export const registryRoot = (cwd = process.cwd()) => join(root(cwd), "registry");
 export const proposalRoot = (cwd = process.cwd()) => join(root(cwd), "proposals");
 
+export async function resolveDefaultMode(cwd = process.cwd()): Promise<Mode> {
+  try {
+    const config = JSON.parse(
+      await readFile(resolve(cwd, ".lending-mind/config.json"), "utf8"),
+    ) as { defaultMode?: unknown };
+    if (
+      config.defaultMode === "advisory" ||
+      config.defaultMode === "enforced" ||
+      config.defaultMode === "audit"
+    ) {
+      return config.defaultMode;
+    }
+  } catch (error) {
+    if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) throw error;
+  }
+  return "advisory";
+}
+
 const gitignoreBlock = `# Lending-Mind Protocol local state (generated; do not commit)
 .lending-mind/
 .lmp_telemetry/

@@ -15,6 +15,7 @@ import {
   listPackages,
   loadMind,
   promoteProposal,
+  resolveDefaultMode,
   shareMind,
   submitProposal,
 } from "./runtime.js";
@@ -156,6 +157,26 @@ describe("CLI runtime", () => {
       });
     } finally {
       process.chdir(originalCwd);
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("honors the configured evaluation mode and defaults safely without configuration", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "lmp-cli-default-mode-"));
+    try {
+      await expect(resolveDefaultMode(directory)).resolves.toBe("advisory");
+      await mkdir(join(directory, ".lending-mind"), { recursive: true });
+      await writeFile(
+        join(directory, ".lending-mind/config.json"),
+        JSON.stringify({ defaultMode: "enforced" }),
+      );
+      await expect(resolveDefaultMode(directory)).resolves.toBe("enforced");
+      await writeFile(
+        join(directory, ".lending-mind/config.json"),
+        JSON.stringify({ defaultMode: "audit" }),
+      );
+      await expect(resolveDefaultMode(directory)).resolves.toBe("audit");
+    } finally {
       await rm(directory, { recursive: true, force: true });
     }
   });

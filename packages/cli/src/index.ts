@@ -16,6 +16,7 @@ import {
   listPackages,
   loadMind,
   promoteProposal,
+  resolveDefaultMode,
   resolveMindPath,
   shareMind,
   submitProposal,
@@ -240,7 +241,7 @@ export function createProgram() {
     .command("evaluate")
     .option("--mind <mind>")
     .option("--workspace <path>", ".")
-    .option("--mode <mode>", "advisory")
+    .option("--mode <mode>", "workspace-configured mode, or advisory when no config exists")
     .option("--json")
     .option("--artifact-dir <path>")
     .option("--offline")
@@ -251,10 +252,11 @@ export function createProgram() {
       if (options.runCommands && options.mode === "audit")
         throw Object.assign(new Error("audit never runs commands"), { exitCode: EXIT.usage });
       const mindPath = options.mind ? await resolveMindPath(options.mind) : undefined;
+      const mode = options.mode ?? (await resolveDefaultMode(resolve(options.workspace)));
       const artifact = await evaluate(
         await loadMind(options.mind),
         resolve(options.workspace),
-        options.mode,
+        mode,
         {
           artifactDir: options.artifactDir,
           runCommands: options.runCommands === true,
@@ -268,7 +270,7 @@ export function createProgram() {
         : console.log(
             `${artifact.summary.status}: ${artifact.summary.hardViolationCount} violation(s)`,
           );
-      if (options.mode === "enforced" && artifact.summary.status !== "pass")
+      if (mode === "enforced" && artifact.summary.status !== "pass")
         throw Object.assign(new Error("enforced evaluation failed"), { exitCode: EXIT.policy });
     });
   program
