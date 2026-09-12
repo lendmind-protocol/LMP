@@ -10,6 +10,7 @@ import {
   decideProposal,
   ensureGitignore,
   evaluate,
+  installEnforcedHook,
   installPackage,
   instructions,
   listPackages,
@@ -144,6 +145,40 @@ export function createProgram() {
       options.json
         ? json(result)
         : console.log(`✨ Active profile shifted to ${result.id}@${result.version}`);
+    });
+  program
+    .command("self-govern")
+    .description(
+      "Activate a profile, enforce it against this workspace, and optionally install the commit gate",
+    )
+    .option("--mind <mind>", "Profile to activate", "linux-kernel")
+    .option("--workspace <path>", ".")
+    .option("--artifact-dir <path>", ".lending-mind/artifacts")
+    .option("--install-hook")
+    .option("--json")
+    .action(async (options) => {
+      const workspace = resolve(options.workspace);
+      const activated = await activateMind(options.mind, workspace);
+      const artifact = await evaluate(
+        await loadMind(activated.path, workspace),
+        workspace,
+        "enforced",
+        { artifactDir: options.artifactDir, mindPath: activated.path },
+      );
+      const hook = options.installHook
+        ? await installEnforcedHook(workspace, options.mind)
+        : undefined;
+      const result = {
+        profile: { id: activated.id, version: activated.version, path: activated.path },
+        mode: "enforced",
+        artifact,
+        hook,
+      };
+      options.json ? json(result) : console.log(`${artifact.summary.status}: ${activated.id}`);
+      if (["fail", "blocked", "error"].includes(artifact.summary.status))
+        throw Object.assign(new Error("self-governance evaluation failed"), {
+          exitCode: EXIT.policy,
+        });
     });
   program
     .command("share <path>")

@@ -1,4 +1,4 @@
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createKeyPair } from "@lending-mind/sdk";
@@ -7,6 +7,7 @@ import { runCli } from "./index.js";
 import {
   decideProposal,
   ensureGitignore,
+  installEnforcedHook,
   installPackage,
   instructions,
   listPackages,
@@ -125,6 +126,20 @@ describe("CLI runtime", () => {
       });
     } finally {
       process.chdir(originalCwd);
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("installs an executable enforced self-governance hook", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "lmp-cli-self-governance-"));
+    try {
+      await mkdir(join(directory, ".git"), { recursive: true });
+      const hook = await installEnforcedHook(directory);
+      expect(await readFile(hook, "utf8")).toContain(
+        "lmp evaluate --mind linux-kernel --workspace . --mode enforced",
+      );
+      expect((await stat(hook)).mode & 0o111).not.toBe(0);
+    } finally {
       await rm(directory, { recursive: true, force: true });
     }
   });

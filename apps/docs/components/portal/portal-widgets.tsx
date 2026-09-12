@@ -323,7 +323,10 @@ export function MindVault() {
               ))}
             </select>
           </label>
-          <label className="grid min-w-0 gap-2 text-sm font-medium" htmlFor="mind-vault-availability">
+          <label
+            className="grid min-w-0 gap-2 text-sm font-medium"
+            htmlFor="mind-vault-availability"
+          >
             Availability
             <select
               id="mind-vault-availability"
