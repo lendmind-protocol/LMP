@@ -2,11 +2,11 @@
   "sources": [
     {
       "id": "lmp-implementation",
-      "title": "LMP repository implementation and tests",
-      "url": "https://github.com/lendmind-protocol/LMP",
-      "sourceType": "implementation",
-      "accessMethod": "local-checkout",
-      "contentDigest": null,
+      "title": "LMP implementation documented in the public repository README",
+      "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/README.md",
+      "sourceType": "documentation",
+      "accessMethod": "public-http",
+      "contentDigest": "sha256:1031c93b138bca12d75d12afc4760e18dbb88bfa77ba0542b3b3a58ba66a41aa",
       "allowedUse": "evaluate-local-implementation",
       "limitations": "No external endorsement is claimed."
     }

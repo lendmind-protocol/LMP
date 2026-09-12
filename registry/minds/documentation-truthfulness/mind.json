@@ -19,16 +19,16 @@
   "provenance": {
     "sources": [
       {
-        "title": "LMP repository implementation and tests",
-        "url": "https://github.com/lendmind-protocol/LMP",
-        "licenseNote": "Repository implementation reference; no external endorsement claimed.",
-        "sourceType": "implementation",
-        "accessMethod": "local-checkout",
-        "contentDigest": null,
+        "title": "LMP implementation documented in the public repository README",
+        "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/README.md",
+        "licenseNote": "Public repository documentation reference; no external endorsement claimed.",
+        "evidenceTier": "primary",
+        "rights": "public-documentation",
+        "sourceType": "documentation",
+        "accessMethod": "public-http",
+        "contentDigest": "sha256:1031c93b138bca12d75d12afc4760e18dbb88bfa77ba0542b3b3a58ba66a41aa",
         "retentionPolicy": "metadata-only",
-        "allowedUse": "evaluate-local-implementation",
-        "evidenceTier": "implementation",
-        "rights": "project-source"
+        "allowedUse": "evaluate-local-implementation"
       }
     ],
     "attributionRequired": false
