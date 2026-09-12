@@ -22,6 +22,30 @@ LMP does not claim to clone a person, reproduce private reasoning, train base-mo
 - Planned
 - Optional Advanced Capability
 
+## Current Evidence-Based Status — 2026-09-12
+
+This summary is the current status index for the acceptance criteria below. A
+milestone is only marked complete when its scoped checks pass; external gates
+remain partial even when the local implementation path is ready.
+
+| Milestone | Status | Evidence boundary |
+|---|---|---|
+| 0 — Core inventory and stability baseline | Productized locally | Rust, TypeScript, Python, Docker-policy, documentation, and artifact checks pass on the pinned local toolchains. |
+| 1 — Local-first product experience | Productized locally | Init, advisory evaluation, offline defaults, redacted artifacts, and additive onboarding are tested. |
+| 2 — Profile contracts and policy compilation | Productized locally | Canonical schema, provenance, rule contracts, typed context, and compiler tests pass. |
+| 3 — Deterministic evaluation and tool adapters | Productized locally, bounded | Evaluator and adapters are tested; optional external tools remain capability-detected and are not silently installed. |
+| 4 — Baseline and TypeScript Minimal profiles | Productized locally | 19 shipped Mind packages validate; six profiles have executable positive/negative/exception fixture runs. |
+| 5 — Bounded agent remediation loops | Productized locally | Retry, repetition, authorization, regression, remediation, escalation, and artifact transitions are tested. |
+| 6 — Autonomy and tool authorization | Productized locally | A0–A6 policy boundaries and denied/allowed integration evidence pass locally. |
+| 7 — Evidence artifacts and PR workflow | Productized locally | Canonical JSON, redaction, limitations, Markdown summary, and fail-closed artifact gates pass. |
+| 8 — SKILL.md and MCP compatibility | Productized locally, host-bounded | Rust/Node MCP surfaces and project-scoped onboarding pass; universal host conformance is not claimed. |
+| 9 — Profile evidence pipeline and governance | Productized locally, authorization-bounded | Source manifests, classifications, contradictions, fixtures, and proposal-only promotion pass; named-author authorization remains required per profile. |
+| 10 — Human-reviewed profile evolution | Productized locally | Promotion proposals, semver bumps, review state, and non-automatic telemetry promotion are implemented and tested. |
+| 11 — Benchmark and proof of value | Technical evidence only | The 64-scenario benchmark passes its configured controls; causal improvement and independent review remain unproven. |
+| 12 — Protocol core productization | Productized locally, release-bounded | One-shot/daemon contracts, signing, sync verification, self-hosting, and lifecycle checks pass; public release artifacts remain external. |
+| 13 — Optional sandbox and remote distribution | Partial | Docker and local OCI/IPFS paths are verified; public deployment, immutable publication, and cross-platform release execution remain pending. |
+| 14 — Optional fleet and graph orchestration | Planned | No multi-agent fleet is required for the current single-agent product scope. |
+
 ## Product Layers
 
 ```text
