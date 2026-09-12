@@ -27,9 +27,43 @@ const readJson = async (path: string): Promise<Record<string, unknown>> =>
 
 const requireNonEmptyDirectory = async (path: string, description: string) => {
   try {
-    if ((await readdir(path)).length === 0) throw new Error("empty");
+    const entries = await readdir(path, { withFileTypes: true });
+    const sourceExtensions = new Set([
+      ".c",
+      ".cc",
+      ".cpp",
+      ".cs",
+      ".go",
+      ".h",
+      ".hpp",
+      ".hcl",
+      ".java",
+      ".jl",
+      ".js",
+      ".jsx",
+      ".kt",
+      ".kts",
+      ".mts",
+      ".php",
+      ".py",
+      ".rb",
+      ".rs",
+      ".sql",
+      ".swift",
+      ".tf",
+      ".ts",
+      ".tsx",
+    ]);
+    if (
+      !entries.some(
+        (entry) =>
+          entry.isFile() &&
+          sourceExtensions.has(entry.name.slice(entry.name.lastIndexOf(".")).toLowerCase()),
+      )
+    )
+      throw new Error("no executable source fixture");
   } catch {
-    throw new Error(`${description} must contain at least one fixture: ${path}`);
+    throw new Error(`${description} must contain at least one executable source fixture: ${path}`);
   }
 };
 
