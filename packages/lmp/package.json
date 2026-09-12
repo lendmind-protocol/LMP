@@ -4,14 +4,15 @@
   "description": "The npx launcher for the Lending-Mind Protocol CLI.",
   "type": "module",
   "bin": {
-    "lmp": "bin.js"
+    "lmp": "bin.ts"
   },
-  "files": ["bin.js", "README.md"],
+  "files": ["bin.ts", "README.md"],
   "dependencies": {
     "@lending-mind/lmp": "workspace:*"
   },
   "scripts": {
-    "test": "node --test bin.test.js"
+    "test": "node --test bin.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "engines": {
     "node": ">=22"

@@ -1,0 +1,1 @@
+{"status":"review_required","curator":"Lending-Mind Protocol Maintainers","method":"Rules are bounded observations of Node.js security guidance; design judgment remains human-reviewed.","applicability":["Node.js applications in the declared scope."],"exceptions":["Framework-specific behavior requires separate review."],"reviewRequiredBeforePublication":true}

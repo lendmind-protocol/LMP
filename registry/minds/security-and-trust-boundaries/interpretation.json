@@ -1,0 +1,12 @@
+{
+  "status": "review_required",
+  "curator": "Lending-Mind Protocol Maintainers",
+  "method": "Deterministic rules are limited to parser-backed and manifest-backed observations; inferred guidance remains advisory.",
+  "applicability": [
+    "The declared repository scope and supported language adapters only."
+  ],
+  "exceptions": [
+    "Unsupported languages and semantic claims must be reported as skipped or review-required."
+  ],
+  "reviewRequiredBeforePublication": true
+}

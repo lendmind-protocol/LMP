@@ -31,9 +31,9 @@ Common evaluation options are `--mind`, `--workspace`, `--mode`, `--artifact-dir
 
 ```bash
 cargo run --bin lmp -- init --install-baseline
-cargo run --bin lmp -- instructions --mind ./skills/baseline
-cargo run --bin lmp -- evaluate --workspace . --mind ./skills/baseline --changed-only --json
-cargo run --bin lmp -- validate ./skills/baseline/mind.json
+cargo run --bin lmp -- instructions --mind ./profiles/baseline
+cargo run --bin lmp -- evaluate --workspace . --mind ./profiles/baseline --changed-only --json
+cargo run --bin lmp -- validate ./profiles/baseline/mind.json
 cargo run --bin lmp -- verify ./path/to/artifact
 # Rotate a verified package signer; keep the returned old key in the revocation list
 npx lmp skill rotate-key ./path/to/mind \
@@ -112,7 +112,7 @@ npx lmp proposal approve ./.lending-mind/proposals/proposal-1.json \
   --reason "Positive and negative fixtures plus the pinned benchmark were reviewed."
 # Materialize the reviewed change; this never carries stale signatures forward
 npx lmp proposal promote ./.lending-mind/proposals/proposal-1.json \
-  --source ./skills/baseline \
+  --source ./profiles/baseline \
   --version 1.1.0 \
   --out ./.lending-mind/releases/baseline-1.1.0 \
   --promoter maintainer-id
@@ -173,13 +173,13 @@ Automation should use the process exit code together with the JSON state. Human-
 Inspect guidance before an agent run:
 
 ```bash
-cargo run --bin lmp -- instructions --mind ./skills/baseline
+cargo run --bin lmp -- instructions --mind ./profiles/baseline
 ```
 
 Validate a package before selecting it:
 
 ```bash
-cargo run --bin lmp -- validate ./skills/baseline/mind.json
+cargo run --bin lmp -- validate ./profiles/baseline/mind.json
 ```
 
 Evaluate a patch and preserve machine-readable evidence:
@@ -187,7 +187,7 @@ Evaluate a patch and preserve machine-readable evidence:
 ```bash
 cargo run --bin lmp -- evaluate \
   --workspace . \
-  --mind ./skills/baseline \
+  --mind ./profiles/baseline \
   --changed-only \
   --artifact-dir ./artifacts/lmp \
   --json

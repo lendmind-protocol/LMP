@@ -1,0 +1,11 @@
+{
+  "packageId": "lmp:mind:lmp-protocol-core",
+  "version": "1.0.0",
+  "changelog": ["Initial self-hosting protocol-core release."],
+  "limitations": ["This Mind reports bounded configured evidence; it does not prove total correctness, security, or production readiness."],
+  "review": {
+    "status": "unreviewed",
+    "reviewers": [],
+    "notes": "Self-hosting profile with explicit source provenance and bounded claims; independent review remains required."
+  }
+}

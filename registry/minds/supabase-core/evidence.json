@@ -1,0 +1,24 @@
+{
+  "status": "verified-fixtures",
+  "tests": [
+    {
+      "id": "supabase-isolated",
+      "kind": "positive",
+      "description": "A change preserving database-level isolation satisfies the configured profile.",
+      "expected": "pass"
+    },
+    {
+      "id": "supabase-app-join",
+      "kind": "negative",
+      "description": "A prohibited application-layer join is surfaced as a review finding.",
+      "expected": "needs_revision"
+    },
+    {
+      "id": "supabase-unknown-database",
+      "kind": "exception",
+      "description": "A database behavior outside the configured static checks is explicitly bounded.",
+      "expected": "blocked"
+    }
+  ],
+  "notes": "This is a community archetype summarized from public documentation; it is not Supabase endorsement."
+}

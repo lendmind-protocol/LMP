@@ -32,6 +32,8 @@ jobs:
         run: |
           pnpm sync:public-registry
           git diff --exit-code -- registry/registry.json apps/docs/public/registry.json apps/docs/public/profiles
+      - name: Reject production profiles without source-backed rule evidence
+        run: LMP_REQUIRE_SOURCE_BACKED=1 node --import tsx public-web-vault/scripts/validate-registry.ts public-web-vault/registry.json
       - name: Verify the product release version
         run: python3 orchestrator/release_version_gate.py "${GITHUB_REF_NAME}"
       - name: Lint JavaScript workspace
@@ -76,7 +78,7 @@ jobs:
         run: |
           idle_workspace="$(mktemp -d)"
           trap 'find "$idle_workspace" -mindepth 1 -delete; rmdir "$idle_workspace"' EXIT
-          python3 orchestrator/resource_gate.py --lmpd target/release/lmpd --mind skills/baseline/mind.json --workspace "$idle_workspace" --output lmp-test-results/resource-gate.json
+          python3 orchestrator/resource_gate.py --lmpd target/release/lmpd --mind profiles/baseline/mind.json --workspace "$idle_workspace" --output lmp-test-results/resource-gate.json
       - name: Run qualification gate
         run: python3 orchestrator/qualification_suite.py --lmp target/release/lmp --lmpd target/release/lmpd --mcp target/release/lmp-mcp --output lmp-test-results/qualification-result.json
       - name: Run real OSS benchmark gate
@@ -93,6 +95,14 @@ jobs:
             test "$(target/release/lmp verify "$profile" | python3 -c 'import json,sys; print(json.load(sys.stdin)["signatureStatus"])')" = verified
           done
           bash orchestrator/test_registry_sync.sh
+      - name: Publish signed Mind files to Pinata public IPFS
+        env:
+          PINATA_JWT: ${{ secrets.PINATA_JWT }}
+          PINATA_GROUP_ID: ${{ secrets.PINATA_GROUP_ID }}
+          PINATA_GATEWAY_DOMAIN: ${{ secrets.PINATA_GATEWAY_DOMAIN }}
+        run: |
+          pnpm publish:ipfs:pinata
+          pnpm sync:public-registry
       - name: Enforce production registry metadata
         run: python3 orchestrator/registry_release_gate.py registry/registry.json --verify-cids
       - name: Verify registry index matches signed package bytes
@@ -138,6 +148,9 @@ jobs:
         with:
           python-version: '3.11'
       - run: cargo build --release --workspace --target ${{ matrix.target }}
+      - name: Smoke-test native release binaries
+        shell: bash
+        run: python orchestrator/release_binary_smoke.py --target "${{ matrix.target }}" --binary-dir "target/${{ matrix.target }}/release"
       - name: Package binaries
         shell: bash
         run: |

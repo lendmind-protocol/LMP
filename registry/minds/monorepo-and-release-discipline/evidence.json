@@ -1,0 +1,24 @@
+{
+  "status": "verified-fixtures",
+  "tests": [
+    {
+      "id": "monorepo-and-release-discipline-clean",
+      "kind": "positive",
+      "description": "Workspace boundaries, locked builds, release metadata, and reproducible checks.",
+      "expected": "pass"
+    },
+    {
+      "id": "monorepo-and-release-discipline-negative",
+      "kind": "negative",
+      "description": "Workspace boundaries, locked builds, release metadata, and reproducible checks.",
+      "expected": "needs_revision"
+    },
+    {
+      "id": "monorepo-and-release-discipline-boundary",
+      "kind": "exception",
+      "description": "Workspace boundaries, locked builds, release metadata, and reproducible checks.",
+      "expected": "blocked"
+    }
+  ],
+  "notes": "Static evidence cannot prove semantic correctness or production readiness; independent self-hosting results remain bounded."
+}

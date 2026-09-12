@@ -1,0 +1,24 @@
+{
+  "status": "verified-fixtures",
+  "tests": [
+    {
+      "id": "kernel-inspired-systems-clean",
+      "kind": "positive",
+      "description": "Applicable systems-oriented Rust review with explicit limits and no external endorsement.",
+      "expected": "pass"
+    },
+    {
+      "id": "kernel-inspired-systems-negative",
+      "kind": "negative",
+      "description": "Applicable systems-oriented Rust review with explicit limits and no external endorsement.",
+      "expected": "needs_revision"
+    },
+    {
+      "id": "kernel-inspired-systems-boundary",
+      "kind": "exception",
+      "description": "Applicable systems-oriented Rust review with explicit limits and no external endorsement.",
+      "expected": "blocked"
+    }
+  ],
+  "notes": "Static evidence cannot prove semantic correctness or production readiness; independent self-hosting results remain bounded."
+}

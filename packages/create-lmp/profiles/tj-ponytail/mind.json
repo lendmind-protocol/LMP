@@ -3,6 +3,7 @@
   "specVersion": "1.0",
   "id": "lmp:mind:tj-ponytail",
   "version": "1.0.0",
+  "metadata": { "sourceRuleContractVersion": "1" },
   "name": "TJ Ponytail Minimalism",
   "description": "A community archetype for small, direct TypeScript and Node.js implementations.",
   "modeDefaults": { "validation": "advisory", "network": "offline" },

@@ -11,6 +11,7 @@ pub mod evaluator;
 pub mod fleet;
 pub mod registry;
 pub mod scope;
+pub mod self_hosting;
 pub mod skills;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
@@ -387,6 +388,11 @@ fn validate_package_dir_impl(dir: &Path) -> anyhow::Result<MindPackage> {
         let contracts_object = contracts
             .as_object()
             .context("canonical package rule contract manifest must be an object")?;
+        let source_backed = package
+            .metadata
+            .get("sourceRuleContractVersion")
+            .and_then(serde_json::Value::as_str)
+            == Some("1");
         reject_unknown_fields(
             contracts_object,
             &["schemaVersion", "rules"],
@@ -502,7 +508,14 @@ fn validate_package_dir_impl(dir: &Path) -> anyhow::Result<MindPackage> {
                 .context("rule contract evidence must be an object")?;
             reject_unknown_fields(
                 evidence,
-                &["classification", "sourceId"],
+                &[
+                    "classification",
+                    "sourceId",
+                    "sourceClaim",
+                    "sourceLocator",
+                    "implementation",
+                    "fixture",
+                ],
                 "rule contract evidence",
             )?;
             anyhow::ensure!(
@@ -528,6 +541,26 @@ fn validate_package_dir_impl(dir: &Path) -> anyhow::Result<MindPackage> {
                 ),
                 "rule contract evidence classification is invalid"
             );
+            if source_backed {
+                for field in ["sourceClaim", "sourceLocator", "implementation", "fixture"] {
+                    anyhow::ensure!(
+                        evidence
+                            .get(field)
+                            .and_then(serde_json::Value::as_str)
+                            .is_some_and(|value| !value.trim().is_empty()),
+                        "source-backed rule evidence requires {field}"
+                    );
+                }
+                anyhow::ensure!(
+                    evidence
+                        .get("sourceLocator")
+                        .and_then(serde_json::Value::as_str)
+                        .is_some_and(
+                            |value| value.starts_with("http://") || value.starts_with("https://")
+                        ),
+                    "source-backed rule evidence sourceLocator must be an absolute URL"
+                );
+            }
             anyhow::ensure!(
                 rule_ids.insert(
                     rule.get("id")
@@ -622,7 +655,7 @@ mod tests {
 
     #[test]
     fn loads_the_canonical_camel_case_manifest() {
-        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../skills/baseline");
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../profiles/baseline");
         let package = validate_package_dir(&root).expect("baseline mind package should validate");
         assert_eq!(package.spec_version.as_deref(), Some("1.0"));
         assert_eq!(

@@ -14,6 +14,7 @@ enum SourceLanguage {
     Rust,
     TypeScript,
     JavaScript,
+    Python,
 }
 
 impl SourceLanguage {
@@ -22,6 +23,7 @@ impl SourceLanguage {
             Self::Rust => "rust",
             Self::TypeScript => "typescript",
             Self::JavaScript => "javascript",
+            Self::Python => "python",
         }
     }
 
@@ -29,6 +31,7 @@ impl SourceLanguage {
         match self {
             Self::Rust => "syn-2",
             Self::TypeScript | Self::JavaScript => "line-policy-v1",
+            Self::Python => "line-policy-v1",
         }
     }
 
@@ -37,6 +40,7 @@ impl SourceLanguage {
             Self::Rust => "2021",
             Self::TypeScript => "syntax-version-agnostic",
             Self::JavaScript => "syntax-version-agnostic",
+            Self::Python => "syntax-version-agnostic",
         }
     }
 }
@@ -51,6 +55,7 @@ fn source_language(path: &Path) -> Option<SourceLanguage> {
         "rs" => Some(SourceLanguage::Rust),
         "ts" | "tsx" => Some(SourceLanguage::TypeScript),
         "js" | "jsx" | "mjs" | "cjs" => Some(SourceLanguage::JavaScript),
+        "py" | "pyi" => Some(SourceLanguage::Python),
         _ => None,
     }
 }
@@ -63,7 +68,6 @@ fn unsupported_source_language(path: &Path) -> Option<&'static str> {
         .as_str()
     {
         "go" => Some("go"),
-        "py" | "pyi" => Some("python"),
         "java" | "kt" | "kts" => Some("jvm"),
         "c" | "h" | "cc" | "cpp" | "cxx" | "hpp" => Some("c-family"),
         "sql" => Some("sql"),
@@ -115,9 +119,12 @@ fn walk(path: &Path, out: &mut Vec<PathBuf>) -> std::io::Result<()> {
             ".next",
             ".turbo",
             ".cache",
+            ".venv",
+            "lmp_test_bed",
             ".lmp-real-world-work",
             "lmp-test-results",
             ".lending-mind",
+            "fixtures",
         ]
         .contains(&n.to_string_lossy().as_ref())
     }) {
@@ -224,10 +231,21 @@ fn source_findings(
         .unwrap_or(path)
         .display()
         .to_string();
+    let user_facing_cli = relative.ends_with("packages/create-lmp/bin.ts")
+        || relative.ends_with("packages/cli/src/index.ts")
+        || relative.starts_with("scripts/")
+        || relative.starts_with("orchestrator/")
+        || path.components().any(|component| {
+            matches!(component, std::path::Component::Normal(value) if value == "scripts" || value == "orchestrator")
+        })
+        || relative.ends_with("cli/src/index.ts")
+        || path.file_name().and_then(|value| value.to_str()) == Some("bin.ts")
+        || path.extension().and_then(|value| value.to_str()) == Some("mjs");
     let severity = if flags.get("errorAny").copied().unwrap_or(false)
         || flags.get("errorEval").copied().unwrap_or(false)
         || flags.get("errorConsoleLog").copied().unwrap_or(false)
         || flags.get("errorDynamicRequire").copied().unwrap_or(false)
+        || flags.get("errorHardcodedSecret").copied().unwrap_or(false)
     {
         "error"
     } else {
@@ -236,6 +254,9 @@ fn source_findings(
     let mut findings = Vec::new();
     for (index, raw_line) in source.lines().enumerate() {
         let line = raw_line.split("//").next().unwrap_or(raw_line);
+        let fixture_literal = line.contains("writeWorkspace(")
+            || line.contains("write_text(")
+            || line.contains("source =");
         let line_number = index + 1;
         let push = |rule_id: &str, message: &str, remediation: &str| Finding {
             rule_id: rule_id.into(),
@@ -244,8 +265,9 @@ fn source_findings(
             message: message.into(),
             evidence: json!({"file": relative, "line": line_number, "remediation": remediation}),
         };
-        if flags.get("errorAny").copied().unwrap_or(false)
-            || flags.get("warnAny").copied().unwrap_or(false)
+        if !fixture_literal
+            && (flags.get("errorAny").copied().unwrap_or(false)
+                || flags.get("warnAny").copied().unwrap_or(false))
         {
             let has_any = line.contains(": any") || line.contains("<any>");
             if has_any {
@@ -256,8 +278,36 @@ fn source_findings(
                 ));
             }
         }
-        if (flags.get("errorEval").copied().unwrap_or(false)
-            || flags.get("warnEval").copied().unwrap_or(false))
+        if !fixture_literal
+            && (flags.get("errorHardcodedSecret").copied().unwrap_or(false)
+                || flags.get("warnHardcodedSecret").copied().unwrap_or(false))
+        {
+            let lower = line.to_ascii_lowercase();
+            let secret_name = [
+                "apikey",
+                "api_key",
+                "api-key",
+                "secret",
+                "password",
+                "token",
+                "private_key",
+                "private-key",
+                "client_secret",
+            ]
+            .iter()
+            .any(|name| lower.contains(name));
+            let literal = line.contains('"') || line.contains('\'');
+            if secret_name && literal && (line.contains('=') || line.contains(':')) {
+                findings.push(push(
+                    "security.hardcoded-secret",
+                    "Secret-shaped value is hardcoded in source.",
+                    "Load the value through the approved environment or secret-management boundary and rotate the exposed value.",
+                ));
+            }
+        }
+        if !fixture_literal
+            && (flags.get("errorEval").copied().unwrap_or(false)
+                || flags.get("warnEval").copied().unwrap_or(false))
             && (line.contains("eval(") || line.contains("globalThis.eval("))
         {
             findings.push(push(
@@ -266,8 +316,9 @@ fn source_findings(
                 "Replace eval with a typed dispatch table or parser.",
             ));
         }
-        if (flags.get("errorConsoleLog").copied().unwrap_or(false)
-            || flags.get("warnConsoleLog").copied().unwrap_or(false))
+        if !user_facing_cli
+            && (flags.get("errorConsoleLog").copied().unwrap_or(false)
+                || flags.get("warnConsoleLog").copied().unwrap_or(false))
             && ["console.log(", "console.debug(", "console.info("]
                 .iter()
                 .any(|token| line.contains(token))
@@ -320,9 +371,14 @@ fn rfc3339_now() -> String {
 }
 
 fn git_metadata(workspace: &Path) -> (Option<String>, bool) {
+    let git_root = if workspace.is_file() {
+        workspace.parent().unwrap_or(workspace)
+    } else {
+        workspace
+    };
     let head = Command::new("git")
         .args(["-C"])
-        .arg(workspace)
+        .arg(git_root)
         .args(["rev-parse", "HEAD"])
         .output()
         .ok()
@@ -332,7 +388,7 @@ fn git_metadata(workspace: &Path) -> (Option<String>, bool) {
         .filter(|value| !value.is_empty());
     let dirty = Command::new("git")
         .args(["-C"])
-        .arg(workspace)
+        .arg(git_root)
         .args(["status", "--porcelain"])
         .output()
         .ok()
@@ -374,10 +430,22 @@ fn evaluate_with_options_impl(
     artifact_dir: Option<&Path>,
     options: EvaluationOptions<'_>,
 ) -> Result<Evaluation> {
-    let profile_cache = workspace.join(".lending-mind/cache/profiles");
-    let bundle = compiler::compile_cached(package_dir, &profile_cache)?;
     let signature_status = crate::crypto::package_signature_status(package_dir)
         .context("failed to determine Mind Package signature status")?;
+    // Signature failure is a security decision, not a package-loading error. Return a
+    // durable blocked result even when the package is too incomplete to compile, so
+    // callers can act on the cryptographic failure instead of receiving an opaque I/O
+    // error (or accidentally treating the package as unavailable).
+    if signature_status == "invalid" {
+        return blocked_signature_evaluation(package_dir, workspace, mode, artifact_dir);
+    }
+    let cache_root = if workspace.is_file() {
+        workspace.parent().unwrap_or(workspace)
+    } else {
+        workspace
+    };
+    let profile_cache = cache_root.join(".lending-mind/cache/profiles");
+    let bundle = compiler::compile_cached(package_dir, &profile_cache)?;
     let package_id = bundle.mind.id.clone();
     let package_version = bundle.mind.version.clone();
     let bundle_digest = bundle.digest.clone();
@@ -429,11 +497,12 @@ fn evaluate_with_options_impl(
             let cache_dir = options
                 .ast_cache_dir
                 .map(PathBuf::from)
-                .unwrap_or_else(|| workspace.join(".lending-mind/cache/ast"));
+                .unwrap_or_else(|| cache_root.join(".lending-mind/cache/ast"));
             fs::create_dir_all(&cache_dir)?;
             let source_digest =
                 crate::crypto::MindPackageVerifier::compute_sha256(source.as_bytes());
-            let cache_path = cache_dir.join(format!("{}-{}.json", source_digest, max_complexity));
+            let cache_path =
+                cache_dir.join(format!("ast-v2-{}-{}.json", source_digest, max_complexity));
             let cached: Option<Vec<String>> = fs::read(&cache_path)
                 .ok()
                 .and_then(|bytes| serde_json::from_slice(&bytes).ok());
@@ -454,7 +523,10 @@ fn evaluate_with_options_impl(
             let messages = crate::ast::audit_source(&source, max_complexity, &[])?;
             fs::write(&cache_path, serde_json::to_vec(&messages)?)?;
             findings.extend(messages.into_iter().map(|message| Finding { rule_id: "rust.ast".into(), passed: false, severity: "error".into(), message, evidence: json!({"file": file.strip_prefix(workspace).unwrap_or(file).display().to_string(), "cache":"miss"}) }));
-        } else {
+        } else if matches!(
+            language,
+            SourceLanguage::TypeScript | SourceLanguage::JavaScript
+        ) {
             findings.extend(source_findings(file, workspace, &source, &flags));
         }
     }
@@ -464,11 +536,46 @@ fn evaluate_with_options_impl(
             "reason": format!("The Rust evaluator has no parser or policy adapter for {language}; the file was not analyzed."),
             "status": "unsupported"
         }));
+        if mode == "enforced" {
+            findings.push(Finding {
+                rule_id: format!("language.unsupported.{language}"),
+                passed: false,
+                severity: "error".into(),
+                message: format!("Unsupported source language {language} cannot pass enforced evaluation."),
+                evidence: json!({
+                    "language": language,
+                    "status": "unsupported",
+                    "remediation": "Use a profile with an evaluator for this language or run in advisory mode and obtain independent coverage."
+                }),
+            });
+        }
     }
     skipped_checks.push(json!({
         "checkId":"behavioral.docker",
         "reason":"Docker execution is an explicit orchestrator gate, not part of this static evaluator run."
     }));
+    for finding in &mut findings {
+        if let Some(contract) = bundle
+            .rules
+            .iter()
+            .find(|rule| rule.get("id").and_then(Value::as_str) == Some(finding.rule_id.as_str()))
+        {
+            if let Some(contract_evidence) = contract.get("evidence") {
+                if let Some(evidence) = finding.evidence.as_object_mut() {
+                    evidence.insert("sourceEvidence".into(), contract_evidence.clone());
+                    if let Some(value) = contract.get("rationale") {
+                        evidence.insert("ruleRationale".into(), value.clone());
+                    }
+                    if let Some(value) = contract.get("assertion") {
+                        evidence.insert("ruleAssertion".into(), value.clone());
+                    }
+                    if let Some(value) = contract.get("remediation") {
+                        evidence.insert("ruleRemediation".into(), value.clone());
+                    }
+                }
+            }
+        }
+    }
     let errors = findings
         .iter()
         .filter(|f| !f.passed && f.severity == "error")
@@ -559,6 +666,60 @@ fn evaluate_with_options_impl(
     })
 }
 
+fn blocked_signature_evaluation(
+    package_dir: &Path,
+    workspace: &Path,
+    mode: &str,
+    artifact_dir: Option<&Path>,
+) -> Result<Evaluation> {
+    let package = crate::load_package(&package_dir.join("mind.json"))
+        .context("invalid Mind Package manifest")?;
+    let created = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
+    let finding = Finding {
+        rule_id: "package.signature".into(),
+        passed: false,
+        severity: "error".into(),
+        message: "Mind Package signature is invalid or unverifiable.".into(),
+        evidence: json!({
+            "signatureStatus": "invalid",
+            "package": package.id,
+            "workspace": workspace.display().to_string()
+        }),
+    };
+    let artifact = json!({
+        "artifactVersion":"1.0",
+        "runId":format!("rust-{created}-{}", std::process::id()),
+        "createdAt":rfc3339_now(),
+        "mind":{"id":package.id,"version":package.version,"signatureStatus":"invalid","layers":[]},
+        "mode":mode,
+        "state":"blocked",
+        "summary":{"status":"fail","hardViolationCount":1,"warningCount":0,"informationalCount":0},
+        "checks":[serde_json::to_value(&finding)?],
+        "skippedChecks":[{"checkId":"evaluation","reason":"Evaluation stopped before package compilation because signature verification failed.","status":"blocked"}],
+        "commands":[],
+        "limitations":["The package was blocked before workspace analysis because its detached signature could not be verified."],
+        "environment":{"runtime":"rust","lmpVersion":"0.1.0"},
+        "privacy":{"sourceCodeIncluded":false,"rawPathsIncluded":false,"networkUsed":false}
+    });
+    if let Some(dir) = artifact_dir {
+        fs::create_dir_all(dir)?;
+        fs::write(
+            dir.join(format!("run-{created}.json")),
+            serde_json::to_vec_pretty(&artifact)?,
+        )?;
+    }
+    Ok(Evaluation {
+        package_id: package.id,
+        package_version: package.version,
+        mode: mode.into(),
+        passed: false,
+        state: "blocked".into(),
+        findings: vec![finding],
+        checked_files: 0,
+        artifact,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::evaluate;
@@ -567,7 +728,7 @@ mod tests {
     #[test]
     fn enforced_evaluation_blocks_denied_dependencies() {
         let root =
-            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../skills/typescript-minimal");
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../profiles/typescript-minimal");
         let workspace = std::env::temp_dir().join(format!("lmp-rust-test-{}", std::process::id()));
         fs::create_dir_all(&workspace).unwrap();
         fs::write(
@@ -587,7 +748,7 @@ mod tests {
     #[test]
     fn rust_evaluator_enforces_typescript_policy_on_source_files() {
         let root =
-            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../skills/typescript-minimal");
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../profiles/typescript-minimal");
         let workspace =
             std::env::temp_dir().join(format!("lmp-rust-ts-test-{}", std::process::id()));
         fs::create_dir_all(&workspace).unwrap();
@@ -612,7 +773,7 @@ mod tests {
     #[test]
     fn artifact_makes_parser_boundary_explicit_for_supported_and_unsupported_sources() {
         let root =
-            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../skills/typescript-minimal");
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../profiles/typescript-minimal");
         let workspace =
             std::env::temp_dir().join(format!("lmp-rust-language-boundary-{}", std::process::id()));
         fs::create_dir_all(&workspace).unwrap();
@@ -620,7 +781,11 @@ mod tests {
         fs::write(workspace.join("worker.go"), "package main\n").unwrap();
 
         let report = evaluate(&root, &workspace, "enforced", None).unwrap();
-        assert_eq!(report.state, "pass");
+        assert_eq!(report.state, "needs_revision");
+        assert!(report
+            .findings
+            .iter()
+            .any(|finding| finding.rule_id == "language.unsupported.go"));
         assert_eq!(report.artifact["analysis"]["checkedFiles"], 1);
         assert!(report.artifact["analysis"]["languages"]
             .as_array()

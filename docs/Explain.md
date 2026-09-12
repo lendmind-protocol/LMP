@@ -357,3 +357,7 @@ Mind calibration proposal
 <p>An executable engineering cognition layer for AI agents. LMP Minds package the decision-making systems of experienced engineers and teams: their philosophy, trade-offs, architectural boundaries, implementation archetypes, tool behavior, review standards, and verified outcomes.
 
 The LMP runtime synchronizes that Mind across the agent’s prompt, context, tools, execution loop, validation, artifacts, and optional multi-agent workflow. It detects when code deviates from the Mind, forces a critique/remediation cycle within the configured harness, and uses verified artifacts to evolve future versions of the Mind.</p>
+
+## Current verified boundary
+
+The local Rust evaluator, signed package checks, Docker qualification suite, MCP adapter tests, public vault validator, and self-hosting run are implemented and exercised in [`docs/evidence`](./evidence/). LMP does not guarantee private reasoning, universal language coverage, universal host enforcement, authorship, or production readiness. OCI/IPFS adapters are tested against controlled endpoints; public pinning and deployment are not claimed without immutable external evidence.

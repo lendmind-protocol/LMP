@@ -543,6 +543,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "47d9d19d1d6efa0109d2f65ff4c85cddd50bd572e5a00127ab10987290bcefae"
 
 [[package]]
+name = "lmp-artifacts"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
+name = "lmp-cli"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "lmp-core",
+ "lmp-evaluator",
+]
+
+[[package]]
 name = "lmp-core"
 version = "0.1.0"
 dependencies = [
@@ -559,6 +577,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "lmp-evaluator"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "lmp-core",
+]
+
+[[package]]
+name = "lmp-ingest"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+]
+
+[[package]]
 name = "lmp-mcp"
 version = "0.1.0"
 dependencies = [
@@ -566,6 +599,14 @@ dependencies = [
  "lmp-core",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "lmp-mind-compiler"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "lmp-core",
 ]
 
 [[package]]

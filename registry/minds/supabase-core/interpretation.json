@@ -1,0 +1,1 @@
+{"status":"review_required","curator":"Lending-Mind Protocol Maintainers","method":"Rules describe database-bound authorization observations; application semantics remain human-reviewed.","applicability":["Supabase projects using PostgreSQL row-level security."],"exceptions":["Policy exceptions require explicit security review."],"reviewRequiredBeforePublication":true}

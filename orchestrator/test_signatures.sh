@@ -17,11 +17,11 @@ LMP_BIN="${LMP_BIN:-$ROOT_DIR/target/debug/lmp}"
 trap 'rm -rf -- "$WORK_DIR"' EXIT
 
 mkdir -p "$WORK_DIR/package"
-cp "$ROOT_DIR/skills/baseline/mind.json" "$WORK_DIR/package/mind.json"
-cp "$ROOT_DIR/skills/baseline/SKILL.md" "$WORK_DIR/package/SKILL.md"
-cp "$ROOT_DIR/skills/baseline/guidance.md" "$WORK_DIR/package/guidance.md"
-cp -R "$ROOT_DIR/skills/baseline/evidence" "$WORK_DIR/package/evidence"
-cp -R "$ROOT_DIR/skills/baseline/rules" "$WORK_DIR/package/rules"
+cp "$ROOT_DIR/profiles/baseline/mind.json" "$WORK_DIR/package/mind.json"
+cp "$ROOT_DIR/profiles/baseline/SKILL.md" "$WORK_DIR/package/SKILL.md"
+cp "$ROOT_DIR/profiles/baseline/guidance.md" "$WORK_DIR/package/guidance.md"
+cp -R "$ROOT_DIR/profiles/baseline/evidence" "$WORK_DIR/package/evidence"
+cp -R "$ROOT_DIR/profiles/baseline/rules" "$WORK_DIR/package/rules"
 
 cargo run -q -p lmp-core --bin mind_signer -- \
   --input "$WORK_DIR/package/mind.json" \

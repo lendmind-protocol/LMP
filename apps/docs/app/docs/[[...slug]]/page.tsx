@@ -1,3 +1,8 @@
+import {
+  DeepWikiToc,
+  DeepWikiTocPopover,
+  DeepWikiTocProvider,
+} from "@/components/docs/deepwiki-toc";
 import { getMdxComponents } from "@/components/mdx-components";
 import { source } from "@/lib/source";
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/layouts/docs/page";
@@ -26,6 +31,13 @@ export default async function Page(props: {
       toc={data.toc}
       tableOfContent={{ enabled: data.toc.length > 0 }}
       tableOfContentPopover={{ enabled: data.toc.length > 0 }}
+      slots={{
+        toc: {
+          provider: DeepWikiTocProvider,
+          main: DeepWikiToc,
+          popover: DeepWikiTocPopover,
+        },
+      }}
     >
       <DocsTitle>{data.title}</DocsTitle>
       <DocsDescription>{data.description}</DocsDescription>

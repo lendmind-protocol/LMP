@@ -1,0 +1,5 @@
+version = 1
+
+# Package policies may add scoped checks here. They cannot weaken the
+# invariants, signature requirement, artifact redaction, or network policy in
+# .lmp/config.toml.

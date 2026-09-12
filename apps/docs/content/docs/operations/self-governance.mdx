@@ -60,6 +60,20 @@ or claim that Docker runtime evidence exists.
 
 ## Full bootstrapping gate
 
+The repository also carries a pinned self-hosting contract in `.lmp/`. The
+native runtime parses that TOML configuration, lock file, and override file
+before evaluating the allowed source scope:
+
+```bash
+pnpm verify:self-hosting
+```
+
+This verifies the pinned self-hosting Mind, its digest, its Ed25519 signature,
+the fail-closed security settings, and the enforced evaluation artifact. The
+current contract evaluates `crates/lmp-core`; the other configured validation
+commands remain explicit CI/release gates rather than being silently executed
+by the parser.
+
 To apply a profile to a working copy before running the audit, activate the
 profile locally and then evaluate the selected scope:
 
@@ -91,7 +105,7 @@ To evaluate the repository with the runtime directly:
 
 ```bash
 target/debug/lmp evaluate \
-  --mind skills/baseline \
+  --mind profiles/baseline \
   --workspace crates/lmp-core \
   --mode audit \
   --json > lmp-test-results/lmp-self-evaluation.json

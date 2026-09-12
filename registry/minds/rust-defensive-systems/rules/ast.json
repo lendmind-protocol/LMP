@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "1.0",
+  "language": "rust",
+  "unsafe": { "allow": false, "requiresEvidence": true },
+  "macros": { "allowRawExpansion": false },
+  "complexity": { "maxCyclomatic": 12 },
+  "note": "These are policy declarations. The evaluator reports only checks it actually implements."
+}

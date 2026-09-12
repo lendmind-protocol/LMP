@@ -17,7 +17,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-QUALIFICATION_SCENARIOS = 38
+QUALIFICATION_SCENARIOS = 39
 
 
 def run_gate(command: list[str]) -> dict[str, object]:
@@ -212,6 +212,9 @@ def readiness(args: argparse.Namespace) -> dict[str, object]:
     checks["registryCopyParity"] = registry_copy_check(
         Path(args.registry), Path(args.public_registry)
     )
+    checks["evidenceBoundary"] = run_gate(
+        [sys.executable, "orchestrator/evidence_boundary_gate.py", args.claim_ledger]
+    )
     qualification = Path(args.qualification)
     if qualification.is_file():
         try:
@@ -385,8 +388,9 @@ def readiness(args: argparse.Namespace) -> dict[str, object]:
     return {
         "artifactVersion": "1.0",
         "status": "ready" if release_clean else "blocked",
+        "decision": "RELEASE_CANDIDATE_QUALIFIED" if release_clean else "BLOCKED",
         "releaseCleanRequired": True,
-        "claim": "local and external release evidence is complete" if release_clean else "release evidence is incomplete; no publication claim is made",
+        "claim": "The release candidate met the configured qualification checks in the documented environment." if release_clean else "Release evidence is incomplete; no publication claim is made.",
         "checks": checks,
     }
 
@@ -401,6 +405,7 @@ def main() -> int:
     parser.add_argument("--qualification", default="lmp-test-results/qualification-result.json")
     parser.add_argument("--registry", default="registry/registry.json")
     parser.add_argument("--public-registry", default="apps/docs/public/registry.json")
+    parser.add_argument("--claim-ledger", default="docs/claim-ledger.md")
     parser.add_argument("--lmp", default="target/release/lmp")
     parser.add_argument("--deployment")
     parser.add_argument("--expected-registry")

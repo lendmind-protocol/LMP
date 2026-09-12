@@ -1,4 +1,4 @@
-import { cp, mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { chmod, cp, mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createKeyPair } from "@lending-mind/sdk";
@@ -7,6 +7,7 @@ import { runCli } from "./index.js";
 import {
   decideProposal,
   ensureGitignore,
+  evaluate,
   installEnforcedHook,
   installPackage,
   instructions,
@@ -18,6 +19,26 @@ import {
 } from "./runtime.js";
 
 describe("CLI runtime", () => {
+  it("does not turn a rejected Rust evaluation into a successful runtime result", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "lmp-cli-runtime-exit-"));
+    const evaluator = join(directory, "fake-lmp");
+    const previous = process.env.LMP_RUST_BIN;
+    try {
+      await writeFile(evaluator, "#!/bin/sh\nprintf 'runtime failed\\n' >&2\nexit 1\n");
+      await chmod(evaluator, 0o755);
+      process.env.LMP_RUST_BIN = evaluator;
+      await expect(
+        evaluate({ id: "lmp:mind:test", version: "1", rules: [] }, directory, "enforced", {
+          mindPath: directory,
+        }),
+      ).rejects.toThrow(/runtime failed/);
+    } finally {
+      if (previous === undefined) process.env.LMP_RUST_BIN = undefined;
+      else process.env.LMP_RUST_BIN = previous;
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
   it("produces deterministic visible instructions", () => {
     const mind = { id: "lmp:test", version: "1", rules: [] };
     expect(instructions(mind, "json")).toContain('"mind": "lmp:test"');
@@ -137,8 +158,8 @@ describe("CLI runtime", () => {
       const hook = await installEnforcedHook(directory);
       const hookContents = await readFile(hook, "utf8");
       expect(hookContents).toContain('root="$(git rev-parse --show-toplevel)"');
-      expect(hookContents).toContain('exec node "$root/packages/lmp/bin.js"');
-      expect(hookContents).toContain("self-govern --mind linux-kernel --workspace crates/lmp-core");
+      expect(hookContents).toContain('exec node "$root/packages/lmp/bin.ts"');
+      expect(hookContents).toContain("self-govern --mind linux-kernel --workspace .");
       expect((await stat(hook)).mode & 0o111).not.toBe(0);
     } finally {
       await rm(directory, { recursive: true, force: true });
@@ -353,7 +374,7 @@ describe("CLI runtime", () => {
     const source = join(directory, "source");
     const output = join(directory, "promoted");
     try {
-      await cp(join(process.cwd(), "..", "..", "skills", "baseline"), source, {
+      await cp(join(process.cwd(), "..", "..", "profiles", "baseline"), source, {
         recursive: true,
       });
       await writeFile(

@@ -4,20 +4,21 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from orchestrator.self_audit import Check, build_report, run_check
+from orchestrator.self_audit import BLOCKED, VERIFIED, Check, build_report, run_check
 
 
 class SelfAuditTests(unittest.TestCase):
     def test_missing_prerequisite_is_blocked_not_passed(self):
         check = Check("missing", "test", ("not-a-real-lmp-executable",))
         result = run_check(check, timeout=1)
-        self.assertEqual(result["status"], "blocked")
+        self.assertEqual(result["status"], BLOCKED)
 
     def test_report_contains_explicit_claim_limits(self):
         report = build_report(timeout=1, include_self_evaluation=False)
         self.assertEqual(report["schema"], "lmp-self-audit-v1")
         self.assertIn("limitations", report)
         self.assertIn("sandbox", report["claims"])
+        self.assertIn(report["status"], {VERIFIED, "FAILED", BLOCKED})
 
     def test_output_is_valid_json_when_written_by_caller(self):
         report = build_report(timeout=1, include_self_evaluation=False)

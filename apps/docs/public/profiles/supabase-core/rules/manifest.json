@@ -1,13 +1,166 @@
 {
   "schemaVersion": "1.0",
   "rules": [
-    { "id": "commands.allowlist", "policyFile": "rules/commands.json", "severity": "error", "classification": "deterministic", "rationale": "Explicit command boundaries prevent unreviewed execution.", "assertion": "Every requested command is allowed by the profile policy.", "scope": ["shell commands"], "remediation": "Use an allowed command or request an explicit policy update.", "limitations": ["This does not prove a command is safe for every repository."], "evidence": { "classification": "verified-fixture", "sourceId": "evidence.json" } },
-    { "id": "complexity.cyclomatic", "policyFile": "rules/complexity.json", "severity": "error", "classification": "verifiable", "rationale": "Bounded control-flow complexity keeps changes reviewable.", "assertion": "Measured cyclomatic complexity does not exceed the profile ceiling.", "scope": ["source functions"], "remediation": "Split branches into smaller functions and rerun evaluation.", "limitations": ["The metric does not assess domain correctness."], "evidence": { "classification": "verified-fixture", "sourceId": "evidence.json" } },
-    { "id": "dependencies.deny", "policyFile": "rules/dependencies.json", "severity": "error", "classification": "deterministic", "rationale": "Dependency policy makes supply-chain and footprint choices explicit.", "assertion": "Denied dependencies are absent from the selected workspace scope.", "scope": ["package manifests"], "remediation": "Remove the denied dependency or document and approve the policy change.", "limitations": ["The check does not replace vulnerability scanning."], "evidence": { "classification": "verified-fixture", "sourceId": "evidence.json" } },
-    { "id": "typescript.any", "policyFile": "rules/typescript.json", "severity": "error", "classification": "deterministic", "rationale": "Implicitly untyped values weaken the declared type boundary.", "assertion": "The selected TypeScript sources contain no forbidden any usage.", "scope": ["TypeScript source"], "remediation": "Replace any with a precise type or an explicitly documented boundary.", "limitations": ["Generated and non-TypeScript code may be outside this check."], "evidence": { "classification": "verified-fixture", "sourceId": "evidence.json" } },
-    { "id": "typescript.eval", "policyFile": "rules/typescript.json", "severity": "error", "classification": "deterministic", "rationale": "Dynamic evaluation defeats static review and expands execution risk.", "assertion": "The selected TypeScript sources contain no eval call.", "scope": ["TypeScript AST"], "remediation": "Use a typed, explicit dispatch or parser instead of eval.", "limitations": ["Runtime behavior outside parsed files is not assessed."], "evidence": { "classification": "verified-fixture", "sourceId": "evidence.json" } },
-    { "id": "typescript.console", "policyFile": "rules/typescript.json", "severity": "warning", "classification": "judgment-guided", "rationale": "Production logging should use the repository's observable logging boundary.", "assertion": "Direct console logging follows the profile policy.", "scope": ["TypeScript AST"], "remediation": "Route operational output through the configured logger or document the exception.", "limitations": ["A static check cannot judge whether a log message is operationally useful."], "evidence": { "classification": "verified-fixture", "sourceId": "evidence.json" } },
-    { "id": "database.app-layer-join", "policyFile": "rules/typescript.json", "severity": "error", "classification": "judgment-guided", "rationale": "Data locality rules keep relational isolation close to the data boundary.", "assertion": "Application-layer join patterns do not violate the active profile policy.", "scope": ["database-facing source"], "remediation": "Move the join into the approved data boundary or record a reviewed exception.", "limitations": ["The heuristic requires domain review for unusual query abstractions."], "evidence": { "classification": "verified-fixture", "sourceId": "evidence.json" } }
+    {
+      "id": "commands.allowlist",
+      "policyFile": "rules/commands.json",
+      "severity": "error",
+      "classification": "deterministic",
+      "rationale": "Explicit command boundaries prevent unreviewed execution.",
+      "assertion": "Every requested command is allowed by the profile policy.",
+      "scope": [
+        "shell commands"
+      ],
+      "remediation": "Use an allowed command or request an explicit policy update.",
+      "limitations": [
+        "This does not prove a command is safe for every repository."
+      ],
+      "evidence": {
+        "classification": "verified-fixture",
+        "sourceId": "evidence.json",
+        "sourceClaim": "LMP-local command boundary; the Supabase source does not claim to define this shell allowlist.",
+        "sourceLocator": "https://github.com/lendmind-protocol/LMP/blob/main/registry/minds/supabase-core/rules/commands.json",
+        "implementation": "packages/evaluator/src/index.ts and crates/lmp-core/src/evaluator.rs apply the command policy.",
+        "fixture": "registry/minds/supabase-core/evidence.json#tests"
+      }
+    },
+    {
+      "id": "complexity.cyclomatic",
+      "policyFile": "rules/complexity.json",
+      "severity": "error",
+      "classification": "verifiable",
+      "rationale": "Bounded control-flow complexity keeps changes reviewable.",
+      "assertion": "Measured cyclomatic complexity does not exceed the profile ceiling.",
+      "scope": [
+        "source functions"
+      ],
+      "remediation": "Split branches into smaller functions and rerun evaluation.",
+      "limitations": [
+        "The metric does not assess domain correctness."
+      ],
+      "evidence": {
+        "classification": "verified-fixture",
+        "sourceId": "evidence.json",
+        "sourceClaim": "LMP-local reviewability threshold; the Supabase source does not prescribe this numeric ceiling.",
+        "sourceLocator": "https://github.com/lendmind-protocol/LMP/blob/main/registry/minds/supabase-core/rules/complexity.json",
+        "implementation": "packages/evaluator/src/index.ts and crates/lmp-core/src/evaluator.rs measure configured complexity limits.",
+        "fixture": "registry/minds/supabase-core/evidence.json#tests"
+      }
+    },
+    {
+      "id": "dependencies.deny",
+      "policyFile": "rules/dependencies.json",
+      "severity": "error",
+      "classification": "deterministic",
+      "rationale": "Dependency policy makes supply-chain and footprint choices explicit.",
+      "assertion": "Denied dependencies are absent from the selected workspace scope.",
+      "scope": [
+        "package manifests"
+      ],
+      "remediation": "Remove the denied dependency or document and approve the policy change.",
+      "limitations": [
+        "The check does not replace vulnerability scanning."
+      ],
+      "evidence": {
+        "classification": "verified-fixture",
+        "sourceId": "evidence.json",
+        "sourceClaim": "LMP-local dependency boundary; the Supabase source does not prescribe this package allowlist.",
+        "sourceLocator": "https://github.com/lendmind-protocol/LMP/blob/main/registry/minds/supabase-core/rules/dependencies.json",
+        "implementation": "packages/evaluator/src/index.ts and crates/lmp-core/src/evaluator.rs inspect package manifests.",
+        "fixture": "registry/minds/supabase-core/evidence.json#tests"
+      }
+    },
+    {
+      "id": "typescript.any",
+      "policyFile": "rules/typescript.json",
+      "severity": "error",
+      "classification": "deterministic",
+      "rationale": "Implicitly untyped values weaken the declared type boundary.",
+      "assertion": "The selected TypeScript sources contain no forbidden any usage.",
+      "scope": [
+        "TypeScript source"
+      ],
+      "remediation": "Replace any with a precise type or an explicitly documented boundary.",
+      "limitations": [
+        "Generated and non-TypeScript code may be outside this check."
+      ],
+      "evidence": {
+        "classification": "verified-fixture",
+        "sourceId": "evidence.json",
+        "sourceClaim": "LMP-local type-safety boundary; the Supabase source does not prescribe this TypeScript rule.",
+        "sourceLocator": "https://github.com/lendmind-protocol/LMP/blob/main/registry/minds/supabase-core/rules/typescript.json",
+        "implementation": "packages/evaluator/src/index.ts and crates/lmp-core/src/evaluator.rs inspect TypeScript policy violations.",
+        "fixture": "registry/minds/supabase-core/evidence.json#tests"
+      }
+    },
+    {
+      "id": "typescript.eval",
+      "policyFile": "rules/typescript.json",
+      "severity": "error",
+      "classification": "deterministic",
+      "rationale": "Dynamic evaluation defeats static review and expands execution risk.",
+      "assertion": "The selected TypeScript sources contain no eval call.",
+      "scope": [
+        "TypeScript AST"
+      ],
+      "remediation": "Use a typed, explicit dispatch or parser instead of eval.",
+      "limitations": [
+        "Runtime behavior outside parsed files is not assessed."
+      ],
+      "evidence": {
+        "classification": "verified-fixture",
+        "sourceId": "evidence.json",
+        "sourceClaim": "LMP-local dynamic-code boundary; the Supabase source does not prescribe this TypeScript rule.",
+        "sourceLocator": "https://github.com/lendmind-protocol/LMP/blob/main/registry/minds/supabase-core/rules/typescript.json",
+        "implementation": "packages/evaluator/src/index.ts and crates/lmp-core/src/evaluator.rs inspect dynamic evaluation patterns.",
+        "fixture": "registry/minds/supabase-core/evidence.json#tests"
+      }
+    },
+    {
+      "id": "typescript.console",
+      "policyFile": "rules/typescript.json",
+      "severity": "warning",
+      "classification": "judgment-guided",
+      "rationale": "Production logging should use the repository's observable logging boundary.",
+      "assertion": "Direct console logging follows the profile policy.",
+      "scope": [
+        "TypeScript AST"
+      ],
+      "remediation": "Route operational output through the configured logger or document the exception.",
+      "limitations": [
+        "A static check cannot judge whether a log message is operationally useful."
+      ],
+      "evidence": {
+        "classification": "verified-fixture",
+        "sourceId": "evidence.json",
+        "sourceClaim": "LMP-local observability boundary; the Supabase source does not prescribe this logging rule.",
+        "sourceLocator": "https://github.com/lendmind-protocol/LMP/blob/main/registry/minds/supabase-core/rules/typescript.json",
+        "implementation": "packages/evaluator/src/index.ts and crates/lmp-core/src/evaluator.rs inspect direct console use.",
+        "fixture": "registry/minds/supabase-core/evidence.json#tests"
+      }
+    },
+    {
+      "id": "database.app-layer-join",
+      "policyFile": "rules/typescript.json",
+      "severity": "error",
+      "classification": "judgment-guided",
+      "rationale": "Data locality rules keep relational isolation close to the data boundary.",
+      "assertion": "Application-layer join patterns do not violate the active profile policy.",
+      "scope": [
+        "database-facing source"
+      ],
+      "remediation": "Move the join into the approved data boundary or record a reviewed exception.",
+      "limitations": [
+        "The heuristic requires domain review for unusual query abstractions; this does not prove RLS is enabled or correct."
+      ],
+      "evidence": {
+        "classification": "explicit-statement",
+        "sourceId": "evidence.json",
+        "sourceClaim": "Supabase documents RLS as database-level granular authorization and recommends policies per operation; this profile turns that boundary principle into a review heuristic, not an RLS proof.",
+        "sourceLocator": "https://supabase.com/docs/guides/database/postgres/row-level-security",
+        "implementation": "packages/evaluator/src/index.ts and crates/lmp-core/src/evaluator.rs flag configured application-layer join patterns.",
+        "fixture": "registry/minds/supabase-core/evidence.json#tests.supabase-app-join"
+      }
+    }
   ]
 }
-

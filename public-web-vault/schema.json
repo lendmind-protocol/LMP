@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lmp-six.vercel.app/schema/mind-vault-v1.json",
+  "type": "object",
+  "required": ["schemaVersion", "generatedAt", "production", "draftMinds"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "production": { "type": "array", "items": { "$ref": "#/$defs/entry" } },
+    "draftMinds": { "type": "array", "items": { "$ref": "#/$defs/draft" } }
+  },
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "required": [
+        "mindKey",
+        "name",
+        "version",
+        "attribution",
+        "category",
+        "verified_status",
+        "packagePath",
+        "sha256",
+        "trustAnchor",
+        "distribution"
+      ],
+      "properties": {
+        "mindKey": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+        "name": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+        "attribution": { "type": "string", "minLength": 1 },
+        "category": {
+          "enum": [
+            "Systems & Languages",
+            "Frontend UI Component Systems",
+            "Backend, Databases, & Infrastructure",
+            "Agentic Frameworks & Context Engineering",
+            "Full-Stack Frameworks & Runtimes"
+          ]
+        },
+        "verified_status": { "enum": ["OFFICIAL_VERIFIED_SIGNATURE", "COMMUNITY_CONTRIBUTED"] },
+        "packagePath": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "trustAnchor": { "type": "string", "pattern": "^0x[0-9a-fA-F]{64}$" },
+        "source": { "type": "string", "format": "uri" },
+        "distribution": { "$ref": "#/$defs/distribution" }
+      }
+    },
+    "draft": {
+      "type": "object",
+      "required": ["mindKey", "name", "category", "status", "promotionWorkflow"],
+      "properties": {
+        "mindKey": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+        "name": { "type": "string", "minLength": 1 },
+        "category": {
+          "enum": [
+            "Systems & Languages",
+            "Frontend UI Component Systems",
+            "Backend, Databases, & Infrastructure",
+            "Agentic Frameworks & Context Engineering",
+            "Full-Stack Frameworks & Runtimes"
+          ]
+        },
+        "status": { "enum": ["DRAFT", "PENDING_PACKAGING"] },
+        "promotionWorkflow": { "type": "string", "minLength": 1 }
+      }
+    },
+    "distribution": {
+      "type": "object",
+      "required": ["status", "ipfsCid", "ociReference", "mintingWorkflow"],
+      "properties": {
+        "status": { "enum": ["PENDING_IPFS_PIN", "VERIFIED_IPFS_PIN", "VERIFIED_OCI_ARTIFACT"] },
+        "ipfsCid": { "type": ["string", "null"] },
+        "ociReference": { "type": ["string", "null"] },
+        "mintingWorkflow": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

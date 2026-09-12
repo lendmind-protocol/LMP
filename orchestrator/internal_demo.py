@@ -22,8 +22,8 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[1]
-ONBOARD = ROOT / "packages/create-lmp/bin.js"
-MIND = ROOT / "skills/typescript-minimal"
+ONBOARD = ROOT / "packages/create-lmp/bin.ts"
+MIND = ROOT / "profiles/typescript-minimal"
 
 
 @dataclass(frozen=True)

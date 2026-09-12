@@ -3,6 +3,7 @@
   "specVersion": "1.0",
   "id": "lmp:mind:supabase-core",
   "version": "1.0.0",
+  "metadata": { "sourceRuleContractVersion": "1" },
   "name": "Supabase Data Isolation",
   "description": "Database-bound authorization and explicit tenant data locality.",
   "modeDefaults": { "validation": "advisory", "network": "offline" },

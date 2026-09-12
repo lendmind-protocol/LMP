@@ -86,12 +86,21 @@ def validate(
     timing = report.get("timingSeconds") or {}
     if not isinstance(timing.get("total"), (int, float)) or timing["total"] < 0:
         raise ValueError("total benchmark timing is required")
+    privacy = report.get("privacy") or {}
+    for field in ("sourceCodeIncluded", "rawPathsIncluded", "privateReasoningIncluded"):
+        if privacy.get(field) is not False:
+            raise ValueError(f"benchmark privacy evidence is invalid: {field}")
     scenarios = report.get("scenarios") or []
     if len(scenarios) != EXPECTED_SCENARIOS:
         raise ValueError(f"every one of the {EXPECTED_SCENARIOS} scenarios is required")
     for index, scenario in enumerate(scenarios):
         if not isinstance(scenario, dict):
             raise ValueError(f"scenario {index} must be an object")
+        for field in ("id", "repository", "revision", "taskType"):
+            if not isinstance(scenario.get(field), str) or not scenario[field]:
+                raise ValueError(f"scenario {index} is missing {field} provenance")
+        if not re.fullmatch(r"[0-9a-f]{40}", scenario["revision"]):
+            raise ValueError(f"scenario {index} has an invalid source revision")
         if scenario.get("transitionPassed") is not True:
             raise ValueError(f"scenario {index} did not pass its baseline-to-guided transition")
         timing = scenario.get("timingSeconds") or {}
@@ -142,6 +151,17 @@ def validate(
     sources = report.get("sourceVerification") or []
     if not sources or any(item.get("verified") is not True for item in sources):
         raise ValueError("every declared provenance source must be verified")
+    for index, source in enumerate(sources):
+        if not isinstance(source, dict) or not isinstance(source.get("id"), str) or not source["id"]:
+            raise ValueError(f"source {index} is missing an identifier")
+        if not isinstance(source.get("url"), str) or not source["url"].startswith("https://"):
+            raise ValueError(f"source {index} must use HTTPS provenance")
+        if not isinstance(source.get("status"), int) or source["status"] < 200 or source["status"] >= 400:
+            raise ValueError(f"source {index} is missing a successful HTTP status")
+        if not isinstance(source.get("contentBytes"), int) or source["contentBytes"] <= 0:
+            raise ValueError(f"source {index} is missing content-size evidence")
+        if not isinstance(source.get("contentSha256"), str) or not re.fullmatch(r"[0-9a-f]{64}", source["contentSha256"]):
+            raise ValueError(f"source {index} is missing content digest evidence")
     if summary.get("verifiedSources") != len(sources):
         raise ValueError("verified source count does not match source evidence")
     return {"status": "verified", "scenarioCount": expected, "revision": revision}

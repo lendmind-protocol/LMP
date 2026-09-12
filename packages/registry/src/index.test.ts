@@ -1,10 +1,36 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { sign as cryptoSign } from "node:crypto";
+import { createHash, sign as cryptoSign } from "node:crypto";
+import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { generateEd25519KeyPair } from "@lending-mind/sdk";
 import { describe, expect, it } from "vitest";
-import { LocalRegistryClient, OciRegistryClient } from "./index.js";
+import { LocalRegistryClient, OciRegistryClient, StaticRegistryClient, syncLocalProfile } from "./index.js";
+
+function packageManifest(id: string, version: string, extra: Record<string, unknown> = {}) {
+  return {
+    id,
+    version,
+    provenance: {
+      sources: [
+        {
+          title: "Test source",
+          url: "https://example.test/source",
+          licenseNote: "Test-only public reference",
+          evidenceTier: "primary",
+          rights: "public-documentation",
+          sourceType: "documentation",
+          accessMethod: "public-http",
+          contentDigest: `sha256:${"a".repeat(64)}`,
+          retentionPolicy: "metadata-only",
+          allowedUse: "test-verification",
+        },
+      ],
+      attributionRequired: true,
+    },
+    ...extra,
+  };
+}
 
 describe("LocalRegistryClient", () => {
   it("installs, lists, resolves, pulls and verifies immutable packages", async () => {
@@ -12,7 +38,7 @@ describe("LocalRegistryClient", () => {
     const source = await mkdtemp(join(tmpdir(), "lmp-package-"));
     await writeFile(
       join(source, "mind.json"),
-      JSON.stringify({ id: "lmp:test", version: "1.0.0" }),
+      JSON.stringify(packageManifest("lmp:test", "1.0.0")),
     );
     const keys = generateEd25519KeyPair();
     const publicKey = keys.publicKey.export({ type: "spki", format: "pem" }).toString();
@@ -27,7 +53,7 @@ describe("LocalRegistryClient", () => {
     await registry.pull("lmp:test", "1.0.0", destination);
     await writeFile(
       join(source, "mind.json"),
-      JSON.stringify({ id: "lmp:test", version: "1.0.0", changed: true }),
+      JSON.stringify(packageManifest("lmp:test", "1.0.0", { changed: true })),
     );
     await expect(registry.install(source)).rejects.toThrow("immutable");
     await rm(root, { recursive: true, force: true });
@@ -49,7 +75,7 @@ describe("LocalRegistryClient", () => {
     const source = await mkdtemp(join(tmpdir(), "lmp-package-"));
     const registry = new LocalRegistryClient(root);
     for (const version of ["1.0.0", "1.2.0", "2.0.0"]) {
-      await writeFile(join(source, "mind.json"), JSON.stringify({ id: "lmp:range", version }));
+      await writeFile(join(source, "mind.json"), JSON.stringify(packageManifest("lmp:range", version)));
       await registry.install(source);
     }
     expect((await registry.resolve("lmp:range", "^1.0.0")).version).toBe("1.2.0");
@@ -74,13 +100,13 @@ describe("LocalRegistryClient", () => {
     const source = await mkdtemp(join(tmpdir(), "lmp-package-"));
     await writeFile(
       join(source, "mind.json"),
-      JSON.stringify({ id: "lmp:tamper", version: "1.0.0" }),
+      JSON.stringify(packageManifest("lmp:tamper", "1.0.0")),
     );
     const registry = new LocalRegistryClient(root);
     await registry.install(source);
     await writeFile(
       join(root, "lmp:tamper", "1.0.0", "mind.json"),
-      JSON.stringify({ id: "lmp:tamper", version: "1.0.0", changed: true }),
+      JSON.stringify(packageManifest("lmp:tamper", "1.0.0", { changed: true })),
     );
     await expect(registry.pull("lmp:tamper", "1.0.0", join(root, "pulled"))).rejects.toThrow(
       /failed digest or signature verification/,
@@ -94,67 +120,150 @@ describe("LocalRegistryClient", () => {
     const destination = await mkdtemp(join(tmpdir(), "lmp-oci-destination-"));
     await writeFile(
       join(source, "mind.json"),
-      JSON.stringify({ id: "lmp:oci-test", version: "1.0.0" }),
+      JSON.stringify(packageManifest("lmp:oci-test", "1.0.0")),
     );
     const keys = generateEd25519KeyPair();
-    const manifestBytes = await readFile(join(source, "mind.json"));
-    const signatureHex = cryptoSign(null, manifestBytes, keys.privateKey).toString("hex");
+    const signedManifestBytes = await readFile(join(source, "mind.json"));
+    const signatureHex = cryptoSign(null, signedManifestBytes, keys.privateKey).toString("hex");
     const publicKeyHex = keys.publicKey.export({ type: "spki", format: "der" }).subarray(-32).toString("hex");
     await mkdir(join(source, "signatures"), { recursive: true });
     await writeFile(join(source, "signatures", "manifest.sig"), `0x${signatureHex}\n`);
     await writeFile(join(source, "signatures", "public-key.hex"), `0x${publicKeyHex}\n`);
 
-    const blobs = new Map<string, Uint8Array>();
-    let manifest: Record<string, unknown> | undefined;
-    const manifestDigest = `sha256:${"a".repeat(64)}`;
-    const fakeFetch: typeof fetch = async (input, init = {}) => {
-      const url = new URL(
-        typeof input === "string" ? input : input instanceof URL ? input.href : input.url,
-      );
-      const body = init.body
-        ? Buffer.from(await new Response(init.body).arrayBuffer())
-        : Buffer.alloc(0);
-      if (url.pathname.endsWith("/blobs/uploads/"))
-        return new Response(null, { status: 202, headers: { location: "/upload/1" } });
-      if (url.pathname === "/upload/1" && init.method === "PUT") {
+    const blobs = new Map<string, Buffer>();
+    let manifestBytes: Buffer | undefined;
+    const server = createServer(async (request, response) => {
+      const url = new URL(request.url ?? "/", "http://127.0.0.1");
+      const chunks: Buffer[] = [];
+      for await (const chunk of request) chunks.push(Buffer.from(chunk));
+      const body = Buffer.concat(chunks);
+      if (url.pathname.endsWith("/blobs/uploads/") && request.method === "POST") {
+        response.writeHead(202, { location: "/upload/1" }).end();
+        return;
+      }
+      if (url.pathname === "/upload/1" && request.method === "PUT") {
         const digest = url.searchParams.get("digest");
-        if (!digest) return new Response("digest required", { status: 400 });
+        if (!digest) { response.writeHead(400).end("digest required"); return; }
         blobs.set(digest, body);
-        return new Response(null, { status: 201, headers: { "docker-content-digest": digest } });
+        response.writeHead(201, { "docker-content-digest": digest }).end();
+        return;
       }
-      if (url.pathname.endsWith("/manifests/1.0.0") && init.method === "PUT") {
-        manifest = JSON.parse(body.toString("utf8"));
-        return new Response(null, {
-          status: 201,
-          headers: { "docker-content-digest": manifestDigest },
-        });
+      if (url.pathname.endsWith("/manifests/1.0.0") && request.method === "PUT") {
+        manifestBytes = body;
+        const digest = `sha256:${createHash("sha256").update(body).digest("hex")}`;
+        response.writeHead(201, { "docker-content-digest": digest }).end();
+        return;
       }
-      if (url.pathname.endsWith("/tags/list"))
-        return Response.json({ name: "lmp/minds", tags: ["1.0.0"] });
-      if (url.pathname.endsWith("/manifests/1.0.0"))
-        return Response.json(manifest, { headers: { "docker-content-digest": manifestDigest } });
+      if (url.pathname.endsWith("/tags/list")) {
+        response.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify({ name: "lmp/minds", tags: ["1.0.0"] }));
+        return;
+      }
+      if (url.pathname.endsWith("/manifests/1.0.0") && manifestBytes) {
+        response.writeHead(200, {
+          "content-type": "application/vnd.oci.image.manifest.v1+json",
+          "docker-content-digest": `sha256:${createHash("sha256").update(manifestBytes).digest("hex")}`,
+        }).end(manifestBytes);
+        return;
+      }
       if (url.pathname.includes("/blobs/")) {
         const blob = blobs.get(url.pathname.split("/blobs/")[1]);
-        return blob ? new Response(Buffer.from(blob)) : new Response("not found", { status: 404 });
+        if (blob) { response.writeHead(200).end(blob); return; }
       }
-      return new Response("not found", { status: 404 });
-    };
-
-    const registry = new OciRegistryClient({
-      registry: "https://registry.test",
-      repository: "lmp/minds",
-      fetch: fakeFetch,
+      response.writeHead(404).end("not found");
     });
-    const published = await registry.install(source);
-    expect(published.ociDigest).toBe(manifestDigest);
-    expect(await registry.list()).toEqual(["1.0.0"]);
-    const pulled = await registry.pull("1.0.0", join(destination, "package"));
-    expect(pulled.id).toBe("lmp:oci-test");
-    expect(await registry.verify("1.0.0")).toBe(true);
-    expect(await readFile(join(destination, "package", "mind.json"), "utf8")).toContain(
-      "lmp:oci-test",
-    );
-    await rm(source, { recursive: true, force: true });
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const address = server.address() as { port: number };
+    try {
+      const registry = new OciRegistryClient({
+        registry: `http://127.0.0.1:${address.port}`,
+        repository: "lmp/minds",
+      });
+      const published = await registry.install(source);
+      expect(published.ociDigest).toMatch(/^sha256:[0-9a-f]{64}$/);
+      expect(await registry.list()).toEqual(["1.0.0"]);
+      const pulled = await registry.pull("1.0.0", join(destination, "package"));
+      expect(pulled.id).toBe("lmp:oci-test");
+      expect(await registry.verify("1.0.0")).toBe(true);
+      expect(await readFile(join(destination, "package", "mind.json"), "utf8")).toContain("lmp:oci-test");
+    } finally {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+      await rm(source, { recursive: true, force: true });
+      await rm(destination, { recursive: true, force: true });
+    }
+  });
+
+  it("syncs a complete package through a real local HTTP IPFS gateway and preserves provenance", async () => {
+    const source = join(process.cwd(), "../create-lmp/profiles/tj-ponytail");
+    const profileFiles = [
+      "SKILL.md", "guidance.md", "evidence.json", "release.json", "evidence/README.md",
+      "rules/manifest.json", "rules/commands.json", "rules/complexity.json", "rules/dependencies.json",
+      "rules/typescript.json", "signatures/manifest.sig", "signatures/public-key.hex",
+    ];
+    const manifest = await readFile(join(source, "mind.json"));
+    const signature = (await readFile(join(source, "signatures/manifest.sig"), "utf8")).trim();
+    const publicKey = (await readFile(join(source, "signatures/public-key.hex"), "utf8")).trim();
+    const packageFiles = await Promise.all(profileFiles.map(async (path) => {
+      const bytes = await readFile(join(source, path));
+      return { path, url: "PLACEHOLDER", digest: createHash("sha256").update(bytes).digest("hex") };
+    }));
+    const server = createServer(async (request, response) => {
+      const path = decodeURIComponent(new URL(request.url ?? "/", "http://127.0.0.1").pathname);
+      if (path === "/ipfs/testcid") {
+        response.writeHead(200, { "content-type": "application/json" });
+        response.end(manifest);
+        return;
+      }
+      const relative = path.replace(/^\/files\//, "");
+      const file = relative === "mind.json" ? join(source, relative) : join(source, relative);
+      if (relative === "mind.json" || profileFiles.includes(relative)) {
+        response.writeHead(200);
+        response.end(await readFile(file));
+        return;
+      }
+      if (path === "/registry.json") {
+        const entry = {
+          id: "lmp:mind:tj-ponytail",
+          version: "1.0.0",
+          ipfsCid: "testcid",
+          digest: createHash("sha256").update(manifest).digest("hex"),
+          signature,
+          publicKey,
+          packageFiles: packageFiles.map((file) => ({ ...file, url: `http://127.0.0.1:${(server.address() as { port: number }).port}/files/${file.path}` })),
+        };
+        response.writeHead(200, { "content-type": "application/json" });
+        response.end(JSON.stringify({ schemaVersion: "1", entries: [entry] }));
+        return;
+      }
+      response.writeHead(404).end();
+    });
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const address = server.address() as { port: number };
+    const root = await mkdtemp(join(tmpdir(), "lmp-static-sync-"));
+    try {
+      const client = new StaticRegistryClient({
+        registryUrl: `http://127.0.0.1:${address.port}/registry.json`,
+        trustedPublicKey: publicKey,
+        ipfsGateways: [`http://127.0.0.1:${address.port}/ipfs/{cid}`],
+      });
+      const metadata = await client.sync("tj-ponytail", root);
+      expect(metadata.provenance.sourceCount).toBe(1);
+      const installedManifest = join(root, "lmp:mind:tj-ponytail", "1.0.0", "mind.json");
+      expect(await readFile(installedManifest, "utf8")).toContain("tj-ponytail");
+      await writeFile(installedManifest, "tampered\n");
+      await expect(client.sync("tj-ponytail", root)).rejects.toThrow(/stored integrity/);
+    } finally {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it("blocks local synchronization when provenance is absent", async () => {
+    const sourceRoot = await mkdtemp(join(tmpdir(), "lmp-local-source-"));
+    const destination = await mkdtemp(join(tmpdir(), "lmp-local-destination-"));
+    await mkdir(join(sourceRoot, "missing-provenance"), { recursive: true });
+    await writeFile(join(sourceRoot, "missing-provenance", "mind.json"), JSON.stringify({ id: "lmp:missing", version: "1.0.0" }));
+    await expect(syncLocalProfile(sourceRoot, "missing-provenance", destination)).rejects.toThrow(/provenance/);
+    await rm(sourceRoot, { recursive: true, force: true });
     await rm(destination, { recursive: true, force: true });
   });
 });

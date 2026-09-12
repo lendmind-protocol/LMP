@@ -6,6 +6,10 @@ from orchestrator.sandbox import DockerSandbox
 
 
 class DockerSandboxMountTests(unittest.TestCase):
+    def test_missing_workspace_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, "existing directory"):
+            DockerSandbox("/path/that/does/not/exist")
+
     def test_no_new_privileges_is_opt_in_for_incompatible_rootless_hosts(self):
         default_command = DockerSandbox("/tmp").build_command(["true"])
         hardened_command = DockerSandbox("/tmp", no_new_privileges=True).build_command(["true"])
@@ -43,6 +47,16 @@ class DockerSandboxMountTests(unittest.TestCase):
             link.symlink_to(target)
             with self.assertRaises(ValueError):
                 DockerSandbox(root, include_paths=[link]).build_command(["true"])
+
+    def test_missing_mount_path_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaisesRegex(ValueError, "does not exist"):
+                DockerSandbox(directory, include_paths=["missing.txt"]).build_command(["true"])
+
+    def test_non_positive_timeout_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaisesRegex(ValueError, "timeout must be positive"):
+                DockerSandbox(directory).run(["true"], timeout_seconds=0)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,24 @@
+{
+  "status": "verified-fixtures",
+  "tests": [
+    {
+      "id": "node-onboarding-safety-clean",
+      "kind": "positive",
+      "description": "Node onboarding, template rendering, non-overwrite behavior, and package resolution.",
+      "expected": "pass"
+    },
+    {
+      "id": "node-onboarding-safety-negative",
+      "kind": "negative",
+      "description": "Node onboarding, template rendering, non-overwrite behavior, and package resolution.",
+      "expected": "needs_revision"
+    },
+    {
+      "id": "node-onboarding-safety-boundary",
+      "kind": "exception",
+      "description": "Node onboarding, template rendering, non-overwrite behavior, and package resolution.",
+      "expected": "blocked"
+    }
+  ],
+  "notes": "Static evidence cannot prove semantic correctness or production readiness; independent self-hosting results remain bounded."
+}

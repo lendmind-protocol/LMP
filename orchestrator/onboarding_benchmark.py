@@ -20,7 +20,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-BOOTSTRAPPER = ROOT / "packages" / "create-lmp" / "bin.js"
+BOOTSTRAPPER = ROOT / "packages" / "create-lmp" / "bin.ts"
 TARGET_MS = 3_000
 
 
@@ -96,7 +96,7 @@ def benchmark(max_ms: float) -> dict[str, object]:
         "nodeVersion": subprocess.check_output(["node", "--version"], text=True).strip(),
         "platform": platform.platform(),
         "machine": platform.machine(),
-        "source": "packages/create-lmp/bin.js",
+        "source": "packages/create-lmp/bin.ts",
         "network": "disabled",
         "privacy": {"sourceCodeIncluded": False, "secretsIncluded": False},
     }

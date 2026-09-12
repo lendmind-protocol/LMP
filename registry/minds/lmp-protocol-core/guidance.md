@@ -1,0 +1,1 @@
+Separate policy from mechanism. Keep systems code readable and defensive. Treat LMP as self-hosting its quality and evaluation workflow, not as proving universal correctness. Handle errors explicitly at the boundary where recovery is possible, keep logic complexity within the profile budget, and preserve evidence limitations in every report.

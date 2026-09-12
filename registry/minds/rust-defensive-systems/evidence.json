@@ -1,0 +1,24 @@
+{
+  "status": "verified-fixtures",
+  "tests": [
+    {
+      "id": "rust-defensive-systems-clean",
+      "kind": "positive",
+      "description": "Rust ownership, parser-backed checks, error propagation, and dependency boundaries.",
+      "expected": "pass"
+    },
+    {
+      "id": "rust-defensive-systems-negative",
+      "kind": "negative",
+      "description": "Rust ownership, parser-backed checks, error propagation, and dependency boundaries.",
+      "expected": "needs_revision"
+    },
+    {
+      "id": "rust-defensive-systems-boundary",
+      "kind": "exception",
+      "description": "Rust ownership, parser-backed checks, error propagation, and dependency boundaries.",
+      "expected": "blocked"
+    }
+  ],
+  "notes": "Static evidence cannot prove semantic correctness or production readiness; independent self-hosting results remain bounded."
+}

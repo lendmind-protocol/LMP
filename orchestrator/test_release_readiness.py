@@ -52,15 +52,15 @@ class ReleaseReadinessTests(unittest.TestCase):
         self.assertEqual(report["checks"]["humanAdoptionPilot"]["boundary"], "human")
         self.assertEqual(report["checks"]["qualificationEvidence"]["status"], "pass")
 
-    def test_qualification_evidence_requires_the_complete_38_scenario_contract(self) -> None:
+    def test_qualification_evidence_requires_the_complete_39_scenario_contract(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             qualification = Path(raw) / "qualification.json"
             qualification.write_text(json.dumps({
                 "status": "complete",
-                "scenarioCount": 38,
-                "expectedScenarioCount": 38,
+                "scenarioCount": 39,
+                "expectedScenarioCount": 39,
                 "dockerRequired": True,
-                "passed": [f"scenario-{index}" for index in range(38)],
+                "passed": [f"scenario-{index}" for index in range(39)],
             }), encoding="utf-8")
             code, report = self.run_report(
                 "--benchmark", "missing.json",
@@ -76,7 +76,7 @@ class ReleaseReadinessTests(unittest.TestCase):
             qualification.write_text(json.dumps({
                 "status": "complete",
                 "scenarioCount": 37,
-                "expectedScenarioCount": 38,
+                "expectedScenarioCount": 39,
                 "dockerRequired": True,
                 "passed": [f"scenario-{index}" for index in range(37)],
             }), encoding="utf-8")
@@ -88,7 +88,7 @@ class ReleaseReadinessTests(unittest.TestCase):
         self.assertEqual(code, 2)
         check = report["checks"]["qualificationEvidence"]
         self.assertEqual(check["status"], "blocked")
-        self.assertIn("exactly 38", json.dumps(check))
+        self.assertIn("exactly 39", json.dumps(check))
 
     def test_failed_registry_gate_is_preserved_as_a_blocker(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

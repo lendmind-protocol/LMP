@@ -73,6 +73,45 @@ not retained in the output artifact.
 
 ## From observations to candidates
 
+For zero-config discovery, use the canonical [profile source extraction
+prompt](https://github.com/lendmind-protocol/LMP/blob/main/docs/templates/zero-config-profile-source-prompt.md) and
+validate its JSON against the checked-in
+[`engineering-profile-source.schema.json`](https://github.com/lendmind-protocol/LMP/blob/main/registry/schemas/engineering-profile-source.schema.json).
+This produces structured evidence for review; it does not create an executable
+Mind, infer missing sources, or bypass the promotion gates.
+
+### Import Firecrawl or `.internal` JSON
+
+The compiler also accepts common Firecrawl JSON responses and the structured
+profile exports used in `.internal/`. It prefers Firecrawl Markdown, records a
+source URL when one is present, and stores only a SHA-256 digest in the output.
+Profile-shaped exports are split into attributable evidence records so each
+philosophy, trade-off, method, or rule can be reviewed separately.
+
+```bash
+python3 orchestrator/mind_crawler.py \
+  --entity linux-style \
+  --input .internal/extract-data-2026-09-12.json \
+  --allow-local \
+  --output lmp-test-results/mind-harvester/linux-style.json
+```
+
+The same command works with a Firecrawl export:
+
+```bash
+python3 orchestrator/mind_crawler.py \
+  --entity imported-style \
+  --input .internal/firecrawl-page.json \
+  --allow-local \
+  --output lmp-test-results/mind-harvester/imported-style.json
+```
+
+JSON is treated as untrusted evidence. Embedded prompts, scripts, HTML, and
+claims are never executed or treated as LMP instructions. The result is a
+deterministic `draft` or `needs-review` proposal, not an active profile. A
+maintainer must resolve provenance and contradictions, run fixtures, and sign
+the resulting package before it can be used for enforcement.
+
 The compiler applies a small transparent lexicon to cluster repeated signals:
 dependency minimalism, performance budgets, security boundaries, complexity
 control, test evidence, and immutability. One source does not establish a

@@ -1,0 +1,24 @@
+{
+  "status": "verified-fixtures",
+  "tests": [
+    {
+      "id": "documentation-truthfulness-clean",
+      "kind": "positive",
+      "description": "Documentation claim bounds, implementation status, limitations, and attribution language.",
+      "expected": "pass"
+    },
+    {
+      "id": "documentation-truthfulness-negative",
+      "kind": "negative",
+      "description": "Documentation claim bounds, implementation status, limitations, and attribution language.",
+      "expected": "needs_revision"
+    },
+    {
+      "id": "documentation-truthfulness-boundary",
+      "kind": "exception",
+      "description": "Documentation claim bounds, implementation status, limitations, and attribution language.",
+      "expected": "blocked"
+    }
+  ],
+  "notes": "Static evidence cannot prove semantic correctness or production readiness; independent self-hosting results remain bounded."
+}

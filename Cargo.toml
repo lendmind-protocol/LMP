@@ -1,6 +1,11 @@
 [workspace]
 members = [
     "crates/lmp-core",
+    "crates/lmp-evaluator",
+    "crates/lmp-artifacts",
+    "crates/lmp-ingest",
+    "crates/lmp-mind-compiler",
+    "crates/lmp-cli",
     "crates/lmpd",
     "crates/lmp-mcp",
     "crates/lmp-sync",

@@ -1,0 +1,12 @@
+{
+  "strict": false,
+  "noImplicitAny": false,
+  "warnAny": true,
+  "warnConsoleLog": true,
+  "warnEmptyCatch": true,
+  "warnHardcodedSecret": true,
+  "warnUnusedVariable": true,
+  "warnTypeErrors": true,
+  "warnDuplicateLogic": true,
+  "warnInsecureDefault": true
+}

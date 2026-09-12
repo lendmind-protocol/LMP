@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v4
         with:
           version: 9.15.4
@@ -36,6 +38,25 @@ jobs:
       - run: cargo check --workspace
       - run: cargo test --workspace
       - run: cargo build --release --workspace
+      - name: Enforce the baseline Mind on the changed repository scope
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          base="$BASE_SHA"
+          if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
+            base="$BEFORE_SHA"
+          fi
+          if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
+            base="HEAD~1"
+          fi
+          target/release/lmp evaluate \
+            --mind profiles/baseline \
+            --workspace . \
+            --mode enforced \
+            --changed-only \
+            --base "$base" \
+            --json
       - name: Run the local LMP self-governance audit
         run: pnpm verify:self-audit
       - name: Verify Rust and Node onboarding integration

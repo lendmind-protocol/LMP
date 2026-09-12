@@ -1,0 +1,36 @@
+version = 1
+global_invariants = [
+  "enforced evaluations fail on hard findings and evaluator errors",
+  "network access is disabled by default",
+  "artifacts are redacted and bounded",
+  "package signatures do not imply policy correctness",
+]
+
+[mind]
+id = "lmp:mind:lmp-protocol-core"
+version = "1.0.0"
+digest = "sha256:4b4257ae379056255be18b16ca7b96b832dd7e57e5c6b45aba7c24df6dac1d1d"
+path = "registry/minds/lmp-protocol-core"
+require_signature = true
+
+[repository]
+root = "."
+allowed_paths = ["crates", "orchestrator", "packages", "registry/minds", "docs", "apps/docs/content/docs", "scripts"]
+
+[validation]
+mode = "enforced"
+rust = ["cargo fmt --check", "cargo test --workspace", "cargo build --locked"]
+python = ["python3 -m unittest discover -s orchestrator -p test_*.py"]
+node = ["pnpm --filter @lending-mind/lmp typecheck", "pnpm --filter @lending-mind/lmp test -- --run"]
+max_command_duration_seconds = 900
+max_output_bytes = 1048576
+
+[limits]
+max_files = 5000
+max_source_bytes = 8388608
+
+[security]
+network = "disabled"
+redact_artifacts = true
+raw_source_in_artifacts = false
+absolute_paths_in_artifacts = false

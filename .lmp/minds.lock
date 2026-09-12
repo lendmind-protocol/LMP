@@ -1,0 +1,6 @@
+version = 1
+
+[minds.lmp_protocol_core]
+id = "lmp:mind:lmp-protocol-core"
+version = "1.0.0"
+ digest = "sha256:4b4257ae379056255be18b16ca7b96b832dd7e57e5c6b45aba7c24df6dac1d1d"

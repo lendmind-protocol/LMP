@@ -27,7 +27,7 @@ def linux_sample(pid: int) -> tuple[int, int]:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Measure lmpd idle CPU and memory")
     parser.add_argument("--lmpd", type=Path, required=True)
-    parser.add_argument("--mind", type=Path, default=Path("skills/baseline/mind.json"))
+    parser.add_argument("--mind", type=Path, default=Path("profiles/baseline/mind.json"))
     parser.add_argument("--workspace", type=Path, default=Path("."))
     parser.add_argument("--duration", type=float, default=5.0)
     parser.add_argument("--output", type=Path)

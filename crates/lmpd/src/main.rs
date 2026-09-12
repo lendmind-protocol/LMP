@@ -30,7 +30,7 @@ extern "C" fn handle_reload(_: libc::c_int) {
     about = "Lending-Mind workspace validation daemon"
 )]
 struct Args {
-    #[arg(short, long, default_value = "./skills/baseline/mind.json")]
+    #[arg(short, long, default_value = "./profiles/baseline/mind.json")]
     mind: PathBuf,
     #[arg(short, long)]
     workspace: Option<PathBuf>,
@@ -210,6 +210,9 @@ fn validate_workspace(mind_dir: &Path, workspace: &Path, mode: &str) -> Result<(
         for finding in report.findings {
             eprintln!(" - [{}] {}", finding.rule_id, finding.message);
         }
+        if mode == "enforced" {
+            anyhow::bail!("enforced workspace evaluation rejected the workspace");
+        }
     }
     Ok(())
 }
@@ -221,13 +224,11 @@ fn is_relevant_event(kind: &EventKind) -> bool {
     )
 }
 
-fn handle_event(event: Event, mind_dir: &Path, workspace: &Path, mode: &str) {
+fn handle_event(event: Event, mind_dir: &Path, workspace: &Path, mode: &str) -> Result<()> {
     if !is_relevant_event(&event.kind) {
-        return;
+        return Ok(());
     }
-    if let Err(error) = validate_workspace(mind_dir, workspace, mode) {
-        eprintln!("❌ workspace evaluation failed: {error:#}");
-    }
+    validate_workspace(mind_dir, workspace, mode)
 }
 
 #[cfg(target_os = "linux")]
@@ -319,12 +320,19 @@ fn main() -> Result<()> {
         }
         match receiver.recv_timeout(Duration::from_millis(250)) {
             Ok(result) => match result {
-                Ok(event) => handle_event(
-                    event,
-                    mind_manifest.parent().unwrap_or(Path::new(".")),
-                    workspace,
-                    &args.mode,
-                ),
+                Ok(event) => {
+                    if let Err(error) = handle_event(
+                        event,
+                        mind_manifest.parent().unwrap_or(Path::new(".")),
+                        workspace,
+                        &args.mode,
+                    ) {
+                        eprintln!("❌ workspace evaluation failed: {error:#}");
+                        if args.mode == "enforced" {
+                            return Err(error);
+                        }
+                    }
+                }
                 Err(error) => eprintln!("❌ watcher error: {error}"),
             },
             Err(RecvTimeoutError::Timeout) => {}

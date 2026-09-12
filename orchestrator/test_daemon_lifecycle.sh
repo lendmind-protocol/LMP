@@ -19,7 +19,7 @@ trap cleanup EXIT
 mkdir -p "${TEST_ROOT}/workspace"
 "${LMPD_BIN}" \
     --workspace "${TEST_ROOT}/workspace" \
-    --mind "${ROOT_DIR}/skills/baseline" \
+    --mind "${ROOT_DIR}/profiles/baseline" \
     --mode advisory \
     --pid-file "${TEST_ROOT}/lmpd.pid" \
     >"${TEST_ROOT}/daemon.log" 2>&1 &

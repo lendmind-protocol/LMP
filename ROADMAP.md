@@ -59,7 +59,7 @@ This inventory must be kept synchronized with the actual repository. Existing im
 | Generated documentation | `orchestrator/gen_docs.py` or equivalent | Existing / verify | Documentation generator exists | Make output deterministic and prevent generated docs from claiming unsupported guarantees |
 | GitHub Actions CI | `.github/workflows/` | Existing / verify | CI workflow references exist | Test current paths, correct invalid configuration, and archive artifacts safely |
 | Release workflow | `.github/workflows/release.yml` | Existing / verify | Release design is documented | Add stable-toolchain verification, checksums, and explicit publish gates |
-| Profile definitions | `registry/definitions/`, `skills/` | Existing / verify | Baseline/example definitions exist | Normalize naming, provenance, rules, tests, and limitations |
+| Profile definitions | `registry/definitions/`, `profiles/` | Existing / verify | Baseline/example definitions exist | Normalize naming, provenance, rules, tests, and limitations |
 
 ## Milestone 0 — Core Inventory and Stability Baseline
 

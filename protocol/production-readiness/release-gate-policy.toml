@@ -1,0 +1,6 @@
+version = "1.0.0"
+fail_closed = true
+allow_missing_external_evidence = false
+allow_status_only_reports = false
+allow_unverified_signatures = false
+claim = "The selected release profile met its configured qualification checks in the documented environment and scope."

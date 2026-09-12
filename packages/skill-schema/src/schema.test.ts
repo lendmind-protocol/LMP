@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   CanonicalMindPackageSchema,
+  EngineeringProfileSourceSchema,
   EvaluationArtifactSchema,
   EvidenceManifestSchema,
   MindPackageSchema,
@@ -211,6 +212,31 @@ describe("mind package schema", () => {
         approver: "maintainer",
       }),
     ).toThrow(/cannot have an approver/);
+  });
+
+  it("validates the canonical zero-config profile source shape", () => {
+    const source = {
+      engineering_philosophies: [
+        {
+          concept: "Explicit boundaries",
+          description: "Keep decisions inspectable.",
+          source_type: "code" as const,
+        },
+      ],
+      technical_tradeoffs: [
+        { topic: "Local execution", decision: "Run locally", rationale: "Limit data movement." },
+      ],
+      development_methods: [{ method_name: "Fixture-first" }],
+      media_references: [],
+    };
+    expect(EngineeringProfileSourceSchema.parse(source)).toEqual(source);
+    expect(() =>
+      EngineeringProfileSourceSchema.parse({
+        ...source,
+        engineering_philosophies: [{ concept: "", description: "missing concept" }],
+      }),
+    ).toThrow();
+    expect(() => EngineeringProfileSourceSchema.parse({ ...source, unexpected: true })).toThrow();
   });
 
   it("requires explicit release limitations and review status", () => {

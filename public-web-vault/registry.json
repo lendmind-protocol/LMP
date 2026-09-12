@@ -1,0 +1,598 @@
+{
+  "schemaVersion": "1",
+  "generatedAt": "2026-09-12T12:47:15.113Z",
+  "production": [
+    {
+      "mindKey": "documentation-truthfulness",
+      "name": "Documentation Truthfulness",
+      "version": "1.0.0",
+      "attribution": "Community archetype; no author or organization endorsement is implied.",
+      "category": "Systems & Languages",
+      "verified_status": "COMMUNITY_CONTRIBUTED",
+      "packagePath": "registry/minds/documentation-truthfulness",
+      "sha256": "sha256:0d0e3184a9c9b2cb46ba98733c7d925d2ecf9c3c874c692ea76482d77927beb9",
+      "trustAnchor": "0xc2ea09dc845eadda6c62e031842c526fbf12f4eba6ad0a3341c74e151b2afb4a",
+      "source": "https://github.com/lendmind-protocol/LMP",
+      "distribution": {
+        "status": "PENDING_IPFS_PIN",
+        "ipfsCid": null,
+        "ociReference": null,
+        "mintingWorkflow": "Publish the complete signed package, record the immutable CID and OCI manifest digest, then rerun the production release gate."
+      }
+    },
+    {
+      "mindKey": "kernel-inspired-systems",
+      "name": "Kernel Inspired Systems",
+      "version": "1.0.0",
+      "attribution": "Community archetype; no author or organization endorsement is implied.",
+      "category": "Systems & Languages",
+      "verified_status": "COMMUNITY_CONTRIBUTED",
+      "packagePath": "registry/minds/kernel-inspired-systems",
+      "sha256": "sha256:b43d3e66166de4ff4eba716166fa9639719bcc48f4dccdf00a7b16ee1ee4986f",
+      "trustAnchor": "0xef52e5571b299ac6f2cb74df908a11b4871a396bae0de3209d40ee806cb327c1",
+      "source": "https://github.com/lendmind-protocol/LMP",
+      "distribution": {
+        "status": "PENDING_IPFS_PIN",
+        "ipfsCid": null,
+        "ociReference": null,
+        "mintingWorkflow": "Publish the complete signed package, record the immutable CID and OCI manifest digest, then rerun the production release gate."
+      }
+    },
+    {
+      "mindKey": "linux-kernel",
+      "name": "Linux Kernel",
+      "version": "1.0.0",
+      "attribution": "Community archetype; no author or organization endorsement is implied.",
+      "category": "Systems & Languages",
+      "verified_status": "COMMUNITY_CONTRIBUTED",
+      "packagePath": "registry/minds/linux-kernel",
+      "sha256": "sha256:5437d2b5f121010e5deb80d74781cc689e02d0ad6181bec90c8b8980458212e8",
+      "trustAnchor": "0xc0438581f53986609b26d65e17c60e260e2905b3385b0745af3efd93d6f69c63",
+      "source": "https://www.kernel.org/doc/html/latest/process/coding-style.html",
+      "distribution": {
+        "status": "PENDING_IPFS_PIN",
+        "ipfsCid": null,
+        "ociReference": null,
+        "mintingWorkflow": "Publish the complete signed package, record the immutable CID and OCI manifest digest, then rerun the production release gate."
+      }
+    },
+    {
+      "mindKey": "lmp-protocol-core",
+      "name": "Lmp Protocol Core",
+      "version": "1.0.0",
+      "attribution": "Community archetype; no author or organization endorsement is implied.",
+      "category": "Systems & Languages",
+      "verified_status": "COMMUNITY_CONTRIBUTED",
+      "packagePath": "registry/minds/lmp-protocol-core",
+      "sha256": "sha256:5d15239cdd3ecd1b5c784a41be18424a4a9842393a0745c3021820ebb6c6542c",
+      "trustAnchor": "0xca250e239f28c449fe8e32991daa1ccda0c4a418843442004fe02dcd75070081",
+      "source": "https://www.kernel.org/doc/html/latest/process/coding-style.html",
+      "distribution": {
+        "status": "PENDING_IPFS_PIN",
+        "ipfsCid": null,
+        "ociReference": null,
+        "mintingWorkflow": "Publish the complete signed package, record the immutable CID and OCI manifest digest, then rerun the production release gate."
+      }
+    },
+    {
+      "mindKey": "monorepo-and-release-discipline",
+      "name": "Monorepo And Release Discipline",
+      "version": "1.0.0",
+      "attribution": "Community archetype; no author or organization endorsement is implied.",
+      "category": "Systems & Languages",
+      "verified_status": "COMMUNITY_CONTRIBUTED",
+      "packagePath": "registry/minds/monorepo-and-release-discipline",
+      "sha256": "sha256:fb2579aa6daed703fedd65fed17af547af62b550e3a17992810976f306000245",
+      "trustAnchor": "0xb8ec2e67e80e9064a60b7a3d194f73003540f79867148fd380b73f80a815dd8b",
+      "source": "https://github.com/lendmind-protocol/LMP",
+      "distribution": {
+        "status": "PENDING_IPFS_PIN",
+        "ipfsCid": null,
+        "ociReference": null,
+        "mintingWorkflow": "Publish the complete signed package, record the immutable CID and OCI manifest digest, then rerun the production release gate."
+      }
+    },
+    {
+      "mindKey": "node-onboarding-safety",
+      "name": "Node Onboarding Safety",
+      "version": "1.0.0",
+      "attribution": "Community archetype; no author or organization endorsement is implied.",
+      "category": "Systems & Languages",
+      "verified_status": "COMMUNITY_CONTRIBUTED",
+      "packagePath": "registry/minds/node-onboarding-safety",
+      "sha256": "sha256:a073bd047c59e2f0ad9923147bdcab40d80fed16d01f9a19e7aaad632a5a0c9a",
+      "trustAnchor": "0xd1dfdd7597f2deded7593214380af128d4bb8b5d720d4291fb1d5435a38ff33c",
+      "source": "https://github.com/lendmind-protocol/LMP",
+      "distribution": {
+        "status": "PENDING_IPFS_PIN",
+        "ipfsCid": null,
+        "ociReference": null,
+        "mintingWorkflow": "Publish the complete signed package, record the immutable CID and OCI manifest digest, then rerun the production release gate."
+      }
+    },
+    {
+      "mindKey": "python-orchestration-safety",
+      "name": "Python Orchestration Safety",
+      "version": "1.0.0",
+      "attribution": "Community archetype; no author or organization endorsement is implied.",
+      "category": "Systems & Languages",
+      "verified_status": "COMMUNITY_CONTRIBUTED",
+      "packagePath": "registry/minds/python-orchestration-safety",
+      "sha256": "sha256:d5efe76469c9ae22e5fa8d98dc9a92e7b9dc7a8fc54f87c0d73ff7dca0cc548b",
+      "trustAnchor": "0x314027123cea11164909835556c4e3e263ceed9b916a7bb4180fdbf561e7c06e",
+      "source": "https://github.com/lendmind-protocol/LMP",
+      "distribution": {
+        "status": "PENDING_IPFS_PIN",
+        "ipfsCid": null,
+        "ociReference": null,
+        "mintingWorkflow": "Publish the complete signed package, record the immutable CID and OCI manifest digest, then rerun the production release gate."
+      }
+    },
+    {
+      "mindKey": "rust-defensive-systems",
+      "name": "Rust Defensive Systems",
+      "version": "1.0.0",
+      "attribution": "Community archetype; no author or organization endorsement is implied.",
+      "category": "Systems & Languages",
+      "verified_status": "COMMUNITY_CONTRIBUTED",
+      "packagePath": "registry/minds/rust-defensive-systems",
+      "sha256": "sha256:70b33105d80c19729c9f9639364ed73f053a9f7abcb160edcacb8cfebcb4d191",
+      "trustAnchor": "0x34433fd494dc955b7163a2cd657de3488e6a2f0957c7ea4c4132bb6d29463582",
+      "source": "https://github.com/lendmind-protocol/LMP",
+      "distribution": {
+        "status": "PENDING_IPFS_PIN",
+        "ipfsCid": null,
+        "ociReference": null,
+        "mintingWorkflow": "Publish the complete signed package, record the immutable CID and OCI manifest digest, then rerun the production release gate."
+      }
+    },
+    {
+      "mindKey": "security-and-trust-boundaries",
+      "name": "Security And Trust Boundaries",
+      "version": "1.0.0",
+      "attribution": "Community archetype; no author or organization endorsement is implied.",
+      "category": "Systems & Languages",
+      "verified_status": "COMMUNITY_CONTRIBUTED",
+      "packagePath": "registry/minds/security-and-trust-boundaries",
+      "sha256": "sha256:3751c7b1db06d963d7a659d2b5d5acad737c1ed299da86f5acc8246218f5eb24",
+      "trustAnchor": "0xeeffcfd15240b48ef774f065f1698ba20d4dcc4582dc7933e9721a5b09b1577c",
+      "source": "https://github.com/lendmind-protocol/LMP",
+      "distribution": {
+        "status": "PENDING_IPFS_PIN",
+        "ipfsCid": null,
+        "ociReference": null,
+        "mintingWorkflow": "Publish the complete signed package, record the immutable CID and OCI manifest digest, then rerun the production release gate."
+      }
+    },
+    {
+      "mindKey": "supabase-core",
+      "name": "Supabase Core",
+      "version": "1.0.0",
+      "attribution": "Community archetype; no author or organization endorsement is implied.",
+      "category": "Agentic Frameworks & Context Engineering",
+      "verified_status": "COMMUNITY_CONTRIBUTED",
+      "packagePath": "registry/minds/supabase-core",
+      "sha256": "sha256:5de36e66eb6cda7cc4a8894798dd106320c6ec89effec524373b4a40bfc7cf15",
+      "trustAnchor": "0x18b9502ee1ac57f955d02eda79b93244cc214233e43cad4d3d4d1f2ef16d5d8f",
+      "source": "https://supabase.com/docs/guides/database/postgres/row-level-security",
+      "distribution": {
+        "status": "PENDING_IPFS_PIN",
+        "ipfsCid": null,
+        "ociReference": null,
+        "mintingWorkflow": "Publish the complete signed package, record the immutable CID and OCI manifest digest, then rerun the production release gate."
+      }
+    },
+    {
+      "mindKey": "tj-ponytail",
+      "name": "Tj Ponytail",
+      "version": "1.0.0",
+      "attribution": "Community archetype; no author or organization endorsement is implied.",
+      "category": "Agentic Frameworks & Context Engineering",
+      "verified_status": "COMMUNITY_CONTRIBUTED",
+      "packagePath": "registry/minds/tj-ponytail",
+      "sha256": "sha256:73ebab2b84abe54c665e7600350a2b076a8a202637bc22cd584a320a2320720f",
+      "trustAnchor": "0x4f2ca685096d9b48b0bca1fbad75f5ebb3b48e65129c13f838f09cd28ffc0986",
+      "source": "https://nodejs.org/en/learn/getting-started/security-best-practices",
+      "distribution": {
+        "status": "PENDING_IPFS_PIN",
+        "ipfsCid": null,
+        "ociReference": null,
+        "mintingWorkflow": "Publish the complete signed package, record the immutable CID and OCI manifest digest, then rerun the production release gate."
+      }
+    }
+  ],
+  "draftMinds": [
+    {
+      "mindKey": "tj-holowaychuk-minimalism",
+      "name": "TJ Holowaychuk Minimalism",
+      "category": "Systems & Languages",
+      "status": "PENDING_PACKAGING",
+      "promotionWorkflow": "Complete the signed Mind package layout, add executable compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "rust-async-systems",
+      "name": "Rust async systems",
+      "category": "Systems & Languages",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "go-concurrency",
+      "name": "Go concurrency",
+      "category": "Systems & Languages",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "python-data-pipelines",
+      "name": "Python data pipelines",
+      "category": "Systems & Languages",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "java-spring-services",
+      "name": "Spring service boundaries",
+      "category": "Full-Stack Frameworks & Runtimes",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "kotlin-mobile-platform",
+      "name": "Kotlin platform engineering",
+      "category": "Systems & Languages",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "swift-app-architecture",
+      "name": "Swift application architecture",
+      "category": "Full-Stack Frameworks & Runtimes",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "c-c-memory-safety",
+      "name": "C memory safety",
+      "category": "Systems & Languages",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "cpp-performance",
+      "name": "C++ performance",
+      "category": "Systems & Languages",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "zig-systems",
+      "name": "Zig systems programming",
+      "category": "Systems & Languages",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "wasm-components",
+      "name": "WebAssembly components",
+      "category": "Full-Stack Frameworks & Runtimes",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "react-component-systems",
+      "name": "React component systems",
+      "category": "Frontend UI Component Systems",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "vue-composition",
+      "name": "Vue composition",
+      "category": "Frontend UI Component Systems",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "svelte-interface",
+      "name": "Svelte interfaces",
+      "category": "Frontend UI Component Systems",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "design-system-accessibility",
+      "name": "Accessible design systems",
+      "category": "Frontend UI Component Systems",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "css-layout-discipline",
+      "name": "CSS layout discipline",
+      "category": "Frontend UI Component Systems",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "tailwind-utility-discipline",
+      "name": "Tailwind utility discipline",
+      "category": "Frontend UI Component Systems",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "web-performance",
+      "name": "Web performance",
+      "category": "Frontend UI Component Systems",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "mobile-interface",
+      "name": "Mobile interface engineering",
+      "category": "Frontend UI Component Systems",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "electron-desktop",
+      "name": "Electron desktop apps",
+      "category": "Full-Stack Frameworks & Runtimes",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "storybook-components",
+      "name": "Storybook component review",
+      "category": "Frontend UI Component Systems",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "postgres-data-isolation",
+      "name": "Postgres data isolation",
+      "category": "Backend, Databases, & Infrastructure",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "mysql-schema-discipline",
+      "name": "MySQL schema discipline",
+      "category": "Backend, Databases, & Infrastructure",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "sqlite-local-first",
+      "name": "SQLite local-first data",
+      "category": "Backend, Databases, & Infrastructure",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "redis-reliability",
+      "name": "Redis reliability",
+      "category": "Backend, Databases, & Infrastructure",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "kafka-event-streams",
+      "name": "Kafka event streams",
+      "category": "Backend, Databases, & Infrastructure",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "terraform-infrastructure",
+      "name": "Terraform infrastructure",
+      "category": "Backend, Databases, & Infrastructure",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "kubernetes-operations",
+      "name": "Kubernetes operations",
+      "category": "Backend, Databases, & Infrastructure",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "docker-images",
+      "name": "Docker image hygiene",
+      "category": "Backend, Databases, & Infrastructure",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "aws-well-architected",
+      "name": "AWS well-architected systems",
+      "category": "Backend, Databases, & Infrastructure",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "cloudflare-edge",
+      "name": "Cloudflare edge delivery",
+      "category": "Backend, Databases, & Infrastructure",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "observability-sre",
+      "name": "Observability and SRE",
+      "category": "Backend, Databases, & Infrastructure",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "api-security",
+      "name": "API security",
+      "category": "Backend, Databases, & Infrastructure",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "mcp-tool-contracts",
+      "name": "MCP tool contracts",
+      "category": "Agentic Frameworks & Context Engineering",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "retrieval-grounding",
+      "name": "Retrieval grounding",
+      "category": "Agentic Frameworks & Context Engineering",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "prompt-evaluation",
+      "name": "Prompt evaluation",
+      "category": "Agentic Frameworks & Context Engineering",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "agent-memory",
+      "name": "Agent memory boundaries",
+      "category": "Agentic Frameworks & Context Engineering",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "context-compression",
+      "name": "Context compression",
+      "category": "Agentic Frameworks & Context Engineering",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "human-in-the-loop",
+      "name": "Human-in-the-loop review",
+      "category": "Agentic Frameworks & Context Engineering",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "ai-safety-evals",
+      "name": "AI safety evaluations",
+      "category": "Agentic Frameworks & Context Engineering",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "structured-output",
+      "name": "Structured AI output",
+      "category": "Agentic Frameworks & Context Engineering",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "multi-agent-coordination",
+      "name": "Multi-agent coordination",
+      "category": "Agentic Frameworks & Context Engineering",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "claude-projects",
+      "name": "Claude Projects workflows",
+      "category": "Agentic Frameworks & Context Engineering",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "chatgpt-custom-gpts",
+      "name": "Custom GPT workflows",
+      "category": "Agentic Frameworks & Context Engineering",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "nextjs-production",
+      "name": "Next.js production",
+      "category": "Full-Stack Frameworks & Runtimes",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "remix-web",
+      "name": "Remix web applications",
+      "category": "Full-Stack Frameworks & Runtimes",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "rails-conventions",
+      "name": "Rails conventions",
+      "category": "Full-Stack Frameworks & Runtimes",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "django-services",
+      "name": "Django services",
+      "category": "Full-Stack Frameworks & Runtimes",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "fastapi-services",
+      "name": "FastAPI services",
+      "category": "Full-Stack Frameworks & Runtimes",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "laravel-applications",
+      "name": "Laravel applications",
+      "category": "Full-Stack Frameworks & Runtimes",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "nestjs-services",
+      "name": "NestJS services",
+      "category": "Full-Stack Frameworks & Runtimes",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "deno-runtime",
+      "name": "Deno runtime",
+      "category": "Full-Stack Frameworks & Runtimes",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "bun-runtime",
+      "name": "Bun runtime",
+      "category": "Full-Stack Frameworks & Runtimes",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "edge-functions",
+      "name": "Edge functions",
+      "category": "Full-Stack Frameworks & Runtimes",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "monorepo-platform",
+      "name": "Monorepo platform engineering",
+      "category": "Full-Stack Frameworks & Runtimes",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    },
+    {
+      "mindKey": "release-engineering",
+      "name": "Release engineering",
+      "category": "Full-Stack Frameworks & Runtimes",
+      "status": "DRAFT",
+      "promotionWorkflow": "Create the full signed Mind package with guidance, provenance, limitations, rules, compliant and violating fixtures, then pass the registry validator before promotion."
+    }
+  ]
+}

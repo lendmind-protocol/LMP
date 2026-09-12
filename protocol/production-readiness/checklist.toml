@@ -1,0 +1,18 @@
+version = "1.0.0"
+decision_engine = "lmp release verify"
+statuses = ["PASS", "NEEDS_REVISION", "BLOCKED", "EVALUATION_ERROR"]
+
+[[check]]
+id = "signed-self-hosting-mind"
+source = "registry/minds/lmp-protocol-core"
+evidence = "Ed25519 signature and package digest verification"
+
+[[check]]
+id = "self-hosting-evaluation"
+source = "crates/lmp-core"
+evidence = ".lmp/artifacts"
+
+[[check]]
+id = "rust-format"
+source = "Cargo workspace"
+evidence = "cargo fmt --all -- --check"

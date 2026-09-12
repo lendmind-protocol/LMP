@@ -1,0 +1,11 @@
+version = "1.0.0"
+
+[daemon]
+sample_seconds = 5
+max_rss_mb = 15
+max_cpu_percent = 1
+measurement = "host-qualified sample; not a universal resource guarantee"
+
+[onboarding]
+max_elapsed_ms = 3000
+measurement = "greenfield and brownfield local benchmark"

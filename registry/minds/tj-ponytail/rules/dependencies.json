@@ -1,0 +1,1 @@
+{ "deny": ["lodash", "express", "axios", "request", "moment", "bluebird"], "allow": ["undici"], "productionOnly": true, "severity": "error" }

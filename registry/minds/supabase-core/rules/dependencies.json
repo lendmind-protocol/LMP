@@ -1,0 +1,1 @@
+{ "deny": ["request"], "allow": ["undici"], "productionOnly": true, "severity": "error" }

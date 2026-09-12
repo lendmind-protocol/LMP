@@ -390,7 +390,7 @@ function sourceFiles(directory: string, tsconfig: string | undefined, exclusions
       excluded.push(path);
     else included.push(file);
   }
-  return { included, excluded: excluded.sort() };
+  return { included, excluded: excluded.sort(), project };
 }
 
 export async function inspectDependencies(
@@ -555,10 +555,57 @@ function sourceFindings(
     policy[warningKey] === true ||
     (policy[errorKey] === undefined && policy[warningKey] === undefined && fallback);
   const findings: RuleResult[] = [];
+  const functionBodies = new Map<string, { file: SourceFile; node: Node; name: string }>();
   for (const file of included) {
     const path = normalizePath(relative(directory, file.getFilePath()));
     if (isTestPath(path)) continue;
     file.forEachDescendant((node) => {
+      if (isFunction(node) && enabled("errorDuplicateLogic", "warnDuplicateLogic", false)) {
+        const body = (node as Node & { getBodyText?: () => string }).getBodyText?.();
+        const normalized = body?.replace(/\s+/g, " ").trim();
+        if (normalized && normalized.length >= 40) {
+          const previous = functionBodies.get(normalized);
+          if (previous && previous.name !== nameOf(node))
+            findings.push(
+              finding(
+                directory,
+                "typescript.duplicate-logic",
+                file,
+                node,
+                `Function ${nameOf(node)} duplicates the body of ${previous.name}.`,
+                severity,
+                "Extract the shared behavior into one deliberately named helper and preserve distinct domain boundaries.",
+                { duplicateOf: previous.name, bodyLength: normalized.length },
+              ),
+            );
+          else if (!previous) functionBodies.set(normalized, { file, node, name: nameOf(node) });
+        }
+      }
+      if (
+        node.isKind(SyntaxKind.VariableDeclaration) &&
+        enabled("errorUnusedVariable", "warnUnusedVariable", false)
+      ) {
+        const nameNode = node.getNameNode();
+        if (nameNode.isKind(SyntaxKind.Identifier) && !nameNode.getText().startsWith("_")) {
+          const statement = node.getFirstAncestorByKind(SyntaxKind.VariableStatement);
+          if (
+            !statement?.isExported() &&
+            node.getInitializer() &&
+            (nameNode.findReferencesAsNodes().length ?? 0) === 0
+          )
+            findings.push(
+              finding(
+                directory,
+                "typescript.unused-variable",
+                file,
+                node,
+                `Unused variable ${nameNode.getText()} detected.`,
+                severity,
+                "Remove the unused declaration or use it in the implementation and tests.",
+              ),
+            );
+        }
+      }
       if (node.isKind(SyntaxKind.AnyKeyword) && enabled("errorAny", "warnAny"))
         findings.push(
           finding(
@@ -637,6 +684,61 @@ function sourceFindings(
           );
       }
       if (
+        node.isKind(SyntaxKind.StringLiteral) &&
+        enabled("errorHardcodedSecret", "warnHardcodedSecret", false)
+      ) {
+        const owner =
+          node.getFirstAncestorByKind(SyntaxKind.PropertyAssignment) ??
+          node.getFirstAncestorByKind(SyntaxKind.VariableDeclaration);
+        const name = owner?.isKind(SyntaxKind.PropertyAssignment)
+          ? owner.getName()
+          : owner?.isKind(SyntaxKind.VariableDeclaration)
+            ? owner.getName()
+            : "";
+        const value = node.getLiteralValue();
+        if (
+          /(?:api[_-]?key|secret|password|token|private[_-]?key|client[_-]?secret)/i.test(name) &&
+          value.length >= 8 &&
+          !/^(?:test|dummy|example|placeholder|changeme|redacted)[-_]/i.test(value)
+        )
+          findings.push(
+            finding(
+              directory,
+              "security.hardcoded-secret",
+              file,
+              node,
+              "Secret-shaped value is hardcoded in source.",
+              severity,
+              "Load credentials from the approved secret or environment boundary and rotate the exposed value.",
+            ),
+          );
+      }
+      if (
+        enabled("errorInsecureDefault", "warnInsecureDefault", false) &&
+        node.isKind(SyntaxKind.PropertyAssignment)
+      ) {
+        const property = node.getNameNode().getText().replace(/["']/g, "");
+        const value = node.getInitializer()?.getText().replace(/["']/g, "");
+        if (
+          property === "dangerouslySetInnerHTML" ||
+          property === "innerHTML" ||
+          (property.toLowerCase() === "origin" && value === "*") ||
+          (property.toLowerCase() === "access-control-allow-origin" && value === "*")
+        )
+          findings.push(
+            finding(
+              directory,
+              "security.insecure-default",
+              file,
+              node,
+              `Insecure default ${property} detected.`,
+              severity,
+              "Replace the permissive or unsafe default with an explicit allowlist, sanitizer, or trusted boundary and add a regression test.",
+              { property, value: value ?? null },
+            ),
+          );
+      }
+      if (
         node.isKind(SyntaxKind.CatchClause) &&
         enabled("errorEmptyCatch", "warnEmptyCatch") &&
         node.getBlock().getStatements().length === 0
@@ -655,6 +757,48 @@ function sourceFindings(
     });
   }
   return findings;
+}
+
+function diagnosticText(
+  value: string | { getMessageText(): string; getNext?(): unknown[] | undefined },
+): string {
+  if (typeof value === "string") return value;
+  const next = value.getNext?.() ?? [];
+  return [value.getMessageText(), ...next.map((item) => diagnosticText(item as typeof value))].join(
+    " ",
+  );
+}
+
+function compilerFindings(
+  directory: string,
+  tsconfig: string | undefined,
+  exclusions: string[],
+  policy: Record<string, unknown>,
+): RuleResult[] {
+  const { project } = sourceFiles(directory, tsconfig, exclusions);
+  const severity = policy.errorTypeErrors === true ? "error" : "warning";
+  return project.getPreEmitDiagnostics().flatMap((diagnostic) => {
+    const sourceFile = diagnostic.getSourceFile();
+    if (!sourceFile) return [];
+    const path = normalizePath(relative(directory, sourceFile.getFilePath()));
+    if (isTestPath(path) || isExcluded(path, exclusions)) return [];
+    const start = diagnostic.getStart();
+    const location = start === undefined ? undefined : sourceFile.getLineAndColumnAtPos(start);
+    return [
+      {
+        ...simpleResult(
+          "typescript.type-error",
+          false,
+          severity,
+          diagnosticText(diagnostic.getMessageText()),
+          { code: diagnostic.getCode(), category: diagnostic.getCategory() },
+        ),
+        file: path,
+        ...(diagnostic.getLineNumber() !== undefined ? { line: diagnostic.getLineNumber() } : {}),
+        ...(location ? { column: location.column } : {}),
+      },
+    ];
+  });
 }
 
 export function assertAllowedCommand(command: string, allowlist: string[]): void {
@@ -785,6 +929,11 @@ export async function evaluate(options: EvaluationOptions): Promise<EvaluationRe
     options.exclusions ?? [],
     policies.typescript ?? policies.typescriptPolicy ?? {},
   );
+  const tsPolicy = policies.typescript ?? policies.typescriptPolicy ?? {};
+  if (tsPolicy.errorTypeErrors === true || tsPolicy.warnTypeErrors === true)
+    results.push(
+      ...compilerFindings(directory, options.tsconfig, options.exclusions ?? [], tsPolicy),
+    );
   const sourceViolationCount = results.length;
   results.push(
     simpleResult(
@@ -891,7 +1040,6 @@ export async function evaluate(options: EvaluationOptions): Promise<EvaluationRe
       ),
     );
   }
-  const tsPolicy = policies.typescript ?? policies.typescriptPolicy ?? {};
   if (tsPolicy.strict === true || tsPolicy.noImplicitAny === true) {
     let config: Record<string, unknown> = {};
     try {
@@ -978,7 +1126,42 @@ export async function evaluate(options: EvaluationOptions): Promise<EvaluationRe
         );
       }
     }
-  const normalizedResults = results.map(normalizeFinding);
+  const normalizedResults = results.map((result) => {
+    const rule = bundle.rules.find((candidate) => candidate.id === result.ruleId);
+    const metadata = rule?.metadata;
+    const sourceEvidence =
+      metadata && typeof metadata === "object" && !Array.isArray(metadata)
+        ? (metadata as Record<string, unknown>).sourceEvidence
+        : undefined;
+    const evidence =
+      sourceEvidence && typeof sourceEvidence === "object" && !Array.isArray(sourceEvidence)
+        ? (sourceEvidence as Record<string, unknown>)
+        : undefined;
+    const contract =
+      metadata && typeof metadata === "object" && !Array.isArray(metadata)
+        ? (metadata as Record<string, unknown>)
+        : undefined;
+    return normalizeFinding({
+      ...result,
+      ...(evidence
+        ? {
+            sourceId: typeof evidence.sourceId === "string" ? evidence.sourceId : undefined,
+            sourceClaim:
+              typeof evidence.sourceClaim === "string" ? evidence.sourceClaim : undefined,
+            sourceLocator:
+              typeof evidence.sourceLocator === "string" ? evidence.sourceLocator : undefined,
+            implementation:
+              typeof evidence.implementation === "string" ? evidence.implementation : undefined,
+            fixture: typeof evidence.fixture === "string" ? evidence.fixture : undefined,
+          }
+        : {}),
+      ...(typeof contract?.rationale === "string" ? { rationale: contract.rationale } : {}),
+      ...(typeof contract?.remediation === "string" ? { remediation: contract.remediation } : {}),
+      ...(Array.isArray(contract?.limitations)
+        ? { limitations: contract.limitations as string[] }
+        : {}),
+    });
+  });
   const hardErrors = normalizedResults.filter(
     (item) => !item.passed && item.severity === "error",
   ).length;
@@ -1055,7 +1238,7 @@ export async function evaluate(options: EvaluationOptions): Promise<EvaluationRe
     checks:
       options.artifactMode === "summary"
         ? normalizedResults.map(
-            ({ ruleId, passed: ok, severity, message, rationale, remediation, limitations }) => ({
+            ({
               ruleId,
               passed: ok,
               severity,
@@ -1063,6 +1246,24 @@ export async function evaluate(options: EvaluationOptions): Promise<EvaluationRe
               rationale,
               remediation,
               limitations,
+              sourceId,
+              sourceClaim,
+              sourceLocator,
+              implementation,
+              fixture,
+            }) => ({
+              ruleId,
+              passed: ok,
+              severity,
+              message,
+              rationale,
+              remediation,
+              limitations,
+              sourceId,
+              sourceClaim,
+              sourceLocator,
+              implementation,
+              fixture,
             }),
           )
         : normalizedResults,

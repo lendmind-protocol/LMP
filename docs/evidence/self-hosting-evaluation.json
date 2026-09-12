@@ -1,0 +1,115 @@
+{
+  "analysis": {
+    "checkedFiles": 106,
+    "languages": ["javascript", "rust", "typescript"],
+    "parsers": ["line-policy-v1", "syn-2"],
+    "versions": ["2021", "syntax-version-agnostic"]
+  },
+  "artifactVersion": "1.0",
+  "checks": [],
+  "commands": [],
+  "createdAt": "2026-09-12T09:24:20Z",
+  "environment": {
+    "lmpVersion": "0.1.0",
+    "runtime": "rust"
+  },
+  "limitations": [
+    "Static and configured checks provide evidence about this evaluation only; they do not prove universal code quality."
+  ],
+  "loopTransitions": [
+    {
+      "attempt": 0,
+      "event": "evaluation_started",
+      "state": "evaluating"
+    },
+    {
+      "attempt": 0,
+      "event": "evaluation_completed",
+      "state": "pass"
+    }
+  ],
+  "mind": {
+    "contentDigest": "sha256:a69117264ab58d9c028d73b74aadd63c6266bd0c8a59b8df13a7c5993cef1e05",
+    "id": "lmp:mind:lmp-protocol-core",
+    "layers": [
+      {
+        "digest": "sha256:47cce2565018d33e632d50e09e1fa7039bb38b7f89fe8d9101700aa9d4f93c50",
+        "name": "guidance.md",
+        "size_bytes": 344
+      },
+      {
+        "digest": "sha256:197fbef2e7a1486866cf57f2be1e824429b1526718fb1b35e843bf0bb1f8f8b2",
+        "name": "rules/architecture.json",
+        "size_bytes": 423
+      },
+      {
+        "digest": "sha256:c2593eec203ffceaaa58be484012348a9c30f8b04efb89a1214989159e791c04",
+        "name": "rules/typescript.json",
+        "size_bytes": 159
+      },
+      {
+        "digest": "sha256:c438d99aa09d0bc74f6545c1277da15deeb12b77636bbb1e296e23e31bc75948",
+        "name": "rules/dependencies.json",
+        "size_bytes": 86
+      },
+      {
+        "digest": "sha256:440fe401e4aaeaa291542c5632b5fd9f9bbbc1ab903b2d82d2085a7a4ba97124",
+        "name": "rules/commands.json",
+        "size_bytes": 100
+      },
+      {
+        "digest": "sha256:17d0d4673ecf59be295a9a1d32bdc6c80891395b48b822063f5efde9d3179ee9",
+        "name": "rules/ast.json",
+        "size_bytes": 296
+      },
+      {
+        "digest": "sha256:461db62829ddccc187988c0509f58108bd4f39c8b2211ea535e58cd0ae9d6466",
+        "name": "rules/security.json",
+        "size_bytes": 394
+      },
+      {
+        "digest": "sha256:05e6c48fe04c38fd5ed962c0a0300dc948141c0ee5dda5cccf162a954cdca936",
+        "name": "rules/complexity.json",
+        "size_bytes": 76
+      }
+    ],
+    "signatureStatus": "verified",
+    "version": "1.0.0"
+  },
+  "mode": "enforced",
+  "privacy": {
+    "networkUsed": false,
+    "rawPathsIncluded": false,
+    "sourceCodeIncluded": false
+  },
+  "runId": "rust-1789205060-3032345",
+  "skippedChecks": [
+    {
+      "checkId": "language.python",
+      "reason": "The Rust evaluator has no parser or policy adapter for python; the file was not analyzed.",
+      "status": "unsupported"
+    },
+    {
+      "checkId": "behavioral.docker",
+      "reason": "Docker execution is an explicit orchestrator gate, not part of this static evaluator run."
+    }
+  ],
+  "state": "pass",
+  "summary": {
+    "hardViolationCount": 0,
+    "informationalCount": 0,
+    "status": "pass",
+    "warningCount": 0
+  },
+  "workspace": {
+    "dirty": true,
+    "gitHead": "a98096bc74250cb2a78f96577c4a8d6aebb8eed7",
+    "pathHash": "sha256:cdb4ee2aea69cc6a83331bbe96dc2caa9a299d21329efb0336fc02a82e1839a8",
+    "scope": {
+      "changedOnly": false,
+      "checkedFiles": 106,
+      "fallbackReason": null,
+      "source": "workspace"
+    }
+  }
+}

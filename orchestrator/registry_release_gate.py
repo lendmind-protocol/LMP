@@ -17,7 +17,11 @@ HEX128 = re.compile(r"^0x[0-9a-fA-F]{128}$")
 # prefix. Syntax is checked locally; `--verify-cids` additionally proves that
 # the CID can be retrieved from at least one configured public gateway.
 CID = re.compile(r"^(?:Qm[1-9A-HJ-NP-Za-km-z]{44}|b[a-z2-7]{20,})$")
-DEFAULT_GATEWAYS = ("https://ipfs.io/ipfs/{cid}", "https://dweb.link/ipfs/{cid}")
+DEFAULT_GATEWAYS = (
+    "https://gateway.pinata.cloud/ipfs/{cid}",
+    "https://ipfs.io/ipfs/{cid}",
+    "https://dweb.link/ipfs/{cid}",
+)
 
 
 def load_json(source: str) -> dict:

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0",
+  "network": "disabled",
+  "artifact": {
+    "redact": true,
+    "includeSource": false,
+    "includeAbsolutePaths": false,
+    "secretPatterns": ["token", "password", "api_key", "private_key"]
+  },
+  "crypto": { "signature": "ed25519", "digest": "sha256" },
+  "note": "Cryptographic verification authenticates signed bytes; it does not prove the policy is wise."
+}

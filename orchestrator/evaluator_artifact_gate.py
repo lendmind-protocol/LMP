@@ -57,11 +57,15 @@ def validate(path: Path, require_clean: bool = False) -> dict[str, object]:
         require(isinstance(summary.get(key), int) and summary[key] >= 0, f"summary field is invalid: {key}")
     checks = artifact.get("checks")
     require(isinstance(checks, list), "checks must be an array")
+    observed_counts = {"hardViolationCount": 0, "warningCount": 0, "informationalCount": 0}
     for item in checks:
         require(isinstance(item, dict), "each check must be an object")
         require(isinstance(item.get("ruleId"), str) and item["ruleId"], "check ruleId is required")
         require(isinstance(item.get("passed"), bool), "check passed must be boolean")
         require(item.get("severity") in {"info", "warning", "error"}, "check severity is invalid")
+        if not item["passed"]:
+            bucket = {"error": "hardViolationCount", "warning": "warningCount", "info": "informationalCount"}[item["severity"]]
+            observed_counts[bucket] += 1
         require(isinstance(item.get("message"), str) and item["message"], "check message is required")
         require(isinstance(item.get("rationale"), str) and item["rationale"], "check rationale is required")
         require(isinstance(item.get("remediation"), str) and item["remediation"], "check remediation is required")
@@ -71,6 +75,10 @@ def validate(path: Path, require_clean: bool = False) -> dict[str, object]:
             and all(isinstance(value, str) and value for value in item["limitations"]),
             "check limitations are required",
         )
+    for key, observed in observed_counts.items():
+        require(summary[key] == observed, f"summary count does not match checks: {key}")
+    if artifact["state"] == "pass":
+        require(summary["hardViolationCount"] == 0 and summary["warningCount"] == 0, "pass artifact contains unresolved findings")
 
     analysis = artifact.get("analysis")
     if analysis is not None:
@@ -97,6 +105,7 @@ def validate(path: Path, require_clean: bool = False) -> dict[str, object]:
         require(isinstance(privacy.get(key), bool), f"privacy field is invalid: {key}")
     require(privacy["sourceCodeIncluded"] is False, "source code must not be included in an evaluator artifact")
     require(privacy["rawPathsIncluded"] is False, "raw paths must not be included in an evaluator artifact")
+    require(privacy["networkUsed"] is False, "evaluator artifacts must record network as disabled")
 
     return {"status": "verified", "runId": artifact["runId"], "state": artifact["state"]}
 

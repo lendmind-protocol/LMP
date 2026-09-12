@@ -3,6 +3,12 @@
 These files are intentionally absent until independent evidence exists. The
 release workflow fails closed when either required input is missing.
 
+The release workflow also runs `orchestrator/evidence_boundary_gate.py`. It
+requires every bounded protocol claim to have executable evidence and keeps
+the universal-interception, anti-gaming, causal-quality, external-distribution,
+and cross-platform claims blocked until their required evidence exists. A
+claim-ledger status alone cannot satisfy this gate.
+
 ## `benchmark-review.json`
 
 This file must contain a non-empty JSON array, or an object with an

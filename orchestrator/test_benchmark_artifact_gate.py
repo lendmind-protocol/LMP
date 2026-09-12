@@ -46,13 +46,18 @@ def artifact() -> dict[str, object]:
         "evidenceMetadata": {
             "repositoryRevision": "a" * 40,
             "repositoryDirty": False,
-            "profile": {"path": "skills/baseline", "mindSha256": "b" * 64},
+            "profile": {"path": "profiles/baseline", "mindSha256": "b" * 64},
             "tools": {"lmp": "lmp 0.1.0", "python": "3.11", "platform": "test", "docker": "Docker"},
             "reviewerAnnotations": [],
         },
         "timingSeconds": {"total": 1.0},
+        "privacy": {"sourceCodeIncluded": False, "rawPathsIncluded": False, "privateReasoningIncluded": False},
         "scenarios": [
             {
+                "id": f"scenario-{_}",
+                "repository": "https://github.com/example/repository.git",
+                "revision": "c" * 40,
+                "taskType": "test-regression",
                 "baseline": candidate,
                 "guided": {**candidate, "state": "pass"},
                 "sandbox": {"baseline": docker, "guided": docker},
@@ -82,7 +87,7 @@ def artifact() -> dict[str, object]:
             }
             for _ in range(scenario_count)
         ],
-        "sourceVerification": [{"id": "source", "verified": True}],
+        "sourceVerification": [{"id": "source", "url": "https://example.test/source", "verified": True, "status": 200, "contentBytes": 10, "contentSha256": "d" * 64}],
     }
 
 

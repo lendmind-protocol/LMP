@@ -1,0 +1,2 @@
+Example rejected source (kept as fixture text, not executable repository code):
+export function unsafe(value: string): string { return eval(value); }

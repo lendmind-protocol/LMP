@@ -1,0 +1,11 @@
+{
+  "packageId": "lmp:mind:supabase-core",
+  "version": "1.0.0",
+  "changelog": ["Initial data-isolation community archetype release."],
+  "limitations": ["The archetype is community-curated and does not imply Supabase endorsement."],
+  "review": {
+    "status": "unreviewed",
+    "reviewers": [],
+    "notes": "Independent provenance and profile review is required before public release claims."
+  }
+}

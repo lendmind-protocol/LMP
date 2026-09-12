@@ -22,6 +22,9 @@ from typing import Sequence
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ROOT / "lmp-test-results" / "self-audit.json"
+VERIFIED = "VERIFIED"
+BLOCKED = "BLOCKED"
+FAILED = "FAILED"
 
 
 @dataclass(frozen=True)
@@ -44,7 +47,7 @@ def run_check(check: Check, timeout: int) -> dict[str, object]:
         return {
             "id": check.id,
             "purpose": check.purpose,
-            "status": "blocked",
+            "status": BLOCKED,
             "required": check.required,
             "command": list(check.command),
             "reason": f"required executable is unavailable: {check.command[0]}",
@@ -68,7 +71,7 @@ def run_check(check: Check, timeout: int) -> dict[str, object]:
         return {
             "id": check.id,
             "purpose": check.purpose,
-            "status": "failed",
+            "status": FAILED,
             "required": check.required,
             "command": list(check.command),
             "exitCode": 124,
@@ -79,7 +82,7 @@ def run_check(check: Check, timeout: int) -> dict[str, object]:
     return {
         "id": check.id,
         "purpose": check.purpose,
-        "status": "pass" if result.returncode == 0 else "failed",
+        "status": VERIFIED if result.returncode == 0 else FAILED,
         "required": check.required,
         "command": list(check.command),
         "exitCode": result.returncode,
@@ -134,7 +137,7 @@ def sandbox_policy_check() -> dict[str, object]:
     return {
         "id": "sandbox-policy",
         "purpose": "Confirm the configured execution boundary before runtime tests.",
-        "status": "pass" if not missing else "failed",
+        "status": VERIFIED if not missing else FAILED,
         "required": True,
         "command": command,
         "missingControls": missing,
@@ -173,7 +176,7 @@ def checks(include_self_evaluation: bool) -> list[Check]:
                     "--",
                     "evaluate",
                     "--mind",
-                    "skills/baseline",
+                    "profiles/baseline",
                     "--workspace",
                     "crates/lmp-core",
                     "--mode",
@@ -189,12 +192,12 @@ def build_report(timeout: int, include_self_evaluation: bool) -> dict[str, objec
     results = [sandbox_policy_check()]
     results.extend(run_check(check, timeout) for check in checks(include_self_evaluation))
     required = [item for item in results if item.get("required") is True]
-    if any(item.get("status") == "failed" for item in required):
-        status = "failed"
-    elif any(item.get("status") == "blocked" for item in required):
-        status = "blocked"
+    if any(item.get("status") == FAILED for item in required):
+        status = FAILED
+    elif any(item.get("status") == BLOCKED for item in required):
+        status = BLOCKED
     else:
-        status = "pass"
+        status = VERIFIED
     return {
         "schema": "lmp-self-audit-v1",
         "status": status,
@@ -202,8 +205,8 @@ def build_report(timeout: int, include_self_evaluation: bool) -> dict[str, objec
         "revision": current_revision(),
         "checks": results,
         "claims": {
-            "ast": "Rust parser and rule tests passed" if status == "pass" else "Only claim the AST checks represented by the passing results.",
-            "signatures": "Ed25519 verification tests passed" if status == "pass" else "Do not claim signature verification until the crypto check passes.",
+            "ast": "Rust parser and rule tests passed" if status == VERIFIED else "Only claim the AST checks represented by the passing results.",
+            "signatures": "Ed25519 verification tests passed" if status == VERIFIED else "Do not claim signature verification until the crypto check passes.",
             "sandbox": "Docker policy flags were inspected; runtime isolation still requires the Docker qualification suite.",
             "bootstrapping": "The repository can be evaluated by its own Rust runtime only when the self-evaluation check passes.",
         },
@@ -247,7 +250,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"status": report["status"], "output": str(destination)}))
-    return 0 if report["status"] == "pass" else 1
+    return 0 if report["status"] == VERIFIED else 1
 
 
 if __name__ == "__main__":

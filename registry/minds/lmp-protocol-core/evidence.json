@@ -1,0 +1,24 @@
+{
+  "status": "verified-fixtures",
+  "tests": [
+    {
+      "id": "lmp-core-clean",
+      "kind": "positive",
+      "description": "The LMP core source satisfies the configured deterministic checks.",
+      "expected": "pass"
+    },
+    {
+      "id": "lmp-core-complexity",
+      "kind": "negative",
+      "description": "A fixture function exceeding the complexity budget produces a finding.",
+      "expected": "needs_revision"
+    },
+    {
+      "id": "lmp-core-boundary",
+      "kind": "exception",
+      "description": "Unsupported syntax is reported as an evaluation boundary instead of silently passing.",
+      "expected": "blocked"
+    }
+  ],
+  "notes": "Self-hosting evidence is limited to configured checks and explicitly does not establish universal correctness."
+}

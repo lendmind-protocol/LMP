@@ -30,7 +30,7 @@ Build the required image before the gate:
 docker build -t lmp-sandbox:local orchestrator
 ```
 
-The matrix covers 38 required end-to-end scenarios, including profile compilation and
+The matrix covers 39 required end-to-end scenarios, including profile compilation and
 binary caching, deterministic content digests, signature failures, Git delta
 scope, untracked files, non-Git fallback, AST/source limits, symlink handling,
 artifacts, MCP JSON-RPC, daemon watching, and an OSS fixture. It is a
@@ -123,6 +123,12 @@ python3 orchestrator/mind_compiler.py \
 python3 orchestrator/mind_harvest_artifact_gate.py \
   lmp-test-results/mind-harvester/example-style.json
 ```
+
+The same `--input` option accepts Firecrawl JSON responses and structured JSON
+exports from `.internal/`. Firecrawl Markdown is preferred and source URLs are
+kept as provenance; raw imported text is never written to the output artifact.
+Use `--allow-local` for local files. These imports always produce draft
+proposals and never activate or sign a profile automatically.
 
 See [`docs/mind-harvesting.md`](../docs/mind-harvesting.md) for the source
 contract, privacy boundary, numeric-evidence rule, and review path.

@@ -1,0 +1,108 @@
+{
+  "repo_notes": [
+    {
+      "content": "Lending-Mind Protocol (LMP) is a local-first protocol for applying signed engineering profiles (Minds) to AI-assisted development. The Rust runtime is authoritative for evaluation and enforcement; the TypeScript SDK prepares protocol data and the Python orchestrator provides bounded benchmarking and release evidence. Treat claims about deployment, external distribution, independent review, and production readiness as requiring explicit evidence in docs/claim-ledger.md."
+    }
+  ],
+  "pages": [
+    {
+      "title": "Overview",
+      "purpose": "Introduce LMP, its local-first validation boundary, the relationship between Minds, the Rust runtime, the daemon, MCP adapter, TypeScript SDK, and Python orchestration tools. Link to the canonical documentation sections.",
+      "page_notes": [
+        {
+          "content": "The canonical human reading path begins at apps/docs/content/docs/index.mdx and concepts/overview.mdx. Do not describe prompt injection or a shell wrapper as equivalent to runtime enforcement."
+        }
+      ]
+    },
+    {
+      "title": "Getting Started",
+      "purpose": "Explain prerequisites, installation, building, profile selection, local evaluation, daemon operation, MCP integration, and the expected verification workflow for a new user or contributor.",
+      "parent": "Overview",
+      "page_notes": [
+        {
+          "content": "Use apps/docs/content/docs/getting-started.mdx and guides/installation.mdx as the source of truth."
+        }
+      ]
+    },
+    {
+      "title": "Core Concepts and Architecture",
+      "purpose": "Explain the validation loop, engineering profiles (Minds), AST auditing, runtime boundaries, human review, and the distinction between advisory guidance and deterministic enforcement.",
+      "parent": "Overview",
+      "page_notes": [
+        {
+          "content": "The Rust evaluator and daemon are authoritative. The SDK, documentation generator, and orchestrator do not silently replace them."
+        }
+      ]
+    },
+    {
+      "title": "Runtime Components",
+      "purpose": "Map the Rust crates and their responsibilities: lmp-core for profile loading and evaluation, lmpd for workspace watching, lmp-mcp for JSON-RPC MCP access, and lmp-sync for profile distribution.",
+      "parent": "Overview",
+      "page_notes": [
+        {
+          "content": "Relevant implementation lives under crates/. Confirm behavior against tests before making capability claims."
+        }
+      ]
+    },
+    {
+      "title": "Engineering Profiles (Minds)",
+      "purpose": "Describe profile layout, signed metadata, rules, evidence, release state, and how profiles are selected and validated.",
+      "parent": "Overview",
+      "page_notes": [
+        {
+          "content": "Profiles are organized under profiles/. The public catalog and package contract are documented in registry/README.md and the Mind Vault reference page."
+        }
+      ]
+    },
+    {
+      "title": "TypeScript SDK",
+      "purpose": "Document hashing, Ed25519 signing and verification, redaction, workspace metadata, canonical JSON, shared protocol types, and real-world integration use cases.",
+      "parent": "Overview",
+      "page_notes": [
+        {
+          "content": "The SDK is an integration layer for AI coding platforms, CI/CD gates, private registries, IDE extensions, orchestration services, compliance pipelines, benchmarks, dashboards, and publishing tools. It does not replace the Rust evaluator, lmpd, or MCP server."
+        }
+      ]
+    },
+    {
+      "title": "Orchestration, Quality, and Governance",
+      "purpose": "Explain benchmark execution, evidence gates, resource limits, release qualification, governance, claim tracking, and the difference between local qualification and external production gates.",
+      "parent": "Overview",
+      "page_notes": [
+        {
+          "content": "The Python tools under orchestrator/ are bounded support tooling. Read docs/claim-ledger.md and docs/production-readiness-report.md before stating that an external gate is complete."
+        }
+      ]
+    },
+    {
+      "title": "Distribution and Security",
+      "purpose": "Cover signed profile distribution, OCI/IPFS plans and adapters, provenance, redaction, key handling, threat boundaries, and the implemented-versus-planned status of remote distribution.",
+      "parent": "Overview",
+      "page_notes": [
+        {
+          "content": "Do not imply that a hosted deployment, public immutable CID, cross-platform release artifact, or independent security review exists unless an explicit verified artifact is linked."
+        }
+      ]
+    },
+    {
+      "title": "Documentation and Contribution",
+      "purpose": "Describe the canonical single-page documentation approach, repository structure, contribution workflow, profile authoring, testing, and community security reporting.",
+      "parent": "Overview",
+      "page_notes": [
+        {
+          "content": "Keep closely related material together for human readers while preserving clear headings and machine-readable page metadata."
+        }
+      ]
+    },
+    {
+      "title": "Glossary",
+      "purpose": "Define LMP-specific terms including Mind, profile, axiom, AST audit, lmpd, MCP adapter, evidence, attestation, registry, digest, signature, qualification, and release gate.",
+      "parent": "Overview",
+      "page_notes": [
+        {
+          "content": "Prefer definitions backed by implementation or canonical documentation rather than inferred marketing language."
+        }
+      ]
+    }
+  ]
+}

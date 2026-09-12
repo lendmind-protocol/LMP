@@ -1,5 +1,5 @@
 {
   "title": "Reference",
   "description": "Stable interfaces and machine-readable contracts.",
-  "pages": ["cli", "sdk", "versioning", "results", "mind-vault"]
+  "pages": ["cli", "sdk", "versioning", "results"]
 }

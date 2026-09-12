@@ -3,6 +3,6 @@ import { describe, expect, it } from "vitest";
 describe("Lending-Mind MVP", () => {
   it("validates a canonical bundled skill", async () => {
     const { validateMindPackage } = await import("@lending-mind/skill");
-    expect((await validateMindPackage("skills/typescript-minimal")).valid).toBe(true);
+    expect((await validateMindPackage("profiles/typescript-minimal")).valid).toBe(true);
   });
 });

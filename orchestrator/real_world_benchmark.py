@@ -20,7 +20,7 @@ from sandbox import DockerSandbox
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCES = ROOT / "registry/provenance/real-sources.json"
-MIND = ROOT / "skills/typescript-minimal"
+MIND = ROOT / "profiles/typescript-minimal"
 
 REPOSITORIES = [
     ("express", "https://github.com/expressjs/express.git"),

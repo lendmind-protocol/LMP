@@ -1,0 +1,13 @@
+version = "1.0.0"
+
+[local]
+required = ["signed-self-hosting-mind", "self-hosting-evaluation"]
+external_evidence = false
+
+[ci]
+required = ["signed-self-hosting-mind", "self-hosting-evaluation", "rust-format"]
+external_evidence = false
+
+[release-candidate]
+required = ["signed-self-hosting-mind", "self-hosting-evaluation", "rust-format", "cross-platform-artifacts", "deployment", "independent-review"]
+external_evidence = true

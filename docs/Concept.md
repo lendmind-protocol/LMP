@@ -1967,3 +1967,6 @@ Specification & Docs: https://lendingmind.org
 By focusing on structural compiler verification, physical sandbox constraints, and native MCP support, your innovation delivers immediate, practical value to elite software engineers—generating organic community traction entirely on technical merit.
 The entire system—including the core systems code, security layers, cross-platform release automation, native MCP integration servers, and community launch assets—is fully engineered, packaged, and ready for release.
 
+## Claim boundary for this repository
+
+The launch essay above is historical proposal copy, not verification evidence. Local and CI qualification pass, while the release-candidate gate remains blocked until real cross-platform artifacts, deployment, and independent review are supplied. Benchmark percentages, organization endorsements, universal MCP compatibility, and guaranteed security outcomes require corresponding source evidence and must not be presented as established facts without it.

@@ -1,0 +1,6 @@
+node --test public-web-vault/scripts/registry.test.ts
+
+TAP summary:
+tests 4
+pass 4
+fail 0

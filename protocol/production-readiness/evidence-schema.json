@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["decision", "profile", "checks", "limitations"],
+  "properties": {
+    "decision": {
+      "enum": [
+        "LOCAL_QUALIFIED",
+        "CI_QUALIFIED",
+        "RELEASE_CANDIDATE_QUALIFIED",
+        "NEEDS_REVISION",
+        "BLOCKED",
+        "EVALUATION_ERROR"
+      ]
+    },
+    "profile": { "enum": ["local", "ci", "release-candidate"] },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "status"],
+        "properties": {
+          "id": { "type": "string" },
+          "status": { "enum": ["pass", "needs_revision", "blocked", "error"] }
+        }
+      }
+    },
+    "limitations": { "type": "array", "items": { "type": "string" } }
+  }
+}

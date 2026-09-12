@@ -33,6 +33,17 @@ export interface LoadedSkill {
   signatureStatus: "unsigned" | "verified" | "invalid";
 }
 
+type RuleContract = {
+  id: string;
+  policyFile: string;
+  severity: "info" | "warning" | "error";
+  rationale: string;
+  assertion: string;
+  remediation: string;
+  limitations: string[];
+  evidence: Record<string, unknown>;
+};
+
 const readOptional = async (directory: string, file: string): Promise<string | undefined> => {
   try {
     return await readFile(join(directory, file), "utf8");
@@ -65,6 +76,24 @@ export async function loadSkill(directory: string): Promise<LoadedSkill> {
   }
   const declaredRules: RuleDefinition[] = [];
   const policies: Record<string, Record<string, unknown>> = {};
+  const contractText = await readOptional(directory, "rules/manifest.json");
+  if (contractText) {
+    const contracts = JSON.parse(contractText) as { rules?: RuleContract[] };
+    for (const contract of contracts.rules ?? []) {
+      declaredRules.push({
+        id: contract.id,
+        severity: contract.severity,
+        description: contract.assertion,
+        metadata: {
+          policyFile: contract.policyFile,
+          rationale: contract.rationale,
+          remediation: contract.remediation,
+          limitations: contract.limitations,
+          sourceEvidence: contract.evidence as JsonValue,
+        },
+      });
+    }
+  }
   for (const [name, path] of Object.entries(result.package.enforcement ?? {})) {
     try {
       const policy = JSON.parse(await readFile(join(directory, path), "utf8")) as Record<
@@ -116,10 +145,18 @@ export function compileInstructions(skill: LoadedSkill): InstructionBundle {
     `# ${normalized.name ?? normalized.id}`,
     normalized.description ?? "",
     ...skill.guidance,
-    ...rules.map(
-      (rule) =>
-        `Rule ${rule.id} (${rule.severity}): ${rule.description ?? "Follow this observable constraint."}`,
-    ),
+    ...rules.map((rule) => {
+      const metadata = rule.metadata;
+      const sourceEvidence =
+        metadata && typeof metadata === "object" && !Array.isArray(metadata)
+          ? (metadata as Record<string, unknown>).sourceEvidence
+          : undefined;
+      const sourceId =
+        sourceEvidence && typeof sourceEvidence === "object" && !Array.isArray(sourceEvidence)
+          ? (sourceEvidence as Record<string, unknown>).sourceId
+          : undefined;
+      return `Rule ${rule.id} (${rule.severity}): ${rule.description ?? "Follow this observable constraint."}${typeof sourceId === "string" ? ` Source evidence: ${sourceId}.` : " Source evidence: missing; treat as unverified."}`;
+    }),
   ].filter(Boolean);
   const instructions = sections.join("\n");
   const payload = {

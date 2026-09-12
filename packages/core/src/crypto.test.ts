@@ -44,7 +44,7 @@ describe("canonical package crypto", () => {
   });
 
   it("verifies the committed Rust-signed baseline profile", async () => {
-    const profilePath = resolve(process.cwd(), "../../skills/baseline");
+    const profilePath = resolve(process.cwd(), "../../profiles/baseline");
     await expect(verifyMindPackage(profilePath)).resolves.toMatchObject({
       signatureStatus: "verified",
     });

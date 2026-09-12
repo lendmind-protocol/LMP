@@ -93,6 +93,19 @@ export async function validateMindPackage(directory: string): Promise<Validation
         const contracts = RuleContractManifestSchema.parse(
           JSON.parse(await readFile(join(directory, "rules/manifest.json"), "utf8")),
         );
+        const sourceBacked = result.data.metadata?.sourceRuleContractVersion === "1";
+        if (sourceBacked) {
+          for (const rule of contracts.rules) {
+            for (const field of [
+              "sourceClaim",
+              "sourceLocator",
+              "implementation",
+              "fixture",
+            ] as const)
+              if (!rule.evidence[field])
+                throw new Error(`source-backed rule ${rule.id} is missing evidence.${field}`);
+          }
+        }
         const policyFiles = new Set(Object.values(result.data.enforcement ?? {}));
         const declaredPolicyFiles = new Set(contracts.rules.map((rule) => rule.policyFile));
         for (const policyFile of policyFiles)

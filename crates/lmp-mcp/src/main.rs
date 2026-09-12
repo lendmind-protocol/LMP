@@ -2,11 +2,14 @@ use lmp_core::{compiler, crypto::package_signature_status, evaluator};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::{
-    io::{self, BufRead, BufWriter, Write},
+    io::{self, BufRead, BufWriter, Read, Write},
+    net::{TcpListener, TcpStream},
     path::PathBuf,
     sync::{Arc, Mutex},
     thread,
 };
+
+const MAX_HTTP_BODY: usize = 1_048_576;
 
 #[derive(Deserialize)]
 struct Request {
@@ -63,7 +66,7 @@ fn tool_error(id: Value, message: &str) -> Response {
     )
 }
 fn tools() -> Value {
-    json!({"tools":[
+    let mut manifest = json!({"tools":[
         {"name":"lmp_list_minds","description":"List locally available mind packages.","inputSchema":{"type":"object","additionalProperties":false,"properties":{"includeLocalWorkspace":{"type":"boolean"}}}},
         {"name":"lmp_get_instructions","description":"Compile visible instructions from a local Mind Package.","inputSchema":{"type":"object","additionalProperties":false,"required":["mind"],"properties":{"mind":{"type":"string"}}}},
         {"name":"lmp_get_context","description":"Return typed, privacy-preserving context for a Mind and workspace.","inputSchema":{"type":"object","additionalProperties":false,"required":["mind","workspace"],"properties":{"mind":{"type":"string"},"workspace":{"type":"string"}}}},
@@ -74,7 +77,23 @@ fn tools() -> Value {
         {"name":"lmp_verify_mind","description":"Validate a local Mind Package manifest and report its digest.","inputSchema":{"type":"object","additionalProperties":false,"required":["packagePath"],"properties":{"packagePath":{"type":"string"}}}},
         {"name":"lmp_get_artifact","description":"Read an evaluation artifact from the configured local artifact directory.","inputSchema":{"type":"object","additionalProperties":false,"required":["artifactPath"],"properties":{"artifactPath":{"type":"string"}}}},
         {"name":"lmp_get_loop_status","description":"Read the state and evidence summary of an evaluation artifact.","inputSchema":{"type":"object","additionalProperties":false,"required":["artifactPath"],"properties":{"artifactPath":{"type":"string"}}}}
-    ]})
+    ]});
+    if let Some(entries) = manifest.get_mut("tools").and_then(Value::as_array_mut) {
+        for entry in entries {
+            let name = entry
+                .get("name")
+                .and_then(Value::as_str)
+                .unwrap_or("LMP tool");
+            let read_only = !matches!(
+                name,
+                "lmp_evaluate_workspace" | "enforce_architectural_axioms"
+            );
+            entry["title"] = Value::String(name.replace('_', " "));
+            entry["annotations"] = json!({"readOnlyHint": read_only, "openWorldHint": false, "destructiveHint": false});
+            entry["outputSchema"] = json!({"type":"object"});
+        }
+    }
+    manifest
 }
 fn configured_root() -> PathBuf {
     std::env::var_os("LMP_WORKSPACE_ROOT")
@@ -113,8 +132,8 @@ fn call(name: &str, args: &Value) -> Result<Value, String> {
             let root = configured_root();
             let mut minds = Vec::new();
             for relative in [
-                "skills/baseline/mind.json",
-                "skills/typescript-minimal/mind.json",
+                "profiles/baseline/mind.json",
+                "profiles/typescript-minimal/mind.json",
                 ".lending-mind/mind.json",
             ] {
                 if root.join(relative).is_file() {
@@ -426,6 +445,249 @@ fn process_line(line: &str, state: &mut ServerState) -> Option<Response> {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Transport {
+    Stdio,
+    StreamableHttp,
+}
+
+#[derive(Debug, Clone)]
+struct HttpConfig {
+    bind: String,
+    port: u16,
+    bearer_token: Option<String>,
+    allowed_origins: Vec<String>,
+}
+
+fn http_config() -> HttpConfig {
+    HttpConfig {
+        bind: std::env::var("LMP_MCP_BIND").unwrap_or_else(|_| "127.0.0.1".into()),
+        port: std::env::var("LMP_MCP_PORT")
+            .ok()
+            .and_then(|value| value.parse().ok())
+            .unwrap_or(8787),
+        bearer_token: std::env::var("LMP_MCP_BEARER_TOKEN")
+            .ok()
+            .filter(|v| !v.is_empty()),
+        allowed_origins: std::env::var("LMP_MCP_ALLOWED_ORIGINS")
+            .unwrap_or_default()
+            .split(',')
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+            .map(String::from)
+            .collect(),
+    }
+}
+
+fn requested_transport() -> Transport {
+    match std::env::var("LMP_MCP_TRANSPORT").as_deref() {
+        Ok("streamable-http") | Ok("http") => Transport::StreamableHttp,
+        _ => Transport::Stdio,
+    }
+}
+
+fn cli_transport() -> anyhow::Result<(Transport, HttpConfig)> {
+    let mut transport = requested_transport();
+    let mut config = http_config();
+    let args = std::env::args().skip(1).collect::<Vec<_>>();
+    let mut index = 0;
+    while index < args.len() {
+        let value = &args[index];
+        match value.as_str() {
+            "--transport" => {
+                index += 1;
+                transport = match args.get(index).map(String::as_str) {
+                    Some("stdio") => Transport::Stdio,
+                    Some("streamable-http") | Some("http") => Transport::StreamableHttp,
+                    Some(other) => anyhow::bail!("unsupported MCP transport: {other}"),
+                    None => anyhow::bail!("--transport requires stdio or streamable-http"),
+                };
+            }
+            "--bind" => {
+                index += 1;
+                config.bind = args
+                    .get(index)
+                    .cloned()
+                    .ok_or_else(|| anyhow::anyhow!("--bind requires an address"))?;
+            }
+            "--port" => {
+                index += 1;
+                config.port = args
+                    .get(index)
+                    .ok_or_else(|| anyhow::anyhow!("--port requires a number"))?
+                    .parse()
+                    .map_err(|_| anyhow::anyhow!("--port must be a number"))?;
+            }
+            "--help" | "-h" => {
+                println!(
+                    "lmp-mcp [--transport stdio|streamable-http] [--bind ADDRESS] [--port PORT]"
+                );
+                println!("stdio is the default. HTTP auth uses LMP_MCP_BEARER_TOKEN and LMP_MCP_ALLOWED_ORIGINS.");
+                std::process::exit(0);
+            }
+            other => anyhow::bail!("unknown argument: {other}"),
+        }
+        index += 1;
+    }
+    Ok((transport, config))
+}
+
+fn http_authorized(headers: &[(String, String)], config: &HttpConfig) -> Result<(), String> {
+    if let Some(token) = &config.bearer_token {
+        let expected = format!("Bearer {token}");
+        if headers
+            .iter()
+            .find(|(key, _)| key == "authorization")
+            .map(|(_, value)| value.as_str())
+            != Some(expected.as_str())
+        {
+            return Err("missing or invalid bearer token".into());
+        }
+    }
+    if let Some(origin) = headers
+        .iter()
+        .find(|(key, _)| key == "origin")
+        .map(|(_, value)| value)
+    {
+        let allowed = if config.allowed_origins.is_empty() {
+            ["http://localhost", "http://127.0.0.1"]
+                .iter()
+                .any(|prefix| origin == prefix || origin.starts_with(&format!("{prefix}:")))
+        } else {
+            config.allowed_origins.iter().any(|value| value == origin)
+        };
+        if !allowed {
+            return Err("origin is not allowed".into());
+        }
+    }
+    Ok(())
+}
+
+fn http_response(status: &str, body: Option<&[u8]>) -> Vec<u8> {
+    let body = body.unwrap_or_default();
+    format!("HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n", body.len())
+        .into_bytes()
+        .into_iter()
+        .chain(body.iter().copied())
+        .collect()
+}
+
+fn serve_http_connection(
+    mut stream: TcpStream,
+    state: Arc<Mutex<ServerState>>,
+    config: HttpConfig,
+) -> anyhow::Result<()> {
+    let mut buffer = Vec::with_capacity(8192);
+    let mut chunk = [0u8; 8192];
+    let header_end = loop {
+        let read = stream.read(&mut chunk)?;
+        if read == 0 {
+            return Ok(());
+        }
+        buffer.extend_from_slice(&chunk[..read]);
+        if buffer.len() > MAX_HTTP_BODY + 16_384 {
+            stream.write_all(&http_response("413 Payload Too Large", None))?;
+            return Ok(());
+        }
+        if let Some(position) = buffer.windows(4).position(|window| window == b"\r\n\r\n") {
+            break position + 4;
+        }
+    };
+    let header_text = String::from_utf8_lossy(&buffer[..header_end]);
+    let mut lines = header_text.split("\r\n");
+    let request_line = lines.next().unwrap_or_default();
+    let mut request_parts = request_line.split_whitespace();
+    let method = request_parts.next().unwrap_or_default();
+    let path = request_parts.next().unwrap_or_default();
+    let headers = lines
+        .filter_map(|line| line.split_once(':'))
+        .map(|(key, value)| (key.trim().to_ascii_lowercase(), value.trim().to_string()))
+        .collect::<Vec<_>>();
+    if method != "POST" || path != "/mcp" {
+        stream.write_all(&http_response("404 Not Found", None))?;
+        return Ok(());
+    }
+    if headers
+        .iter()
+        .find(|(key, _)| key == "content-type")
+        .map(|(_, value)| value.split(';').next().unwrap_or_default().trim())
+        != Some("application/json")
+    {
+        stream.write_all(&http_response("415 Unsupported Media Type", None))?;
+        return Ok(());
+    }
+    if let Err(message) = http_authorized(&headers, &config) {
+        let body = serde_json::to_vec(&json!({"error": message}))?;
+        stream.write_all(&http_response("401 Unauthorized", Some(&body)))?;
+        return Ok(());
+    }
+    let content_length = headers
+        .iter()
+        .find(|(key, _)| key == "content-length")
+        .and_then(|(_, value)| value.parse::<usize>().ok())
+        .unwrap_or(0);
+    if content_length == 0 || content_length > MAX_HTTP_BODY {
+        stream.write_all(&http_response("413 Payload Too Large", None))?;
+        return Ok(());
+    }
+    while buffer.len() < header_end + content_length {
+        let read = stream.read(&mut chunk)?;
+        if read == 0 {
+            break;
+        }
+        buffer.extend_from_slice(&chunk[..read]);
+    }
+    if buffer.len() < header_end + content_length {
+        stream.write_all(&http_response("400 Bad Request", None))?;
+        return Ok(());
+    }
+    let body = &buffer[header_end..header_end + content_length];
+    let response = match serde_json::from_slice::<Request>(body) {
+        Ok(request) => {
+            let mut state = state
+                .lock()
+                .map_err(|_| anyhow::anyhow!("MCP state lock poisoned"))?;
+            handle(request, &mut state)
+        }
+        Err(_) => Some(err(Value::Null, -32600, "Invalid Request")),
+    };
+    if let Some(response) = response {
+        let body = serde_json::to_vec(&response)?;
+        stream.write_all(&http_response("200 OK", Some(&body)))?;
+    } else {
+        stream.write_all(&http_response("202 Accepted", None))?;
+    }
+    Ok(())
+}
+
+fn serve_http(config: HttpConfig) -> anyhow::Result<()> {
+    if config.bind != "127.0.0.1"
+        && config.bind != "localhost"
+        && (config.bearer_token.is_none() || config.allowed_origins.is_empty())
+    {
+        anyhow::bail!(
+            "non-local MCP HTTP binding requires LMP_MCP_BEARER_TOKEN and LMP_MCP_ALLOWED_ORIGINS"
+        );
+    }
+    let listener = TcpListener::bind((&*config.bind, config.port))?;
+    eprintln!(
+        "lmp-mcp Streamable HTTP listening on http://{}:{}/mcp",
+        config.bind, config.port
+    );
+    let state = Arc::new(Mutex::new(ServerState { initialized: false }));
+    for stream in listener.incoming() {
+        let stream = stream?;
+        let state = Arc::clone(&state);
+        let config = config.clone();
+        thread::spawn(move || {
+            if let Err(error) = serve_http_connection(stream, state, config) {
+                eprintln!("MCP HTTP connection failed: {error}");
+            }
+        });
+    }
+    Ok(())
+}
+
 fn is_accepted_initialize(line: &str) -> bool {
     let Ok(request) = serde_json::from_str::<Request>(line) else {
         return false;
@@ -445,6 +707,10 @@ fn is_accepted_initialize(line: &str) -> bool {
 }
 
 fn main() -> anyhow::Result<()> {
+    let (transport, config) = cli_transport()?;
+    if transport == Transport::StreamableHttp {
+        return serve_http(config);
+    }
     let stdin = io::stdin();
     let output = Arc::new(Mutex::new(BufWriter::new(io::stdout())));
     let mut initialized = false;
@@ -527,7 +793,38 @@ mod tests {
         for tool in tool_manifest["tools"].as_array().unwrap() {
             assert_eq!(tool["inputSchema"]["type"], "object");
             assert_eq!(tool["inputSchema"]["additionalProperties"], false);
+            assert!(tool["title"].is_string());
+            assert!(tool["annotations"]["readOnlyHint"].is_boolean());
+            assert_eq!(tool["annotations"]["openWorldHint"], false);
+            assert!(tool["outputSchema"].is_object());
         }
+    }
+
+    #[test]
+    fn remote_exposure_requires_authentication_and_origins() {
+        let config = HttpConfig {
+            bind: "0.0.0.0".into(),
+            port: 8787,
+            bearer_token: Some("secret".into()),
+            allowed_origins: vec!["https://agent.example".into()],
+        };
+        assert!(http_authorized(&[], &config).is_err());
+        assert!(http_authorized(
+            &[
+                ("authorization".into(), "Bearer secret".into()),
+                ("origin".into(), "https://evil.example".into())
+            ],
+            &config
+        )
+        .is_err());
+        assert!(http_authorized(
+            &[
+                ("authorization".into(), "Bearer secret".into()),
+                ("origin".into(), "https://agent.example".into())
+            ],
+            &config
+        )
+        .is_ok());
     }
 
     #[test]

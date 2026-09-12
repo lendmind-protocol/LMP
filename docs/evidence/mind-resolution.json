@@ -1,0 +1,14 @@
+{
+  "status": "verified",
+  "mindKey": "rust-defensive-systems",
+  "packagePath": "registry/minds/rust-defensive-systems",
+  "version": "1.0.0",
+  "sha256": "sha256:0888b40243978176a051385d0e58eac2912a57bd4cedde69204d992d0e3d63fb",
+  "trustAnchor": "0xc1ddaa774098b887612142add5c191939f32f220849fa279c3a6a8a8af560e51",
+  "distributionStatus": "PENDING_IPFS_PIN",
+  "draftResolution": {
+    "mindKey": "rust-async-systems",
+    "status": "rejected",
+    "reason": "Mind is not present as a production package"
+  }
+}

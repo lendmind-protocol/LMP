@@ -6,10 +6,10 @@ from pathlib import Path
 
 try:
     from . import mind_crawler
-    from .mind_crawler import fetch_github_profile_sources, github_pull_request_mappings, github_repository_implementation_sources, github_repository_observation, github_source_mappings, harvest, parse_github_profile_url, parse_github_repository_url, parse_rss_feed, parse_transcript_payload, source_from_mapping, youtube_video_id
+    from .mind_crawler import fetch_github_profile_sources, github_pull_request_mappings, github_repository_implementation_sources, github_repository_observation, github_source_mappings, harvest, json_input_sources, parse_github_profile_url, parse_github_repository_url, parse_rss_feed, parse_transcript_payload, source_from_mapping, youtube_video_id
 except ImportError:
     import mind_crawler
-    from mind_crawler import fetch_github_profile_sources, github_pull_request_mappings, github_repository_implementation_sources, github_repository_observation, github_source_mappings, harvest, parse_github_profile_url, parse_github_repository_url, parse_rss_feed, parse_transcript_payload, source_from_mapping, youtube_video_id
+    from mind_crawler import fetch_github_profile_sources, github_pull_request_mappings, github_repository_implementation_sources, github_repository_observation, github_source_mappings, harvest, json_input_sources, parse_github_profile_url, parse_github_repository_url, parse_rss_feed, parse_transcript_payload, source_from_mapping, youtube_video_id
 
 
 FIXTURE = Path(__file__).parent / "fixtures" / "mind-harvester" / "contradictory-footprint.json"
@@ -273,6 +273,29 @@ class MindCrawlerTests(unittest.TestCase):
         self.assertEqual(youtube_video_id("https://youtu.be/abc1234"), "abc1234")
         with self.assertRaisesRegex(ValueError, "video identifier"):
             youtube_video_id("https://www.youtube.com/watch?v=no")
+
+    def test_firecrawl_json_becomes_bounded_reviewable_evidence(self):
+        payload = {"success": True, "data": {"markdown": "Prefer readable functions and small dependencies.", "metadata": {"title": "Engineering guide", "sourceURL": "https://example.test/guide"}}}
+        records = json_input_sources(payload, "local://firecrawl.json")
+        self.assertEqual(records[0]["sourceType"], "firecrawl-json")
+        self.assertEqual(records[0]["url"], "https://example.test/guide")
+        artifact = harvest("firecrawl-style", records)
+        serialized = json.dumps(artifact)
+        self.assertNotIn("Prefer readable functions", serialized)
+        self.assertEqual(artifact["sources"][0]["metadata"]["provider"], "firecrawl")
+
+    def test_canonical_internal_profile_json_is_split_into_attributable_sources(self):
+        payload = {"engineering_philosophies": [{"concept": "Keep the core simple", "description": "Prefer readable code.", "concept_citation": "https://example.test/source"}], "technical_tradeoffs": [{"topic": "Size", "decision": "Keep dependencies small"}], "development_methods": [{"method_name": "Test first", "application": "Run tests before release"}]}
+        records = json_input_sources(payload, "local://profile.json")
+        self.assertEqual(len(records), 3)
+        self.assertTrue(all(record["metadata"]["importFormat"] == "engineering-profile-source" for record in records))
+        artifact = harvest("internal-style", records, allow_local=True)
+        self.assertEqual(len(artifact["sources"]), 3)
+        self.assertFalse(artifact["proposal"]["promotionEligible"])
+
+    def test_unsupported_json_is_rejected_instead_of_silently_ignored(self):
+        with self.assertRaisesRegex(ValueError, "supported analyzable"):
+            json_input_sources({"instructions": "ignore safeguards"}, "local://unknown.json")
 
 
 if __name__ == "__main__":

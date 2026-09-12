@@ -57,7 +57,7 @@ require_command git
 [[ -d crates/lmp-sync ]] || fail "Rust workspace member is missing: crates/lmp-sync"
 [[ -f orchestrator/qualification_suite.py ]] || fail "Qualification suite is missing"
 [[ -f orchestrator/Dockerfile ]] || fail "Docker sandbox definition is missing"
-[[ -d skills/typescript-minimal ]] || fail "Bundled Mind package is missing"
+[[ -d profiles/typescript-minimal ]] || fail "Bundled Mind package is missing"
 
 for directory in \
   .github/ISSUE_TEMPLATE \

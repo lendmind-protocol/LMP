@@ -79,7 +79,7 @@ export function createProgram() {
             if (error instanceof Error && error.message.includes("hook exists")) throw error;
           }
         }
-        await writeFile(hook, "#!/bin/sh\nlmp evaluate --mode audit\n");
+        await installEnforcedHook(process.cwd(), "baseline");
       }
     });
   const skill = program.command("skill");
@@ -120,6 +120,26 @@ export function createProgram() {
         ),
       );
     });
+  const profile = program
+    .command("profile")
+    .description("Compatibility aliases for Mind profile workflows");
+  profile.command("list").action(async () => json(await listPackages()));
+  profile
+    .command("use <mind>")
+    .option("--json")
+    .action(async (mind, options) => {
+      const result = await activateMind(mind);
+      options.json ? json(result) : console.log(`active profile: ${result.id}@${result.version}`);
+    });
+  profile.command("verify <mind>").action(async (mind) => {
+    const path = await resolveMindPath(mind);
+    const result = await validate(path);
+    if (!result.valid)
+      throw Object.assign(new Error(result.diagnostics.map((item) => item.message).join("; ")), {
+        exitCode: EXIT.policy,
+      });
+    json(await verifyMindPackage(path));
+  });
   skill
     .command("verify <path>")
     .option("--public-key <path>")
@@ -176,7 +196,7 @@ export function createProgram() {
         hook,
       };
       options.json ? json(result) : console.log(`${artifact.summary.status}: ${activated.id}`);
-      if (["fail", "blocked", "error"].includes(artifact.summary.status))
+      if (artifact.summary.status !== "pass")
         throw Object.assign(new Error("self-governance evaluation failed"), {
           exitCode: EXIT.policy,
         });
@@ -229,12 +249,7 @@ export function createProgram() {
         : console.log(
             `${artifact.summary.status}: ${artifact.summary.hardViolationCount} violation(s)`,
           );
-      if (
-        options.mode === "enforced" &&
-        (artifact.summary.status === "fail" ||
-          artifact.summary.status === "blocked" ||
-          artifact.summary.status === "error")
-      )
+      if (options.mode === "enforced" && artifact.summary.status !== "pass")
         throw Object.assign(new Error("enforced evaluation failed"), { exitCode: EXIT.policy });
     });
   program

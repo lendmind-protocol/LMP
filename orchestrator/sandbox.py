@@ -42,10 +42,14 @@ class DockerSandbox:
         image: str = "lmp-sandbox:latest",
         no_new_privileges: bool | None = None,
         include_paths: Sequence[str | Path] | None = None,
+        writable_paths: Sequence[str | Path] | None = None,
     ) -> None:
         self.workspace = Path(workspace).resolve()
+        if not self.workspace.is_dir():
+            raise ValueError(f"sandbox workspace must be an existing directory: {self.workspace}")
         self.image = image
         self.include_paths = tuple(include_paths or ())
+        self.writable_paths = tuple(writable_paths or ())
         self.no_new_privileges = (
             no_new_privileges
             if no_new_privileges is not None
@@ -53,23 +57,31 @@ class DockerSandbox:
         )
 
     def _mounts(self) -> list[str]:
-        if not self.include_paths:
+        requested_paths = list(self.include_paths)
+        for writable in self.writable_paths:
+            if writable not in requested_paths:
+                requested_paths.append(writable)
+        if not requested_paths:
             return [f"{self.workspace}:/workspace:ro"]
         mounts: list[str] = []
-        for raw_path in self.include_paths:
+        for raw_path in requested_paths:
             requested = (self.workspace / raw_path) if not Path(raw_path).is_absolute() else Path(raw_path)
             if requested.is_symlink():
                 raise ValueError(f"sandbox path cannot be a symlink: {requested}")
             path = requested.resolve()
             if not path.is_relative_to(self.workspace):
                 raise ValueError(f"sandbox path escapes workspace: {path}")
+            if not path.exists():
+                raise ValueError(f"sandbox path does not exist: {path}")
             if path.is_symlink():
                 raise ValueError(f"sandbox path cannot be a symlink: {path}")
             relative = path.relative_to(self.workspace)
+            mode = "rw" if any(path == (self.workspace / writable).resolve() for writable in self.writable_paths) else "ro"
+            access = ",readonly" if mode == "ro" else ""
             mounts.extend(
                 [
                     "--mount",
-                    f"type=bind,source={path},destination=/workspace/{relative},readonly",
+                    f"type=bind,source={path},destination=/workspace/{relative}{access}",
                 ]
             )
         return mounts
@@ -102,6 +114,8 @@ class DockerSandbox:
         return docker_command
 
     def run(self, command: Sequence[str], timeout_seconds: int = 120) -> SandboxResult:
+        if timeout_seconds <= 0:
+            raise ValueError("sandbox timeout must be positive")
         docker_command = self.build_command(command)
         started = time.perf_counter()
         try:

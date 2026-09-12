@@ -1,13 +1,166 @@
 {
   "schemaVersion": "1.0",
   "rules": [
-    { "id": "commands.allowlist", "policyFile": "rules/commands.json", "severity": "error", "classification": "deterministic", "rationale": "Explicit command boundaries prevent unreviewed execution.", "assertion": "Every requested command is allowed by the profile policy.", "scope": ["shell commands"], "remediation": "Use an allowed command or request an explicit policy update.", "limitations": ["This does not prove a command is safe for every repository."], "evidence": { "classification": "verified-fixture", "sourceId": "evidence.json" } },
-    { "id": "complexity.cyclomatic", "policyFile": "rules/complexity.json", "severity": "error", "classification": "verifiable", "rationale": "Bounded control-flow complexity keeps changes reviewable.", "assertion": "Measured cyclomatic complexity does not exceed the profile ceiling.", "scope": ["source functions"], "remediation": "Split branches into smaller functions and rerun evaluation.", "limitations": ["The metric does not assess domain correctness."], "evidence": { "classification": "verified-fixture", "sourceId": "evidence.json" } },
-    { "id": "dependencies.deny", "policyFile": "rules/dependencies.json", "severity": "error", "classification": "deterministic", "rationale": "Dependency policy makes supply-chain and footprint choices explicit.", "assertion": "Denied dependencies are absent from the selected workspace scope.", "scope": ["package manifests"], "remediation": "Remove the denied dependency or document and approve the policy change.", "limitations": ["The check does not replace vulnerability scanning."], "evidence": { "classification": "verified-fixture", "sourceId": "evidence.json" } },
-    { "id": "typescript.any", "policyFile": "rules/typescript.json", "severity": "error", "classification": "deterministic", "rationale": "Implicitly untyped values weaken the declared type boundary.", "assertion": "The selected TypeScript sources contain no forbidden any usage.", "scope": ["TypeScript source"], "remediation": "Replace any with a precise type or an explicitly documented boundary.", "limitations": ["Generated and non-TypeScript code may be outside this check."], "evidence": { "classification": "verified-fixture", "sourceId": "evidence.json" } },
-    { "id": "typescript.eval", "policyFile": "rules/typescript.json", "severity": "error", "classification": "deterministic", "rationale": "Dynamic evaluation defeats static review and expands execution risk.", "assertion": "The selected TypeScript sources contain no eval call.", "scope": ["TypeScript AST"], "remediation": "Use a typed, explicit dispatch or parser instead of eval.", "limitations": ["Runtime behavior outside parsed files is not assessed."], "evidence": { "classification": "verified-fixture", "sourceId": "evidence.json" } },
-    { "id": "typescript.console", "policyFile": "rules/typescript.json", "severity": "warning", "classification": "judgment-guided", "rationale": "Production logging should use the repository's observable logging boundary.", "assertion": "Direct console logging follows the profile policy.", "scope": ["TypeScript AST"], "remediation": "Route operational output through the configured logger or document the exception.", "limitations": ["A static check cannot judge whether a log message is operationally useful."], "evidence": { "classification": "verified-fixture", "sourceId": "evidence.json" } },
-    { "id": "database.app-layer-join", "policyFile": "rules/typescript.json", "severity": "error", "classification": "judgment-guided", "rationale": "Data locality rules keep relational isolation close to the data boundary.", "assertion": "Application-layer join patterns do not violate the active profile policy.", "scope": ["database-facing source"], "remediation": "Move the join into the approved data boundary or record a reviewed exception.", "limitations": ["The heuristic requires domain review for unusual query abstractions."], "evidence": { "classification": "verified-fixture", "sourceId": "evidence.json" } }
+    {
+      "id": "commands.allowlist",
+      "policyFile": "rules/commands.json",
+      "severity": "error",
+      "classification": "deterministic",
+      "rationale": "Explicit command boundaries prevent unreviewed execution.",
+      "assertion": "Every requested command is allowed by the profile policy.",
+      "scope": [
+        "shell commands"
+      ],
+      "remediation": "Use an allowed command or request an explicit policy update.",
+      "limitations": [
+        "This does not prove a command is safe for every repository."
+      ],
+      "evidence": {
+        "classification": "verified-fixture",
+        "sourceId": "evidence.json",
+        "sourceClaim": "Profile-local contract: Explicit command boundaries prevent unreviewed execution. The cited source provides context only and does not establish external authorship or endorsement.",
+        "sourceLocator": "https://nodejs.org/en/learn/getting-started/security-best-practices",
+        "implementation": "The LMP evaluator applies rules/commands.json at the configured analysis boundary.",
+        "fixture": "/home/justine/Downloads/lend-mind-protocol/packages/create-lmp/profiles/tj-ponytail/evidence.json#tests"
+      }
+    },
+    {
+      "id": "complexity.cyclomatic",
+      "policyFile": "rules/complexity.json",
+      "severity": "error",
+      "classification": "verifiable",
+      "rationale": "Bounded control-flow complexity keeps changes reviewable.",
+      "assertion": "Measured cyclomatic complexity does not exceed the profile ceiling.",
+      "scope": [
+        "source functions"
+      ],
+      "remediation": "Split branches into smaller functions and rerun evaluation.",
+      "limitations": [
+        "The metric does not assess domain correctness."
+      ],
+      "evidence": {
+        "classification": "verified-fixture",
+        "sourceId": "evidence.json",
+        "sourceClaim": "Profile-local contract: Bounded control-flow complexity keeps changes reviewable. The cited source provides context only and does not establish external authorship or endorsement.",
+        "sourceLocator": "https://nodejs.org/en/learn/getting-started/security-best-practices",
+        "implementation": "The LMP evaluator applies rules/complexity.json at the configured analysis boundary.",
+        "fixture": "/home/justine/Downloads/lend-mind-protocol/packages/create-lmp/profiles/tj-ponytail/evidence.json#tests"
+      }
+    },
+    {
+      "id": "dependencies.deny",
+      "policyFile": "rules/dependencies.json",
+      "severity": "error",
+      "classification": "deterministic",
+      "rationale": "Dependency policy makes supply-chain and footprint choices explicit.",
+      "assertion": "Denied dependencies are absent from the selected workspace scope.",
+      "scope": [
+        "package manifests"
+      ],
+      "remediation": "Remove the denied dependency or document and approve the policy change.",
+      "limitations": [
+        "The check does not replace vulnerability scanning."
+      ],
+      "evidence": {
+        "classification": "verified-fixture",
+        "sourceId": "evidence.json",
+        "sourceClaim": "Profile-local contract: Dependency policy makes supply-chain and footprint choices explicit. The cited source provides context only and does not establish external authorship or endorsement.",
+        "sourceLocator": "https://nodejs.org/en/learn/getting-started/security-best-practices",
+        "implementation": "The LMP evaluator applies rules/dependencies.json at the configured analysis boundary.",
+        "fixture": "/home/justine/Downloads/lend-mind-protocol/packages/create-lmp/profiles/tj-ponytail/evidence.json#tests"
+      }
+    },
+    {
+      "id": "typescript.any",
+      "policyFile": "rules/typescript.json",
+      "severity": "error",
+      "classification": "deterministic",
+      "rationale": "Implicitly untyped values weaken the declared type boundary.",
+      "assertion": "The selected TypeScript sources contain no forbidden any usage.",
+      "scope": [
+        "TypeScript source"
+      ],
+      "remediation": "Replace any with a precise type or an explicitly documented boundary.",
+      "limitations": [
+        "Generated and non-TypeScript code may be outside this check."
+      ],
+      "evidence": {
+        "classification": "verified-fixture",
+        "sourceId": "evidence.json",
+        "sourceClaim": "Profile-local contract: Implicitly untyped values weaken the declared type boundary. The cited source provides context only and does not establish external authorship or endorsement.",
+        "sourceLocator": "https://nodejs.org/en/learn/getting-started/security-best-practices",
+        "implementation": "The LMP evaluator applies rules/typescript.json at the configured analysis boundary.",
+        "fixture": "/home/justine/Downloads/lend-mind-protocol/packages/create-lmp/profiles/tj-ponytail/evidence.json#tests"
+      }
+    },
+    {
+      "id": "typescript.eval",
+      "policyFile": "rules/typescript.json",
+      "severity": "error",
+      "classification": "deterministic",
+      "rationale": "Dynamic evaluation defeats static review and expands execution risk.",
+      "assertion": "The selected TypeScript sources contain no eval call.",
+      "scope": [
+        "TypeScript AST"
+      ],
+      "remediation": "Use a typed, explicit dispatch or parser instead of eval.",
+      "limitations": [
+        "Runtime behavior outside parsed files is not assessed."
+      ],
+      "evidence": {
+        "classification": "verified-fixture",
+        "sourceId": "evidence.json",
+        "sourceClaim": "Profile-local contract: Dynamic evaluation defeats static review and expands execution risk. The cited source provides context only and does not establish external authorship or endorsement.",
+        "sourceLocator": "https://nodejs.org/en/learn/getting-started/security-best-practices",
+        "implementation": "The LMP evaluator applies rules/typescript.json at the configured analysis boundary.",
+        "fixture": "/home/justine/Downloads/lend-mind-protocol/packages/create-lmp/profiles/tj-ponytail/evidence.json#tests"
+      }
+    },
+    {
+      "id": "typescript.console",
+      "policyFile": "rules/typescript.json",
+      "severity": "warning",
+      "classification": "judgment-guided",
+      "rationale": "Production logging should use the repository's observable logging boundary.",
+      "assertion": "Direct console logging follows the profile policy.",
+      "scope": [
+        "TypeScript AST"
+      ],
+      "remediation": "Route operational output through the configured logger or document the exception.",
+      "limitations": [
+        "A static check cannot judge whether a log message is operationally useful."
+      ],
+      "evidence": {
+        "classification": "verified-fixture",
+        "sourceId": "evidence.json",
+        "sourceClaim": "Profile-local contract: Production logging should use the repository's observable logging boundary. The cited source provides context only and does not establish external authorship or endorsement.",
+        "sourceLocator": "https://nodejs.org/en/learn/getting-started/security-best-practices",
+        "implementation": "The LMP evaluator applies rules/typescript.json at the configured analysis boundary.",
+        "fixture": "/home/justine/Downloads/lend-mind-protocol/packages/create-lmp/profiles/tj-ponytail/evidence.json#tests"
+      }
+    },
+    {
+      "id": "database.app-layer-join",
+      "policyFile": "rules/typescript.json",
+      "severity": "error",
+      "classification": "judgment-guided",
+      "rationale": "Data locality rules keep relational isolation close to the data boundary.",
+      "assertion": "Application-layer join patterns do not violate the active profile policy.",
+      "scope": [
+        "database-facing source"
+      ],
+      "remediation": "Move the join into the approved data boundary or record a reviewed exception.",
+      "limitations": [
+        "The heuristic requires domain review for unusual query abstractions."
+      ],
+      "evidence": {
+        "classification": "verified-fixture",
+        "sourceId": "evidence.json",
+        "sourceClaim": "Profile-local contract: Data locality rules keep relational isolation close to the data boundary. The cited source provides context only and does not establish external authorship or endorsement.",
+        "sourceLocator": "https://nodejs.org/en/learn/getting-started/security-best-practices",
+        "implementation": "The LMP evaluator applies rules/typescript.json at the configured analysis boundary.",
+        "fixture": "/home/justine/Downloads/lend-mind-protocol/packages/create-lmp/profiles/tj-ponytail/evidence.json#tests"
+      }
+    }
   ]
 }
-

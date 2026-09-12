@@ -245,6 +245,16 @@ Use this rubric to label the final demo outcome.
 | `EVALUATION_ERROR` | LMP cannot make a trustworthy evaluation statement | Evaluator/sandbox/redaction/internal failure; never treated as `PASS` |
 | `HUMAN_REVIEW_REQUIRED` | Automation cannot safely decide the issue | Security, legal, product, architecture, or high-impact trade-off requires accountable review |
 
+## 5.1 Anti-gaming controls
+
+The evaluator treats evidence as an input to a bounded decision, not as proof
+that an agent behaved honestly. Artifact validation binds results to the
+repository revision, declared task, selected Mind, scoped paths, and recorded
+commands. Redaction checks reject secret-bearing output, negative results are
+retained, and missing external evidence stays `BLOCKED` rather than becoming a
+passing score. These controls reduce evidence gaming; they do not detect every
+collusion, benchmark contamination, or host-level compromise.
+
 ---
 
 ## 6. Benchmark Proof Checklist

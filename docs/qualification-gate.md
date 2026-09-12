@@ -15,7 +15,7 @@ docker build -t lmp-sandbox:local orchestrator
 python3 orchestrator/qualification_suite.py --lmp target/release/lmp --lmpd target/release/lmpd --mcp target/release/lmp-mcp --output lmp-test-results/qualification-result.json
 idle_workspace="$(mktemp -d)"
 trap 'find "$idle_workspace" -mindepth 1 -delete; rmdir "$idle_workspace"' EXIT
-python3 orchestrator/resource_gate.py --lmpd target/release/lmpd --mind skills/baseline/mind.json --workspace "$idle_workspace" --output lmp-test-results/resource-gate.json
+python3 orchestrator/resource_gate.py --lmpd target/release/lmpd --mind profiles/baseline/mind.json --workspace "$idle_workspace" --output lmp-test-results/resource-gate.json
 python3 -m unittest discover -s orchestrator -p 'test_*.py'
 ```
 

@@ -12,7 +12,7 @@ LMP is an executable engineering-cognition runtime for AI-assisted software deli
 - Treat Rust as the primary and canonical LMP implementation language.
 - Rust owns Mind Package schemas and validation, the Mind compiler, evaluator, evidence artifacts, signing, local registry, daemon, CLI, MCP server, filesystem watching, low-level parsing, and system-intensive workloads.
 - Treat Python 3.11+ as the secondary orchestration language for Docker sandbox virtualization, agent-run measurement, metrics aggregation, and dashboard/plot generation.
-- Treat TypeScript/Node.js 22 as the supporting delivery language, used exclusively by `create-lmp` for onboarding and agent configuration files such as `CLAUDE.md` and `AGENTS.md`.
+- Treat TypeScript/Node.js 22 as the only authored JavaScript-family delivery language, used by the CLI, onboarding, repository scripts, tests, and documentation configuration. Generated JavaScript remains build output only.
 - Python and TypeScript must consume Rust artifacts/contracts and must not define competing protocol semantics.
 - Rust is the source of truth for protocol behavior; secondary adapters must remain compatibility-tested against Rust outputs.
 - Do not reduce LMP to Markdown instructions, a passive linter, a prompt template, or a single quality score.

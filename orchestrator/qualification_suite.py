@@ -24,9 +24,9 @@ ROOT = Path(__file__).resolve().parents[1]
 LMP = Path(os.environ.get("LMP_BIN", ROOT / "target/debug/lmp"))
 LMPD = Path(os.environ.get("LMPD_BIN", ROOT / "target/debug/lmpd"))
 MCP = Path(os.environ.get("LMP_MCP_BIN", ROOT / "target/debug/lmp-mcp"))
-MIND = ROOT / "skills/typescript-minimal"
+MIND = ROOT / "profiles/typescript-minimal"
 OUTPUT_PATH: Path | None = None
-EXPECTED_SCENARIOS = 38
+EXPECTED_SCENARIOS = 39
 
 
 def run_lmp(*args: str, expected: tuple[int, ...] = (0, 1)) -> tuple[int, dict]:
@@ -64,6 +64,19 @@ def make_git_repo(root: Path) -> Path:
     return repo
 
 
+def sign_profile(profile: Path) -> None:
+    """Re-seal a copied profile after the qualification matrix edits its manifest."""
+    signer = ROOT / "target/debug/mind_signer"
+    result = subprocess.run(
+        [str(signer), "--input", str(profile / "mind.json"), "--output-dir", str(profile)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise AssertionError(result.stderr or result.stdout)
+
+
 def main() -> None:
     global LMP, LMPD, MCP, OUTPUT_PATH
     parser = argparse.ArgumentParser(description="Run the end-to-end LMP qualification gate")
@@ -89,6 +102,7 @@ def main() -> None:
         raise SystemExit(2)
 
     passed: list[str] = []
+    docker_evidence: list[dict[str, object]] = []
     with tempfile.TemporaryDirectory(prefix="lmp-qualification-") as temp:
         root = Path(temp)
 
@@ -287,6 +301,7 @@ def main() -> None:
             release["packageId"] = manifest["id"]
             release["version"] = manifest["version"]
             (profile / "release.json").write_text(json.dumps(release), encoding="utf-8")
+            sign_profile(profile)
             _, report = run_lmp("evaluate", "--mind", str(profile), "--workspace", str(empty), "--mode", "enforced", "--json")
             profile_digests.add(report["mind"]["contentDigest"])
         assert len(profile_digests) == 32
@@ -303,7 +318,39 @@ def main() -> None:
         )
         assert sandbox_result.exit_code == 0 and sandbox_result.stdout.strip() == "True False", sandbox_result.to_dict()
         passed.append("Docker sandbox mounts only selected changed paths")
+        docker_evidence.append({
+            "check": "selected-path-mount",
+            "image": "lmp-sandbox:local",
+            "network": "none",
+            "exitCode": sandbox_result.exit_code,
+            "timedOut": sandbox_result.timed_out,
+        })
         shutil.rmtree(sandbox_root, ignore_errors=True)
+
+        docker_runtime = DockerSandbox(
+            ROOT,
+            image="lmp-sandbox:local",
+            include_paths=["target/debug/lmp", "registry/minds/lmp-protocol-core"],
+        ).run(
+            [
+                "/workspace/target/debug/lmp",
+                "validate",
+                "/workspace/registry/minds/lmp-protocol-core",
+            ],
+            timeout_seconds=30,
+        )
+        assert docker_runtime.exit_code == 0 and docker_runtime.stdout.strip() == "valid", docker_runtime.to_dict()
+        passed.append("compiled Rust CLI validates the signed Mind inside the network-disabled Docker sandbox")
+        docker_evidence.append({
+            "check": "signed-mind-validation",
+            "image": "lmp-sandbox:local",
+            "network": "none",
+            "capabilities": "dropped-all",
+            "filesystem": "read-only",
+            "exitCode": docker_runtime.exit_code,
+            "stdout": docker_runtime.stdout.strip(),
+            "timedOut": docker_runtime.timed_out,
+        })
 
         fleet_graph = ROOT / "docs/examples/fleet-graph.json"
         fleet_reports = ROOT / "docs/examples/fleet-reports.json"
@@ -330,7 +377,7 @@ def main() -> None:
         assert blocked_fleet["disagreements"]
         passed.append("fleet evidence disagreement blocks a passing decision")
 
-    report = {"artifactVersion": "1.1", "status": "complete" if len(passed) == EXPECTED_SCENARIOS else "incomplete", "scenarioCount": len(passed), "expectedScenarioCount": EXPECTED_SCENARIOS, "dockerRequired": True, "passed": passed}
+    report = {"artifactVersion": "1.1", "status": "complete" if len(passed) == EXPECTED_SCENARIOS else "incomplete", "scenarioCount": len(passed), "expectedScenarioCount": EXPECTED_SCENARIOS, "dockerRequired": True, "dockerEvidence": docker_evidence, "passed": passed}
     args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2))
     if report["status"] != "complete":

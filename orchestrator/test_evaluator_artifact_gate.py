@@ -71,6 +71,18 @@ class EvaluatorArtifactGateTest(unittest.TestCase):
         value = artifact()
         value["mind"]["id"] = "lmp:profile:example"
         with self.assertRaisesRegex(ValueError, "canonical package ID"):
+                validate(self.write(value))
+
+    def test_rejects_summary_counts_that_do_not_match_findings(self):
+        value = artifact()
+        value["summary"]["informationalCount"] = 1
+        with self.assertRaisesRegex(ValueError, "summary count"):
+            validate(self.write(value))
+
+    def test_rejects_network_claim_in_private_artifact(self):
+        value = artifact()
+        value["privacy"]["networkUsed"] = True
+        with self.assertRaisesRegex(ValueError, "network"):
             validate(self.write(value))
 
 

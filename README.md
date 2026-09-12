@@ -40,8 +40,8 @@ Engineering preference
 | Recommended path | What it does |
 | --- | --- |
 | `npx lmp init --baseline` | Installs the baseline profile through the public launcher |
-| `npx lmp instructions --mind skills/baseline` | Prints visible guidance for an agent or human |
-| `npx lmp evaluate --mind skills/baseline --workspace . --mode advisory` | Evaluates without executing commands or mutating source |
+| `npx lmp instructions --mind profiles/baseline` | Prints visible guidance for an agent or human |
+| `npx lmp evaluate --mind profiles/baseline --workspace . --mode advisory` | Evaluates without executing commands or mutating source |
 | `npx lmp self-govern --mind linux-kernel --workspace crates/lmp-core --install-hook` | Runs enforced self-governance and installs a local pre-commit gate |
 
 For the Rust workspace itself:
@@ -51,7 +51,7 @@ cargo build --workspace
 cargo test --workspace
 cargo run --bin lmp -- init --install-baseline
 cargo run --bin lmp -- evaluate \
-  --mind skills/baseline \
+  --mind profiles/baseline \
   --workspace . \
   --mode advisory \
   --artifact-dir .lending-mind/artifacts
@@ -71,7 +71,21 @@ The repository pins Rust `1.98.1` in [`rust-toolchain.toml`](./rust-toolchain.to
 | `packages/create-lmp` | Agent-host onboarding wrapper | [`packages/create-lmp`](./packages/create-lmp) |
 | `orchestrator/` | Python sandbox, qualification suite, benchmarks, and artifact gates | [`orchestrator`](./orchestrator) |
 | `registry/` | Versioned Mind definitions and public registry metadata | [`registry`](./registry) |
+| `public-web-vault/` | Generated 65-entry public catalog: 10 locally validated packages and 55 explicitly marked drafts | [`public-web-vault`](./public-web-vault) |
 | `apps/docs` | Landing page and canonical documentation portal | [`apps/docs`](./apps/docs) |
+
+### Public Mind Vault
+
+The launch-day catalog is generated from the checked-in packages and validated before it is published. It contains no invented IPFS CIDs, OCI digests, signatures, or author endorsements. Production entries remain `PENDING_IPFS_PIN` until an immutable external publication is actually performed; draft entries are not resolvable by the production CLI.
+
+```bash
+node public-web-vault/scripts/generate-registry.ts
+node public-web-vault/scripts/validate-registry.ts
+cargo run --locked --bin lmp -- registry validate --path public-web-vault/registry.json
+cargo run --locked --bin lmp -- mind list --registry public-web-vault/registry.json
+```
+
+See [`docs/mind-vault.md`](./docs/mind-vault.md) for the package contract, trust boundaries, export workflow, and limitations.
 
 ## How the control plane works
 

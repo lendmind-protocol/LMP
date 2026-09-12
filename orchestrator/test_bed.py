@@ -4,6 +4,7 @@ import os
 import subprocess
 import tempfile
 import time
+import hashlib
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -29,7 +30,7 @@ class LMPTestBedOrchestrator:
         self._generate_repositories()
 
     def _generate_repositories(self) -> None:
-        """Create distinct fixture codebases representing common policy outcomes."""
+        """Create controlled fixtures representing explicit policy outcomes."""
         # Scenario 1: A bloated project breaching the Ponytail Minimalism Axioms
         bloated_node_repo = self.repositories_dir / "bloated-node-service"
         bloated_node_repo.mkdir(parents=True, exist_ok=True)
@@ -108,8 +109,11 @@ class LMPTestBedOrchestrator:
             passed = artifact.get("state") == "pass"
             
             report = {
+                "fixtureType": "controlled-fixture",
+                "fixtureRevision": self._fixture_revision(Path(repo_path)),
                 "repository": repo_name,
-                "skill_applied": "lmp:mind:tj-ponytail",
+                "mind": "lmp:mind:typescript-minimal",
+                "evidenceScope": "local controlled fixture; not a production benchmark",
                 "status": "COMPLIANT" if passed else "NON_COMPLIANT_REJECTED",
                 "metrics": {
                     "evaluation_latency_ms": round(elapsed_time_ms, 4),
@@ -125,6 +129,15 @@ class LMPTestBedOrchestrator:
                 json.dump(report, rf, indent=2)
                 
         return suite_results
+
+    @staticmethod
+    def _fixture_revision(repo_path: Path) -> str:
+        digest = hashlib.sha256()
+        for path in sorted(candidate for candidate in repo_path.rglob("*") if candidate.is_file()):
+            digest.update(str(path.relative_to(repo_path)).encode("utf-8"))
+            digest.update(b"\0")
+            digest.update(path.read_bytes())
+        return digest.hexdigest()
 
     def print_aggregated_dashboard(self, results: List[Dict[str, Any]]) -> None:
         """Displays clear scannable telemetry metrics directly to the console."""

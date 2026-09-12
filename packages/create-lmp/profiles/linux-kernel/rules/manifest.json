@@ -1,13 +1,166 @@
 {
   "schemaVersion": "1.0",
   "rules": [
-    { "id": "commands.allowlist", "policyFile": "rules/commands.json", "severity": "error", "classification": "deterministic", "rationale": "Explicit command boundaries prevent unreviewed execution.", "assertion": "Every requested command is allowed by the profile policy.", "scope": ["shell commands"], "remediation": "Use an allowed command or request an explicit policy update.", "limitations": ["This does not prove a command is safe for every repository."], "evidence": { "classification": "verified-fixture", "sourceId": "evidence.json" } },
-    { "id": "complexity.cyclomatic", "policyFile": "rules/complexity.json", "severity": "error", "classification": "verifiable", "rationale": "Bounded control-flow complexity keeps changes reviewable.", "assertion": "Measured cyclomatic complexity does not exceed the profile ceiling.", "scope": ["source functions"], "remediation": "Split branches into smaller functions and rerun evaluation.", "limitations": ["The metric does not assess domain correctness."], "evidence": { "classification": "verified-fixture", "sourceId": "evidence.json" } },
-    { "id": "dependencies.deny", "policyFile": "rules/dependencies.json", "severity": "error", "classification": "deterministic", "rationale": "Dependency policy makes supply-chain and footprint choices explicit.", "assertion": "Denied dependencies are absent from the selected workspace scope.", "scope": ["package manifests"], "remediation": "Remove the denied dependency or document and approve the policy change.", "limitations": ["The check does not replace vulnerability scanning."], "evidence": { "classification": "verified-fixture", "sourceId": "evidence.json" } },
-    { "id": "typescript.any", "policyFile": "rules/typescript.json", "severity": "error", "classification": "deterministic", "rationale": "Implicitly untyped values weaken the declared type boundary.", "assertion": "The selected TypeScript sources contain no forbidden any usage.", "scope": ["TypeScript source"], "remediation": "Replace any with a precise type or an explicitly documented boundary.", "limitations": ["Generated and non-TypeScript code may be outside this check."], "evidence": { "classification": "verified-fixture", "sourceId": "evidence.json" } },
-    { "id": "typescript.eval", "policyFile": "rules/typescript.json", "severity": "error", "classification": "deterministic", "rationale": "Dynamic evaluation defeats static review and expands execution risk.", "assertion": "The selected TypeScript sources contain no eval call.", "scope": ["TypeScript AST"], "remediation": "Use a typed, explicit dispatch or parser instead of eval.", "limitations": ["Runtime behavior outside parsed files is not assessed."], "evidence": { "classification": "verified-fixture", "sourceId": "evidence.json" } },
-    { "id": "typescript.console", "policyFile": "rules/typescript.json", "severity": "warning", "classification": "judgment-guided", "rationale": "Production logging should use the repository's observable logging boundary.", "assertion": "Direct console logging follows the profile policy.", "scope": ["TypeScript AST"], "remediation": "Route operational output through the configured logger or document the exception.", "limitations": ["A static check cannot judge whether a log message is operationally useful."], "evidence": { "classification": "verified-fixture", "sourceId": "evidence.json" } },
-    { "id": "database.app-layer-join", "policyFile": "rules/typescript.json", "severity": "error", "classification": "judgment-guided", "rationale": "Data locality rules keep relational isolation close to the data boundary.", "assertion": "Application-layer join patterns do not violate the active profile policy.", "scope": ["database-facing source"], "remediation": "Move the join into the approved data boundary or record a reviewed exception.", "limitations": ["The heuristic requires domain review for unusual query abstractions."], "evidence": { "classification": "verified-fixture", "sourceId": "evidence.json" } }
+    {
+      "id": "commands.allowlist",
+      "policyFile": "rules/commands.json",
+      "severity": "error",
+      "classification": "deterministic",
+      "rationale": "Explicit command boundaries prevent unreviewed execution.",
+      "assertion": "Every requested command is allowed by the profile policy.",
+      "scope": [
+        "shell commands"
+      ],
+      "remediation": "Use an allowed command or request an explicit policy update.",
+      "limitations": [
+        "This does not prove a command is safe for every repository."
+      ],
+      "evidence": {
+        "classification": "verified-fixture",
+        "sourceId": "evidence.json",
+        "sourceClaim": "The Linux kernel coding style documents explicit conventions for readable, consistent systems code.",
+        "sourceLocator": "https://www.kernel.org/doc/html/latest/process/coding-style.html",
+        "implementation": "The profile enforces the declared command allowlist; it does not prove every command is safe.",
+        "fixture": "evidence.json"
+      }
+    },
+    {
+      "id": "complexity.cyclomatic",
+      "policyFile": "rules/complexity.json",
+      "severity": "error",
+      "classification": "verifiable",
+      "rationale": "Bounded control-flow complexity keeps changes reviewable.",
+      "assertion": "Measured cyclomatic complexity does not exceed the profile ceiling.",
+      "scope": [
+        "source functions"
+      ],
+      "remediation": "Split branches into smaller functions and rerun evaluation.",
+      "limitations": [
+        "The metric does not assess domain correctness."
+      ],
+      "evidence": {
+        "classification": "verified-fixture",
+        "sourceId": "evidence.json",
+        "sourceClaim": "The Linux kernel coding style documents explicit conventions for readable, consistent systems code.",
+        "sourceLocator": "https://www.kernel.org/doc/html/latest/process/coding-style.html",
+        "implementation": "The profile measures configured complexity thresholds; it does not assess domain correctness.",
+        "fixture": "evidence.json"
+      }
+    },
+    {
+      "id": "dependencies.deny",
+      "policyFile": "rules/dependencies.json",
+      "severity": "error",
+      "classification": "deterministic",
+      "rationale": "Dependency policy makes supply-chain and footprint choices explicit.",
+      "assertion": "Denied dependencies are absent from the selected workspace scope.",
+      "scope": [
+        "package manifests"
+      ],
+      "remediation": "Remove the denied dependency or document and approve the policy change.",
+      "limitations": [
+        "The check does not replace vulnerability scanning."
+      ],
+      "evidence": {
+        "classification": "verified-fixture",
+        "sourceId": "evidence.json",
+        "sourceClaim": "The Linux kernel coding style emphasizes maintainable code boundaries and explicit conventions.",
+        "sourceLocator": "https://www.kernel.org/doc/html/latest/process/coding-style.html",
+        "implementation": "The profile checks only configured dependency denials; it does not replace supply-chain review.",
+        "fixture": "evidence.json"
+      }
+    },
+    {
+      "id": "typescript.any",
+      "policyFile": "rules/typescript.json",
+      "severity": "error",
+      "classification": "deterministic",
+      "rationale": "Implicitly untyped values weaken the declared type boundary.",
+      "assertion": "The selected TypeScript sources contain no forbidden any usage.",
+      "scope": [
+        "TypeScript source"
+      ],
+      "remediation": "Replace any with a precise type or an explicitly documented boundary.",
+      "limitations": [
+        "Generated and non-TypeScript code may be outside this check."
+      ],
+      "evidence": {
+        "classification": "verified-fixture",
+        "sourceId": "evidence.json",
+        "sourceClaim": "The Linux kernel coding style favors explicit, readable interfaces over opaque shortcuts.",
+        "sourceLocator": "https://www.kernel.org/doc/html/latest/process/coding-style.html",
+        "implementation": "The profile rejects explicit any usage in selected TypeScript sources; TypeScript is outside the source project's canonical language set.",
+        "fixture": "evidence.json"
+      }
+    },
+    {
+      "id": "typescript.eval",
+      "policyFile": "rules/typescript.json",
+      "severity": "error",
+      "classification": "deterministic",
+      "rationale": "Dynamic evaluation defeats static review and expands execution risk.",
+      "assertion": "The selected TypeScript sources contain no eval call.",
+      "scope": [
+        "TypeScript AST"
+      ],
+      "remediation": "Use a typed, explicit dispatch or parser instead of eval.",
+      "limitations": [
+        "Runtime behavior outside parsed files is not assessed."
+      ],
+      "evidence": {
+        "classification": "verified-fixture",
+        "sourceId": "evidence.json",
+        "sourceClaim": "The Linux kernel coding style favors explicit, inspectable control flow.",
+        "sourceLocator": "https://www.kernel.org/doc/html/latest/process/coding-style.html",
+        "implementation": "The profile rejects eval tokens in selected TypeScript sources; this is a narrow heuristic.",
+        "fixture": "evidence.json"
+      }
+    },
+    {
+      "id": "typescript.console",
+      "policyFile": "rules/typescript.json",
+      "severity": "warning",
+      "classification": "judgment-guided",
+      "rationale": "Production logging should use the repository's observable logging boundary.",
+      "assertion": "Direct console logging follows the profile policy.",
+      "scope": [
+        "TypeScript AST"
+      ],
+      "remediation": "Route operational output through the configured logger or document the exception.",
+      "limitations": [
+        "A static check cannot judge whether a log message is operationally useful."
+      ],
+      "evidence": {
+        "classification": "verified-fixture",
+        "sourceId": "evidence.json",
+        "sourceClaim": "The Linux kernel coding style values clear, reviewable implementation choices.",
+        "sourceLocator": "https://www.kernel.org/doc/html/latest/process/coding-style.html",
+        "implementation": "The profile warns on direct console calls; humans must judge logging usefulness and exceptions.",
+        "fixture": "evidence.json"
+      }
+    },
+    {
+      "id": "database.app-layer-join",
+      "policyFile": "rules/typescript.json",
+      "severity": "error",
+      "classification": "judgment-guided",
+      "rationale": "Data locality rules keep relational isolation close to the data boundary.",
+      "assertion": "Application-layer join patterns do not violate the active profile policy.",
+      "scope": [
+        "database-facing source"
+      ],
+      "remediation": "Move the join into the approved data boundary or record a reviewed exception.",
+      "limitations": [
+        "The heuristic requires domain review for unusual query abstractions."
+      ],
+      "evidence": {
+        "classification": "verified-fixture",
+        "sourceId": "evidence.json",
+        "sourceClaim": "The Linux kernel coding style favors keeping responsibilities explicit and reviewable.",
+        "sourceLocator": "https://www.kernel.org/doc/html/latest/process/coding-style.html",
+        "implementation": "The profile records this as a judgment-guided policy; it does not infer database architecture from arbitrary code.",
+        "fixture": "evidence.json"
+      }
+    }
   ]
 }
-

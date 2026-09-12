@@ -59,7 +59,7 @@ echo "🚀 Executing the real Node.js onboarding bootstrapper..."
 LMP_DISABLE_RUNTIME_DOWNLOAD=1 \
 LMPD_BIN="${ROOT_DIR}/target/release/lmpd" \
 LMP_MCP_BIN="${ROOT_DIR}/target/release/lmp-mcp" \
-node "${ROOT_DIR}/packages/create-lmp/bin.js" \
+node "${ROOT_DIR}/packages/create-lmp/bin.ts" \
     --yes --agent cursor --mind tj-ponytail --stack rust --strategy greenfield \
     "${TEST_WORKSPACE}"
 

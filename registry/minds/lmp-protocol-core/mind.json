@@ -1,0 +1,15 @@
+{
+  "$schema": "https://lmp-six.vercel.app/schema/mind-v1.json",
+  "specVersion": "1.0",
+  "id": "lmp:mind:lmp-protocol-core",
+  "version": "1.0.0",
+  "metadata": { "sourceRuleContractVersion": "1" },
+  "name": "LMP Protocol Core Self-Hosting",
+  "description": "Self-hosting quality checks for the LMP protocol core, with explicit trust and evidence boundaries.",
+  "modeDefaults": { "validation": "advisory", "network": "offline" },
+  "author": { "kind": "official-maintainer", "displayName": "Lending-Mind Protocol Maintainers", "verified": false, "website": null },
+  "provenance": { "sources": [{ "title": "Linux kernel coding style", "url": "https://www.kernel.org/doc/html/latest/process/coding-style.html", "licenseNote": "Public documentation reference; no external endorsement claimed.", "sourceType": "documentation", "accessMethod": "public-http", "contentDigest": "sha256:c7137f6a6bc3a30a021d7324f8430fabd5a2d87542cc1f0e93ac9708844eec7e", "retentionPolicy": "metadata-only", "allowedUse": "summarize-public-guidance", "evidenceTier": "primary", "rights": "public-documentation" }], "attributionRequired": true },
+  "philosophy": { "principles": ["Separate policy from mechanism.", "Prefer deterministic, inspectable behavior.", "Treat source, packages, commands, and artifacts as untrusted inputs."], "tradeoffs": ["A complexity cap can require more small functions and explicit error paths.", "Static evidence is bounded and does not replace human review."], "decisionRules": ["Handle errors at the boundary where recovery is possible.", "Require evidence before quality, security, or performance claims."], "antiPatterns": ["RAW_MACRO_EXPANSION", "UNHANDLED_ERROR", "UNBOUNDED_COMMAND_OUTPUT", "UNREDACTED_ARTIFACT"] },
+  "capabilities": { "languages": ["rust", "python", "typescript", "javascript"], "requiredAgentTools": ["read_file", "write_file", "execute_command", "search"] },
+  "enforcement": { "dependencyPolicy": "rules/dependencies.json", "complexityPolicy": "rules/complexity.json", "typescriptPolicy": "rules/typescript.json", "commandPolicy": "rules/commands.json", "astPolicy": "rules/ast.json", "architecturePolicy": "rules/architecture.json", "securityPolicy": "rules/security.json" }
+}

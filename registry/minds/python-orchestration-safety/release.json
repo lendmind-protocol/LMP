@@ -1,0 +1,16 @@
+{
+  "packageId": "lmp:mind:python-orchestration-safety",
+  "version": "1.0.0",
+  "changelog": [
+    "Initial python-orchestration-safety self-hosting package."
+  ],
+  "limitations": [
+    "This Mind reports bounded configured evidence; it does not prove total correctness, security, or production readiness.",
+    "Signature status must be verified before publication."
+  ],
+  "review": {
+    "status": "unreviewed",
+    "reviewers": [],
+    "notes": "Requires independent maintainer review before publication."
+  }
+}

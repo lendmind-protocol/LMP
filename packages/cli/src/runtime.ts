@@ -113,7 +113,7 @@ async function resolveMindInputPath(input: string | undefined, cwd: string): Pro
     const packagePath = await resolveMindPath(selected, cwd);
     return (await stat(packagePath)).isDirectory() ? join(packagePath, "mind.json") : packagePath;
   }
-  const resolved = resolve(cwd, selected ?? join("skills", "baseline", "mind.json"));
+  const resolved = resolve(cwd, selected ?? join("profiles", "baseline", "mind.json"));
   try {
     return (await stat(resolved)).isDirectory() ? join(resolved, "mind.json") : resolved;
   } catch {
@@ -125,6 +125,8 @@ export async function resolveMindPath(id: string, cwd = process.cwd()): Promise<
   const alias = id.split(":").pop() ?? id;
   const candidates = [
     resolve(cwd, id),
+    resolve(cwd, "profiles", id),
+    resolve(cwd, "profiles", alias),
     resolve(cwd, "registry", "definitions", id),
     resolve(cwd, "registry", "definitions", `${id}.json`),
     resolve(cwd, "packages", "create-lmp", "profiles", id),
@@ -217,11 +219,20 @@ export async function evaluate(
       stderr += chunk.toString();
     });
     child.on("error", reject);
-    child.on("close", (code) =>
-      code === 0 || stdout
-        ? resolveOutput(stdout)
-        : reject(new Error(stderr.trim() || `Rust evaluator exited with code ${code}`)),
-    );
+    child.on("close", (code) => {
+      if (code !== 0 && !stdout.trim()) {
+        const detail = stderr.trim();
+        reject(
+          new Error(
+            detail
+              ? `${detail} (Rust evaluator exited with code ${code})`
+              : `Rust evaluator exited with code ${code}`,
+          ),
+        );
+        return;
+      }
+      resolveOutput(stdout);
+    });
   });
   return JSON.parse(output) as RuntimeArtifact;
 }
@@ -285,10 +296,10 @@ export async function installEnforcedHook(
     `#!/bin/sh
 set -eu
 root="$(git rev-parse --show-toplevel)"
-if [ -f "$root/packages/lmp/bin.js" ]; then
-  exec node "$root/packages/lmp/bin.js" self-govern --mind ${mind} --workspace crates/lmp-core --artifact-dir .lending-mind/artifacts
+if [ -f "$root/packages/lmp/bin.ts" ]; then
+exec node "$root/packages/lmp/bin.ts" self-govern --mind ${mind} --workspace . --artifact-dir .lending-mind/artifacts
 fi
-exec npx --no-install lmp self-govern --mind ${mind} --workspace crates/lmp-core --artifact-dir .lending-mind/artifacts
+exec npx --no-install lmp self-govern --mind ${mind} --workspace . --artifact-dir .lending-mind/artifacts
 `,
   );
   await chmod(hook, 0o755);

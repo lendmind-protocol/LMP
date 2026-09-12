@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1.0",
+  "boundaries": [
+    { "name": "policy", "owner": "Mind package", "mayDependOn": ["metadata", "rules"] },
+    { "name": "evaluation", "owner": "lmp-core", "mayDependOn": ["policy", "workspace"] },
+    { "name": "artifacts", "owner": "lmp-core", "mayDependOn": ["evaluation"], "mustRedact": true }
+  ],
+  "note": "Boundary metadata supports review; it is not a proof of dependency isolation."
+}

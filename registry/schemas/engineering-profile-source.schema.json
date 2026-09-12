@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lendingmind.org/schemas/engineering-profile-source-v1.json",
+  "title": "Engineering profile source extraction",
+  "description": "Canonical zero-config structure for turning attributable engineering material into a reviewable profile source draft.",
+  "type": "object",
+  "required": ["engineering_philosophies", "technical_tradeoffs", "development_methods"],
+  "additionalProperties": false,
+  "properties": {
+    "engineering_philosophies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["concept", "description"],
+        "additionalProperties": false,
+        "properties": {
+          "concept": { "type": "string", "minLength": 1 },
+          "description": { "type": "string", "minLength": 1 },
+          "source_type": { "type": "string", "enum": ["youtube", "blog", "code", "email", "interview"] }
+        }
+      }
+    },
+    "technical_tradeoffs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["topic", "decision"],
+        "additionalProperties": false,
+        "properties": {
+          "topic": { "type": "string", "minLength": 1 },
+          "decision": { "type": "string", "minLength": 1 },
+          "rationale": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "development_methods": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["method_name"],
+        "additionalProperties": false,
+        "properties": {
+          "method_name": { "type": "string", "minLength": 1 },
+          "application": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "media_references": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["title", "media_type"],
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string", "minLength": 1 },
+          "url": { "type": "string", "format": "uri" },
+          "media_type": { "type": "string", "enum": ["youtube", "blog", "article", "talk"] }
+        }
+      }
+    }
+  }
+}

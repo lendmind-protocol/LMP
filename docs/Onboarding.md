@@ -1,5 +1,17 @@
 # Lending-Mind Onboarding
 
+## Launch-day zero-config bootstrap
+
+`npx lmp init` is safe to run against a new or existing repository. It records detected languages, monorepo tools, and practical framework signals in `.lending-mind/config.json`; it does not upload source code or silently enable network access. The generated runtime state remains local and can be removed with:
+
+```bash
+npx lmp --uninstall .
+```
+
+The initializer preserves unrelated project guidance and existing MCP servers. Project-scoped integrations are written only for the selected host and report `runtime-unavailable` when verified Rust binaries are not present. Build or install the signed runtime before enabling enforcement.
+
+For non-technical users, the public Mind Vault is the visual path: select a package, use its export action to download a plain-English `LMP_INSTRUCTIONS.md`, and add that file to the AI project’s knowledge/context area. This is guidance injection, not proof that the host obeyed the guidance; a local LMP evaluation is the verification boundary.
+
 ## Goal
 
 A new user should receive value from Lending-Mind without learning the protocol internals.
@@ -113,7 +125,7 @@ Artifact:
 
 ```bash
 pnpm lmp profile list
-pnpm lmp profile use skills/typescript-minimal
+pnpm lmp profile use profiles/typescript-minimal
 ```
 
 Expected output:
@@ -141,7 +153,7 @@ This profile will not:
 ### 5. Evaluate with the selected profile
 
 ```bash
-pnpm lmp evaluate --mind skills/typescript-minimal --mode advisory
+pnpm lmp evaluate --mind profiles/typescript-minimal --mode advisory
 ```
 
 Expected behavior:
@@ -156,7 +168,7 @@ Expected behavior:
 
 ```bash
 pnpm lmp evaluate \
-  --mind skills/typescript-minimal \
+  --mind profiles/typescript-minimal \
   --mode advisory \
   --run-approved-checks
 ```
@@ -174,7 +186,7 @@ Expected behavior:
 
 ```bash
 pnpm lmp evaluate \
-  --mind skills/typescript-minimal \
+  --mind profiles/typescript-minimal \
   --mode enforced \
   --run-approved-checks
 ```

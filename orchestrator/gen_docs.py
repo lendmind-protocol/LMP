@@ -1,36 +1,37 @@
 #!/usr/bin/env python3
 import os
-import re
+import json
 
 class LMPDocsGenerator:
-    def __init__(self, src_file: str = "crates/lmp-core/src/ast.rs", output_md: str = "docs/ast-axioms.md"):
-        self.src_file = os.path.abspath(src_file)
+    def __init__(self, registry_file: str = "registry/minds/lmp-protocol-core/rules/manifest.json", output_md: str = "docs/ast-axioms.md"):
+        self.registry_file = os.path.abspath(registry_file)
         self.output_md = os.path.abspath(output_md)
         os.makedirs(os.path.dirname(self.output_md), exist_ok=True)
 
     def extract_and_compile_docs(self) -> None:
-        """Parses the Rust AST module for custom string violations and compiles a documentation grid."""
-        print(f"📖 Scanning Rust core systems source tree: {self.src_file}")
-        if not os.path.exists(self.src_file):
+        """Compile documentation from the signed, structured rule registry."""
+        print(f"📖 Reading structured enforcement registry: {self.registry_file}")
+        if not os.path.exists(self.registry_file):
             raise FileNotFoundError(
-                f"AST source required for generated documentation was not found: {self.src_file}"
+                f"Rule registry required for generated documentation was not found: {self.registry_file}"
             )
 
-        with open(self.src_file, "r") as f:
-            content = f.read()
-
-        # Regular expression to extract explicit validation errors inside the compiler visitor logic
-        violation_patterns = re.findall(r'"([A-Z_]+_VIOLATION|[A-Z_]+_RISK):\s*([^"]+)"', content)
+        with open(self.registry_file, "r", encoding="utf-8") as f:
+            registry = json.load(f)
 
         markdown_output = [
-            "# Lending-Mind Protocol (LMP) AST Enforcement Registry 🛡️\n",
-            "This document is generated automatically by the core compiler source analysis tools. It profiles every structural code rule evaluated by the local validation daemon (`lmpd`).\n",
-            "| Rule Code Class | Automated Evaluation Violation / Prevention Constraint Guard |",
-            "| :--- | :--- |"
+            "# Lending-Mind Protocol (LMP) Enforcement Registry 🛡️\n",
+            "This document is generated from the structured Mind rule registry. It describes declared checks and their limits; it is not a claim that every declaration is implemented by every evaluator.\n",
+            "| Rule | Severity | Assertion | Limitations |",
+            "| :--- | :--- | :--- | :--- |",
         ]
 
-        for code, description in violation_patterns:
-            markdown_output.append(f"| `{code}` | {description.strip()} |")
+        for rule in registry.get("rules", []):
+            limitations = "; ".join(rule.get("limitations", []))
+            markdown_output.append(
+                f"| `{rule.get('id', 'unknown')}` | {rule.get('severity', 'unspecified')} | "
+                f"{rule.get('assertion', 'No assertion supplied.')} | {limitations} |"
+            )
 
         with open(self.output_md, "w") as f:
             f.write("\n".join(markdown_output))

@@ -10,5 +10,6 @@
   "provenance": { "sources": [{ "title": "Linux kernel coding style", "url": "https://www.kernel.org/doc/html/latest/process/coding-style.html", "licenseNote": "Public documentation reference; no external endorsement claimed.", "sourceType": "documentation", "accessMethod": "public-http", "contentDigest": "sha256:c7137f6a6bc3a30a021d7324f8430fabd5a2d87542cc1f0e93ac9708844eec7e", "retentionPolicy": "metadata-only", "allowedUse": "summarize-public-guidance", "evidenceTier": "primary", "rights": "public-documentation" }], "attributionRequired": true },
   "philosophy": { "principles": ["Separate policy from mechanism.", "Prefer readable, unsurprising, defensive code."], "tradeoffs": ["A complexity cap can require more small functions and explicit error paths."], "decisionRules": ["Handle errors at the boundary where recovery is possible."], "antiPatterns": ["RAW_MACRO_EXPANSION", "UNHANDLED_ERROR"] },
   "capabilities": { "languages": ["c", "rust"], "requiredAgentTools": ["read_file", "write_file", "execute_command", "search"] },
-  "enforcement": { "dependencyPolicy": "rules/dependencies.json", "complexityPolicy": "rules/complexity.json", "typescriptPolicy": "rules/typescript.json", "commandPolicy": "rules/commands.json" }
+  "enforcement": { "dependencyPolicy": "rules/dependencies.json", "complexityPolicy": "rules/complexity.json", "typescriptPolicy": "rules/typescript.json", "commandPolicy": "rules/commands.json" },
+  "metadata": { "sourceRuleContractVersion": "1" }
 }

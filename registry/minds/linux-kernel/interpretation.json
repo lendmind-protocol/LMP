@@ -1,0 +1,1 @@
+{"status":"review_required","curator":"Lending-Mind Protocol Maintainers","method":"Rules are bounded observations of the cited coding guidance; semantic correctness remains human-reviewed.","applicability":["C and Rust systems code in the declared scope."],"exceptions":["Unsupported kernel subsystems require review."],"reviewRequiredBeforePublication":true}

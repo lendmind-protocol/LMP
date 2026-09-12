@@ -37,6 +37,10 @@ export const RuleContractSchema = z
           "verified-fixture",
         ]),
         sourceId: z.string().min(1),
+        sourceClaim: z.string().min(1).optional(),
+        sourceLocator: z.string().url().optional(),
+        implementation: z.string().min(1).optional(),
+        fixture: z.string().min(1).optional(),
       })
       .strict(),
   })
@@ -74,6 +78,11 @@ export const RuleResultSchema = z
     column: z.number().int().positive().optional(),
     remediation: z.string().optional(),
     limitations: z.array(z.string()).optional(),
+    sourceId: z.string().optional(),
+    sourceClaim: z.string().optional(),
+    sourceLocator: z.string().url().optional(),
+    implementation: z.string().optional(),
+    fixture: z.string().optional(),
   })
   .strict();
 
@@ -398,6 +407,112 @@ export const PromotionRecordSchema = z
   })
   .strict();
 
+const SourceTypeSchema = z.enum(["youtube", "blog", "code", "email", "interview"]);
+const MediaTypeSchema = z.enum(["youtube", "blog", "article", "talk"]);
+
+export const EngineeringProfileSourceSchema = z
+  .object({
+    engineering_philosophies: z.array(
+      z
+        .object({
+          concept: z.string().min(1),
+          description: z.string().min(1),
+          source_type: SourceTypeSchema.optional(),
+        })
+        .strict(),
+    ),
+    technical_tradeoffs: z.array(
+      z
+        .object({
+          topic: z.string().min(1),
+          decision: z.string().min(1),
+          rationale: z.string().min(1).optional(),
+        })
+        .strict(),
+    ),
+    development_methods: z.array(
+      z
+        .object({
+          method_name: z.string().min(1),
+          application: z.string().min(1).optional(),
+        })
+        .strict(),
+    ),
+    media_references: z
+      .array(
+        z
+          .object({
+            title: z.string().min(1),
+            url: z.string().url().optional(),
+            media_type: MediaTypeSchema,
+          })
+          .strict(),
+      )
+      .optional(),
+  })
+  .strict();
+
+export const engineeringProfileSourceJsonSchema = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  title: "Engineering profile source extraction",
+  type: "object",
+  required: ["engineering_philosophies", "technical_tradeoffs", "development_methods"],
+  additionalProperties: false,
+  properties: {
+    engineering_philosophies: {
+      type: "array",
+      items: {
+        type: "object",
+        required: ["concept", "description"],
+        additionalProperties: false,
+        properties: {
+          concept: { type: "string", minLength: 1 },
+          description: { type: "string", minLength: 1 },
+          source_type: { type: "string", enum: SourceTypeSchema.options },
+        },
+      },
+    },
+    technical_tradeoffs: {
+      type: "array",
+      items: {
+        type: "object",
+        required: ["topic", "decision"],
+        additionalProperties: false,
+        properties: {
+          topic: { type: "string", minLength: 1 },
+          decision: { type: "string", minLength: 1 },
+          rationale: { type: "string", minLength: 1 },
+        },
+      },
+    },
+    development_methods: {
+      type: "array",
+      items: {
+        type: "object",
+        required: ["method_name"],
+        additionalProperties: false,
+        properties: {
+          method_name: { type: "string", minLength: 1 },
+          application: { type: "string", minLength: 1 },
+        },
+      },
+    },
+    media_references: {
+      type: "array",
+      items: {
+        type: "object",
+        required: ["title", "media_type"],
+        additionalProperties: false,
+        properties: {
+          title: { type: "string", minLength: 1 },
+          url: { type: "string", format: "uri" },
+          media_type: { type: "string", enum: MediaTypeSchema.options },
+        },
+      },
+    },
+  },
+} as const;
+
 export const mindPackageJsonSchema = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
   title: "MindPackage",
@@ -437,6 +552,10 @@ export const mindPackageJsonSchema = {
 
 export function exportJsonSchema(): typeof mindPackageJsonSchema {
   return mindPackageJsonSchema;
+}
+
+export function exportEngineeringProfileSourceSchema(): typeof engineeringProfileSourceJsonSchema {
+  return engineeringProfileSourceJsonSchema;
 }
 
 export const toJsonSchema = exportJsonSchema;

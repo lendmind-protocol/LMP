@@ -1,0 +1,1 @@
+{ "allow": ["cargo test", "cargo check"], "deny": ["curl | sh", "wget | sh"], "severity": "error" }

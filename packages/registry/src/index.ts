@@ -47,6 +47,35 @@ export interface OciPackageMetadata extends LocalPackageMetadata {
   repository: string;
 }
 
+export interface RegistryPackageFile {
+  path: string;
+  url: string;
+  digest: string;
+}
+
+export interface RegistryIndexEntry {
+  id: string;
+  version: string;
+  manifestUrl?: string;
+  ipfsCid?: string | null;
+  digest?: string;
+  signature?: string;
+  publicKey?: string;
+  packageFiles?: RegistryPackageFile[];
+}
+
+export interface StaticRegistryClientOptions {
+  registryUrl: string;
+  trustedPublicKey: string;
+  ipfsGateways?: string[];
+  fetch?: typeof globalThis.fetch;
+}
+
+export interface StaticSyncMetadata extends LocalPackageMetadata {
+  source: string;
+  provenance: { sourceCount: number; digests: string[] };
+}
+
 interface OciDescriptor {
   mediaType: string;
   digest: string;
@@ -70,6 +99,86 @@ const metadataFile = ".lmp-registry.json";
 function assertDigest(value: unknown, label: string): asserts value is string {
   if (typeof value !== "string" || !/^sha256:[0-9a-f]{64}$/.test(value))
     throw new Error(`Invalid ${label}; expected a sha256 digest`);
+}
+
+function digestMatches(expected: string, actual: string): boolean {
+  return (
+    expected.replace(/^sha256:/, "").toLowerCase() === actual.replace(/^sha256:/, "").toLowerCase()
+  );
+}
+
+function validateTransportUrl(value: string, label: string): void {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error(`${label} must be an absolute URL`);
+  }
+  const loopback = ["127.0.0.1", "localhost", "[::1]"].includes(url.hostname);
+  if (url.protocol !== "https:" && !(url.protocol === "http:" && loopback))
+    throw new Error(`${label} must use HTTPS (loopback HTTP is allowed only for local tests)`);
+}
+
+function validateIpfsGateway(value: string): void {
+  if (!value.includes("{cid}")) throw new Error("IPFS gateway must contain a {cid} placeholder");
+  validateTransportUrl(value.replace("{cid}", "cid"), "IPFS gateway");
+}
+
+function validatePackageRelativePath(value: string): void {
+  if (!value || value.startsWith("/") || value.includes("\\") || value.split("/").includes(".."))
+    throw new Error(`Package file path is unsafe: ${value}`);
+  if (value === "mind.json") throw new Error("packageFiles must not replace the signed manifest");
+}
+
+function publicKeyBytes(value: string): Buffer {
+  const normalized = value.trim().replace(/^0x/, "");
+  if (/^[0-9a-f]{64}$/i.test(normalized)) return Buffer.from(normalized, "hex");
+  return createPublicKey(value).export({ type: "spki", format: "der" }).subarray(-32);
+}
+
+function verifyManifestSignature(
+  payload: Uint8Array,
+  signature: string,
+  publicKey: string,
+): boolean {
+  try {
+    const key = publicKeyBytes(publicKey);
+    const spki = Buffer.concat([Buffer.from("302a300506032b6570032100", "hex"), key]);
+    return cryptoVerify(
+      null,
+      payload,
+      createPublicKey({ key: spki, format: "der", type: "spki" }),
+      Buffer.from(signature.trim().replace(/^0x/, ""), "hex"),
+    );
+  } catch {
+    return false;
+  }
+}
+
+export function verifyProvenance(value: unknown): { sourceCount: number; digests: string[] } {
+  const provenance = (value as { provenance?: { sources?: unknown[] } } | undefined)?.provenance;
+  if (!provenance || !Array.isArray(provenance.sources) || provenance.sources.length === 0)
+    throw new Error("package provenance is required for registry ingestion");
+  const digests: string[] = [];
+  for (const source of provenance.sources) {
+    if (!source || typeof source !== "object")
+      throw new Error("package provenance source is invalid");
+    const record = source as Record<string, unknown>;
+    if (
+      typeof record.url !== "string" ||
+      typeof record.title !== "string" ||
+      typeof record.licenseNote !== "string"
+    )
+      throw new Error("package provenance source must include title, url, and licenseNote");
+    validateTransportUrl(record.url, "provenance source URL");
+    if (
+      typeof record.contentDigest !== "string" ||
+      !/^sha256:[0-9a-f]{64}$/.test(record.contentDigest)
+    )
+      throw new Error(`provenance source ${record.title} must include a SHA-256 content digest`);
+    digests.push(record.contentDigest);
+  }
+  return { sourceCount: digests.length, digests };
 }
 
 type Semver = { major: number; minor: number; patch: number; prerelease: string[] };
@@ -164,6 +273,138 @@ async function rejectSymlinks(root: string): Promise<void> {
   await visit(resolvedRoot);
 }
 
+export class StaticRegistryClient {
+  private readonly registryUrl: string;
+  private readonly trustedPublicKey: string;
+  private readonly ipfsGateways: string[];
+  private readonly request: typeof globalThis.fetch;
+
+  constructor(options: StaticRegistryClientOptions) {
+    validateTransportUrl(options.registryUrl, "static registry URL");
+    this.registryUrl = options.registryUrl;
+    this.trustedPublicKey = options.trustedPublicKey;
+    publicKeyBytes(options.trustedPublicKey);
+    this.ipfsGateways = options.ipfsGateways ?? ["https://ipfs.io/ipfs/{cid}"];
+    for (const gateway of this.ipfsGateways) validateIpfsGateway(gateway);
+    this.request = options.fetch ?? globalThis.fetch;
+  }
+
+  async sync(mindId: string, destination: string): Promise<StaticSyncMetadata> {
+    const indexResponse = await this.http(this.registryUrl);
+    const index = (await indexResponse.json()) as { schemaVersion?: unknown; entries?: unknown };
+    if (index.schemaVersion !== "1" || !Array.isArray(index.entries))
+      throw new Error("static registry index is invalid");
+    const entry = index.entries.find((candidate): candidate is RegistryIndexEntry =>
+      Boolean(
+        candidate &&
+          typeof candidate === "object" &&
+          ((candidate as RegistryIndexEntry).id === mindId ||
+            (candidate as RegistryIndexEntry).id?.endsWith(`:${mindId}`)),
+      ),
+    );
+    if (!entry) throw new Error(`mind profile '${mindId}' was not found in ${this.registryUrl}`);
+    if (
+      typeof entry.id !== "string" ||
+      typeof entry.version !== "string" ||
+      typeof entry.digest !== "string" ||
+      typeof entry.signature !== "string" ||
+      typeof entry.publicKey !== "string"
+    )
+      throw new Error(
+        "static registry entry must provide identity, digest, signature, and public key",
+      );
+    if (
+      publicKeyBytes(entry.publicKey).toString("hex") !==
+      publicKeyBytes(this.trustedPublicKey).toString("hex")
+    )
+      throw new Error("static registry public key does not match the configured trust anchor");
+
+    const candidates = entry.manifestUrl ? [entry.manifestUrl] : [];
+    if (entry.ipfsCid) {
+      if (!/^[A-Za-z0-9]+$/.test(entry.ipfsCid))
+        throw new Error("static registry IPFS CID is invalid");
+      candidates.push(
+        ...this.ipfsGateways.map((gateway) => gateway.replace("{cid}", entry.ipfsCid as string)),
+      );
+    }
+    if (!candidates.length) throw new Error("registry entry has neither manifestUrl nor ipfsCid");
+
+    let manifestBytes: Buffer | undefined;
+    let source: string | undefined;
+    const failures: string[] = [];
+    for (const candidate of candidates) {
+      try {
+        validateTransportUrl(candidate, "manifest URL");
+        const response = await this.http(candidate);
+        const bytes = Buffer.from(await response.arrayBuffer());
+        const digest = `sha256:${createHash("sha256").update(bytes).digest("hex")}`;
+        if (!digestMatches(entry.digest, digest)) throw new Error("manifest digest mismatch");
+        if (!verifyManifestSignature(bytes, entry.signature, entry.publicKey))
+          throw new Error("manifest signature verification failed");
+        manifestBytes = bytes;
+        source = candidate;
+        break;
+      } catch (error) {
+        failures.push(`${candidate}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+    if (!manifestBytes || !source)
+      throw new Error(`all static profile sources failed verification: ${failures.join("; ")}`);
+
+    const temporary = await mkdtemp(join(tmpdir(), "lmp-static-sync-"));
+    try {
+      await writeFile(join(temporary, "mind.json"), manifestBytes, { flag: "wx" });
+      for (const file of entry.packageFiles ?? []) {
+        validatePackageRelativePath(file.path);
+        validateTransportUrl(file.url, "package file URL");
+        const response = await this.http(file.url);
+        const bytes = Buffer.from(await response.arrayBuffer());
+        const digest = `sha256:${createHash("sha256").update(bytes).digest("hex")}`;
+        if (!digestMatches(file.digest, digest))
+          throw new Error(`package file digest mismatch: ${file.path}`);
+        const target = resolve(temporary, file.path);
+        if (!inside(temporary, target))
+          throw new Error(`package file path escapes staging directory: ${file.path}`);
+        await mkdir(dirname(target), { recursive: true });
+        await writeFile(target, bytes, { flag: "wx" });
+      }
+      const validation = await validateMindPackage(temporary);
+      if (!validation.valid || !validation.package)
+        throw new Error(validation.diagnostics.map((diagnostic) => diagnostic.message).join("; "));
+      if (validation.package.id !== entry.id || validation.package.version !== entry.version)
+        throw new Error("static profile identity does not match the selected registry entry");
+      const provenance = verifyProvenance(validation.package);
+      if (entry.packageFiles === undefined)
+        throw new Error("complete packageFiles are required to activate a static registry package");
+      const installed = await new LocalRegistryClient(destination).install(temporary);
+      return { ...installed, source, provenance };
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  }
+
+  private async http(url: string): Promise<Response> {
+    const response = await this.request(url);
+    if (!response.ok) throw new Error(`registry request failed (${response.status}): ${url}`);
+    return response;
+  }
+}
+
+export async function syncLocalProfile(
+  registryRoot: string,
+  mindId: string,
+  destination: string,
+): Promise<LocalPackageMetadata> {
+  safePart(mindId, "mind selector");
+  const source = join(registryRoot, mindId);
+  try {
+    await access(join(source, "mind.json"));
+  } catch {
+    throw new Error(`mind profile '${mindId}' was not found in ${registryRoot}`);
+  }
+  return new LocalRegistryClient(destination).install(source);
+}
+
 export class LocalRegistryClient {
   readonly root: string;
 
@@ -176,6 +417,7 @@ export class LocalRegistryClient {
     const validation = await validateMindPackage(sourcePath);
     if (!validation.valid || !validation.package)
       throw new Error(validation.diagnostics.map((d) => d.message).join("; "));
+    verifyProvenance(validation.package);
     await rejectSymlinks(sourcePath);
     const pkg = validation.package;
     const id = safePart(pkg.id, "package id");
@@ -191,14 +433,22 @@ export class LocalRegistryClient {
     if (signature && !signature.publicKey) throw new Error("publicKey is required when signing");
     const destination = join(this.root, id, version);
     if (!inside(this.root, destination)) throw new Error("Unsafe package path");
+    let existing: LocalPackageMetadata | undefined;
     try {
-      const existing = JSON.parse(
+      existing = JSON.parse(
         await readFile(join(destination, metadataFile), "utf8"),
       ) as LocalPackageMetadata;
-      if (existing.digest !== digest) throw new Error(`Package ${id}@${version} is immutable`);
-      return existing;
     } catch (error) {
-      if (error instanceof Error && error.message.includes("is immutable")) throw error;
+      if (!(error instanceof Error && "code" in error && error.code === "ENOENT"))
+        throw new Error(`Package ${id}@${version} has incomplete registry metadata`, {
+          cause: error,
+        });
+    }
+    if (existing) {
+      if (existing.digest !== digest) throw new Error(`Package ${id}@${version} is immutable`);
+      if ((await computePackageDigest(destination)) !== existing.digest)
+        throw new Error(`Package ${id}@${version} failed stored integrity verification`);
+      return existing;
     }
     await mkdir(this.root, { recursive: true });
     await cp(sourcePath, destination, { recursive: true, errorOnExist: true, force: false });
@@ -355,6 +605,7 @@ export class OciRegistryClient {
     const validation = await validateMindPackage(sourcePath);
     if (!validation.valid || !validation.package)
       throw new Error(validation.diagnostics.map((diagnostic) => diagnostic.message).join("; "));
+    verifyProvenance(validation.package);
     await rejectSymlinks(sourcePath);
     const files = await packageFiles(sourcePath);
     const blobs: OciDescriptor[] = [];
@@ -431,6 +682,7 @@ export class OciRegistryClient {
     const validation = await validateMindPackage(target);
     if (!validation.valid || !validation.package)
       throw new Error("pulled OCI package failed schema validation");
+    verifyProvenance(validation.package);
     if (validation.package.id !== config.id || validation.package.version !== config.version)
       throw new Error("OCI package config does not match its manifest");
     const digest = await computePackageDigest(target);
@@ -456,18 +708,29 @@ export class OciRegistryClient {
           signature: string;
         };
         const publicKey = await readFile(join(temporary, "signatures", "public-key.pem"), "utf8");
-        return signature.digest === metadata.digest && verifyEd25519(signature.digest, signature.signature, publicKey);
+        return (
+          signature.digest === metadata.digest &&
+          verifyEd25519(signature.digest, signature.signature, publicKey)
+        );
       } catch {
         try {
           const payload = await readFile(join(temporary, "mind.json"));
-          const signatureText = (await readFile(join(temporary, "signatures", "manifest.sig"), "utf8"))
+          const signatureText = (
+            await readFile(join(temporary, "signatures", "manifest.sig"), "utf8")
+          )
             .trim()
             .replace(/^0x/, "");
-          const publicKeyText = (await readFile(join(temporary, "signatures", "public-key.hex"), "utf8"))
+          const publicKeyText = (
+            await readFile(join(temporary, "signatures", "public-key.hex"), "utf8")
+          )
             .trim()
             .replace(/^0x/, "");
-          if (!/^[0-9a-f]{128}$/i.test(signatureText) || !/^[0-9a-f]{64}$/i.test(publicKeyText)) return false;
-          const spki = Buffer.concat([Buffer.from("302a300506032b6570032100", "hex"), Buffer.from(publicKeyText, "hex")]);
+          if (!/^[0-9a-f]{128}$/i.test(signatureText) || !/^[0-9a-f]{64}$/i.test(publicKeyText))
+            return false;
+          const spki = Buffer.concat([
+            Buffer.from("302a300506032b6570032100", "hex"),
+            Buffer.from(publicKeyText, "hex"),
+          ]);
           return cryptoVerify(
             null,
             payload,

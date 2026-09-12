@@ -78,6 +78,28 @@ It is useful when a Node process needs to prepare or inspect protocol data, but
 it must not be used as a substitute for `lmp evaluate` or the Rust MCP server.
 Those paths provide the actual evaluation and enforcement boundary.
 
+## Applications and real-world use cases
+
+The SDK is useful inside applications that need to move Mind packages and
+evidence safely between people, agents, and automation:
+
+| Application | SDK use case |
+| --- | --- |
+| AI coding platform | Load a selected Mind, verify its signature, and attach typed metadata to an agent task. |
+| CI/CD quality gate | Verify the package and redact evaluation output before publishing a pull-request or release artifact. |
+| Private enterprise registry | Build a catalog for signed Mind versions, promotion records, provenance, and approval state. |
+| IDE or editor extension | Display the active Mind, integrity status, and safe evaluation summaries in VS Code, JetBrains, or an internal editor. |
+| Agent orchestration service | Select a repository-scoped Mind and persist hashes, findings, and redacted run metadata. |
+| Security and compliance pipeline | Detect package tampering and prevent credentials from entering logs or evidence. |
+| Benchmarking platform | Bind baseline and guided runs to exact Mind versions, task metadata, and reproducible digests. |
+| Developer portal or dashboard | Show Mind versions, provenance, signature state, findings, and release history. |
+| Publishing and promotion tool | Create keys, sign packages, rotate signers, and prepare registry promotion records. |
+
+These are integration use cases: the SDK prepares and verifies protocol data.
+It does not independently decide whether source code is acceptable. Use the
+Rust runtime for evaluation, `lmpd` for daemon behavior, and the MCP server for
+agent-host connectivity.
+
 ## Hash a Mind package
 
 Use `sha256` for a stable digest of a JSON value, string, or byte sequence. The
@@ -105,7 +127,7 @@ and private key files.
 ```ts
 import { computePackageDigest } from "@lending-mind/sdk";
 
-const digest = await computePackageDigest("./skills/baseline");
+const digest = await computePackageDigest("./profiles/baseline");
 ```
 
 ## Sign and verify content
@@ -142,13 +164,13 @@ import {
 
 await createKeyPair("./.lending-mind/keys");
 await signMindPackage(
-  "./skills/baseline",
+  "./profiles/baseline",
   "./.lending-mind/keys/private-key.pem",
 );
 
 const result = await verifyMindPackage(
-  "./skills/baseline",
-  "./skills/baseline/signatures/public-key.pem",
+  "./profiles/baseline",
+  "./profiles/baseline/signatures/public-key.pem",
 );
 console.log(result.signatureStatus); // verified, invalid, or another status
 ```

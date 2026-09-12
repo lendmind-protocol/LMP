@@ -72,9 +72,78 @@ failed, or blocked artifact is not a release result.
 | Layout | Required workspace members and runtime files exist |
 | Rust build | All workspace crates compile together |
 | Docker | `lmp-sandbox:local` can be built for isolated execution |
-| Qualification | 38 required CLI, daemon, MCP, profile, scope, sandbox, and fleet checks |
+| Qualification | 39 required CLI, daemon, MCP, profile, scope, sandbox, and fleet checks |
 | Full benchmark | Optional 64-scenario real-OSS evidence |
 
 The installer verifies the checked-out implementation; it does not publish
 packages, deploy binaries to another host, or claim that a policy pass replaces
 human review and production testing.
+
+## Test unpublished packages from another project
+
+The npm packages are not published yet. Developers testing LMP in a separate
+application should use a local package boundary rather than a registry version.
+Build the package first from this repository:
+
+```bash
+pnpm --filter @lending-mind/sdk build
+pnpm --filter @lending-mind/lmp build
+```
+
+### Tarball install (recommended)
+
+This most closely resembles a real package install while keeping the package
+on the local machine:
+
+```bash
+mkdir -p /tmp/lmp-local-packages
+pnpm --dir packages/core pack --pack-destination /tmp/lmp-local-packages
+pnpm --dir packages/cli pack --pack-destination /tmp/lmp-local-packages
+
+# Run this from the external test project.
+pnpm add file:/tmp/lmp-local-packages/lending-mind-sdk-0.1.0.tgz
+pnpm add file:/tmp/lmp-local-packages/lending-mind-lmp-0.1.0.tgz
+```
+
+Use the exact filenames printed by `pnpm pack` if the package version changes.
+The external project should then run its normal `lmp init` and evaluation
+commands. A tarball test verifies the files included by the package and avoids
+accidentally importing the repository's source tree.
+
+### Direct local path
+
+For a fast test, a package can be referenced directly:
+
+```bash
+pnpm add /absolute/path/to/lend-mind-protocol/packages/cli
+```
+
+Or in `package.json`:
+
+```json
+{
+  "devDependencies": {
+    "@lending-mind/lmp": "file:../lend-mind-protocol/packages/cli"
+  }
+}
+```
+
+The current packages use pnpm workspace dependencies during repository
+development. For an unrelated npm-only project, prefer the tarball path until
+the packages are published with registry-resolvable dependency metadata.
+
+### Linking for rapid iteration
+
+Linking reflects rebuilt package changes immediately, but it is less faithful
+to a production install and can expose duplicate dependency trees:
+
+```bash
+# From the LMP repository.
+pnpm --filter @lending-mind/lmp link --global
+
+# From the external test project.
+pnpm link --global @lending-mind/lmp
+```
+
+These methods are temporary developer-test paths. They do not create a public
+release, immutable package identity, or production support commitment.

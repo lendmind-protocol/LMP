@@ -1,0 +1,24 @@
+{
+  "status": "verified-fixtures",
+  "tests": [
+    {
+      "id": "python-orchestration-safety-clean",
+      "kind": "positive",
+      "description": "Python orchestration, subprocess boundaries, Docker lifecycle, and evidence handling.",
+      "expected": "pass"
+    },
+    {
+      "id": "python-orchestration-safety-negative",
+      "kind": "negative",
+      "description": "Python orchestration, subprocess boundaries, Docker lifecycle, and evidence handling.",
+      "expected": "needs_revision"
+    },
+    {
+      "id": "python-orchestration-safety-boundary",
+      "kind": "exception",
+      "description": "Python orchestration, subprocess boundaries, Docker lifecycle, and evidence handling.",
+      "expected": "blocked"
+    }
+  ],
+  "notes": "Static evidence cannot prove semantic correctness or production readiness; independent self-hosting results remain bounded."
+}

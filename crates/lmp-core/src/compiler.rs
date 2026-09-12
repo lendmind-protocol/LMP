@@ -44,6 +44,13 @@ pub fn compile(dir: &Path) -> Result<InstructionBundle> {
         .map(String::from)
         .collect::<Vec<_>>();
     let mut rules = Vec::new();
+    if let Ok(contract_text) = fs::read_to_string(dir.join("rules/manifest.json")) {
+        let contracts: Value = serde_json::from_str(&contract_text)
+            .with_context(|| format!("invalid rule contract manifest in {}", dir.display()))?;
+        if let Some(declared_rules) = contracts.get("rules").and_then(Value::as_array) {
+            rules.extend(declared_rules.iter().cloned());
+        }
+    }
     let mut layers = vec![ProfileLayer {
         name: "guidance.md".into(),
         digest: format!(
@@ -71,6 +78,14 @@ pub fn compile(dir: &Path) -> Result<InstructionBundle> {
         sections.push(description.clone());
     }
     sections.extend(guidance.iter().cloned());
+    sections.extend(rules.iter().filter_map(|rule| {
+        let id = rule.get("id")?.as_str()?;
+        let assertion = rule.get("assertion")?.as_str()?;
+        let evidence = rule.get("evidence")?.get("sourceId")?.as_str()?;
+        Some(format!(
+            "Rule {id}: {assertion} Evidence: {evidence}. Verify the implementation and fixture before relying on this rule."
+        ))
+    }));
     sections.push("Run the relevant checks before reporting completion.".into());
     let instructions = sections.join("\n");
     let digest = source_digest(dir, &mind)?;

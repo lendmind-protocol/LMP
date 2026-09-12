@@ -3,6 +3,7 @@ use std::collections::HashSet;
 use syn::{
     visit::{self, Visit},
     BinOp, ExprBinary, ExprForLoop, ExprIf, ExprLoop, ExprMatch, ExprMethodCall, ExprWhile, ItemFn,
+    Local,
 };
 
 pub struct ConcurrencyAuditEngine {
@@ -32,22 +33,36 @@ impl<'ast> Visit<'ast> for ConcurrencyAuditEngine {
         visit::visit_item_fn(self, node);
     }
 
+    fn visit_local(&mut self, node: &'ast Local) {
+        if let (syn::Pat::Ident(binding), Some(init)) = (&node.pat, &node.init) {
+            let mut expression = &*init.expr;
+            loop {
+                match expression {
+                    syn::Expr::MethodCall(call) if call.method == "lock" => {
+                        self.lock_trackers.insert(binding.ident.to_string());
+                        break;
+                    }
+                    syn::Expr::MethodCall(call) => expression = &call.receiver,
+                    _ => break,
+                }
+            }
+        }
+        visit::visit_local(self, node);
+    }
+
     /// Evaluates internal method call expressions for naked lock primitives or thread blocks
     fn visit_expr_method_call(&mut self, node: &'ast ExprMethodCall) {
         let method_name = node.method.to_string();
 
-        if method_name == "lock" {
-            if let syn::Expr::Path(ref expr_path) = *node.receiver {
-                if let Some(ident) = expr_path.path.get_ident() {
-                    self.lock_trackers.insert(ident.to_string());
-                }
-            }
-        }
-
-        // Catch instances where locks are held over long network or sync I/O boundaries
-        if (method_name == "sleep" || method_name == "join") && !self.lock_trackers.is_empty() {
+        // A method named `join` is only a lock-related finding when it is
+        // invoked on the value returned by a tracked lock acquisition. A
+        // thread handle can legitimately be joined while another lock exists
+        // elsewhere in the function.
+        let joins_tracked_lock = method_name == "join"
+            && matches!(&*node.receiver, syn::Expr::Path(path) if path.path.get_ident().is_some_and(|ident| self.lock_trackers.contains(&ident.to_string())));
+        if joins_tracked_lock {
             self.violations_found.push(format!(
-                "THREAD_RACE_RISK: Blocking routine `{}` invoked while thread holds an exclusive resource access lock!",
+                "THREAD_RACE_RISK: Blocking routine `{}` invoked on a value holding an exclusive resource access lock!",
                 method_name
             ));
         }
@@ -178,5 +193,33 @@ mod tests {
                 "expected a syn::Error, got: {error:#}"
             );
         }
+    }
+
+    #[test]
+    fn joining_a_thread_is_not_reported_because_an_unrelated_lock_exists() {
+        let source = r#"
+            fn run(lock: &std::sync::Mutex<()>, worker: std::thread::JoinHandle<()>) {
+                let _guard = lock.lock().unwrap();
+                worker.join().unwrap();
+            }
+        "#;
+        let violations = audit_source(source, 10, &[]).unwrap();
+        assert!(violations
+            .iter()
+            .all(|violation| !violation.contains("THREAD_RACE_RISK")));
+    }
+
+    #[test]
+    fn joining_the_tracked_lock_value_remains_a_finding() {
+        let source = r#"
+            fn run(lock: &std::sync::Mutex<()>) {
+                let guard = lock.lock().unwrap();
+                guard.join().unwrap();
+            }
+        "#;
+        let violations = audit_source(source, 10, &[]).unwrap();
+        assert!(violations
+            .iter()
+            .any(|violation| violation.contains("THREAD_RACE_RISK")));
     }
 }

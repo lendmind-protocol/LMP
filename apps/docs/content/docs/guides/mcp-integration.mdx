@@ -5,13 +5,19 @@ description: Connect an agent host to the native Rust MCP server.
 
 # MCP integration
 
-Connect an agent host to LMP over a local stdio process. The server is the
-native Rust binary; the optional `@lending-mind/mcp` package is only a Node.js
-compatibility launcher for hosts that need one. The transport follows the
+Connect an agent host to LMP over local stdio or a remote Streamable HTTP
+endpoint. The server is the native Rust binary; the optional
+`@lending-mind/mcp` package is only a Node.js compatibility launcher for hosts
+that need one. The transport follows the
 [Model Context Protocol specification](https://modelcontextprotocol.io/specification/latest),
 and its request envelope follows [JSON-RPC 2.0](https://www.jsonrpc.org/specification).
 
 ## Quick setup
+
+Choose one transport per host. Use stdio for a local project because it keeps
+the workspace boundary in the child process configuration. Use Streamable HTTP
+only when a separately managed service is required. LMP does not use the
+deprecated SSE transport.
 
 ### 1. Build the server
 
@@ -150,9 +156,10 @@ response must not replace the evidence for an earlier decision.
 
 ## JSON-RPC transport
 
-`lmp-mcp` reads one JSON-RPC message per line and writes one response per line
-over stdio. Paths are constrained to `LMP_WORKSPACE_ROOT`, and the server does
-not execute commands or access the network.
+In stdio mode, `lmp-mcp` reads one JSON-RPC message per line and writes one
+response per line. Paths are constrained to `LMP_WORKSPACE_ROOT`, and the tool
+surface does not execute commands or make outbound network requests. For a
+remote client, use the `POST /mcp` Streamable HTTP endpoint described below.
 
 Example tool call:
 
@@ -172,6 +179,79 @@ Example tool call:
   }
 }
 ```
+
+## Remote Streamable HTTP
+
+Start the same binary as an HTTP MCP server when a host cannot launch a local
+process:
+
+```bash
+LMP_WORKSPACE_ROOT="$PWD" \
+LMP_MCP_TRANSPORT=streamable-http \
+LMP_MCP_BEARER_TOKEN="replace-with-a-secret" \
+LMP_MCP_ALLOWED_ORIGINS="https://your-agent.example" \
+./target/release/lmp-mcp --bind 0.0.0.0 --port 8787
+```
+
+The endpoint is `POST /mcp` with `Content-Type: application/json`. The server
+accepts JSON-RPC request and notification messages and returns JSON responses;
+notifications receive `202 Accepted`. It rejects requests with an unexpected
+`Origin`, and any non-local bind requires both `LMP_MCP_BEARER_TOKEN` and
+`LMP_MCP_ALLOWED_ORIGINS`. Put TLS and a normal reverse proxy in front of a
+public deployment; do not expose the built-in listener directly to the public
+internet.
+
+The minimum smoke test is:
+
+```bash
+curl --fail-with-body -sS http://127.0.0.1:8787/mcp \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer replace-with-a-secret' \
+  -H 'Origin: https://your-agent.example' \
+  --data '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}'
+```
+
+Remote mode is still subject to the same workspace confinement as stdio:
+`LMP_WORKSPACE_ROOT` is mandatory in the deployment contract, and every path
+argument must resolve below that root. The HTTP listener never executes shell
+commands or grants network access to a tool. Use one isolated service instance
+per workspace or tenant; do not share a writable workspace root between users.
+
+## Pinata IPFS publishing
+
+IPFS publishing is a release operation, not a browser operation. Configure
+these repository or environment secrets in the release runner:
+
+```text
+PINATA_JWT                 the scoped Pinata upload token
+PINATA_GROUP_ID            the group ID from the Pinata group URL
+PINATA_GATEWAY_DOMAIN      optional; defaults to gateway.pinata.cloud
+```
+
+The release workflow runs `pnpm publish:ipfs:pinata`. It uploads every file in
+each signed production Mind package, verifies each returned CID through the
+configured Pinata gateway, records the manifest CID and file URLs in the
+registry, and then reruns the registry verification gate. The JWT is never
+written to the repository, frontend bundle, registry, or generated docs.
+
+For a controlled local release rehearsal, provide the same variables only in
+the invoking shell:
+
+```bash
+PINATA_JWT="..." \
+PINATA_GROUP_ID="your-group-id" \
+PINATA_GATEWAY_DOMAIN="gateway.pinata.cloud" \
+pnpm publish:ipfs:pinata tj-ponytail
+```
+
+The free plan can use Pinata's shared `gateway.pinata.cloud` gateway; no custom
+domain upgrade is required. A custom gateway may be configured later if
+delivery volume requires it.
+
+The command refuses to run without the JWT and group ID, requires HTTPS,
+rejects symlinks, and does not write registry metadata until upload and
+retrieval verification have succeeded. Pinata availability, account ownership,
+and long-term billing are external operational responsibilities.
 
 Request IDs must be unique while requests are in flight. The compatibility
 adapter rejects a duplicate ID with JSON-RPC `-32600`; it does not replace the

@@ -135,6 +135,155 @@ describe("evaluator", () => {
     await rm(directory, { recursive: true, force: true });
   });
 
+  it("finds secret-shaped literals at the AST property boundary", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "lmp-evaluator-secret-"));
+    await writeFile(join(directory, "package.json"), "{}\n");
+    await writeFile(
+      join(directory, "tsconfig.json"),
+      JSON.stringify({ compilerOptions: { target: "ES2022" }, include: ["src.ts"] }),
+    );
+    await writeFile(join(directory, "src.ts"), 'export const apiKey = "live-key-value-123";\n');
+    const report = await evaluate({
+      directory,
+      packageDirectory: resolve(
+        dirname(new URL(import.meta.url).pathname),
+        "../../../profiles/baseline",
+      ),
+      mode: "enforced",
+      artifactMode: "none",
+      runCommands: false,
+    });
+    expect(report.results).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ ruleId: "security.hardcoded-secret", passed: false }),
+      ]),
+    );
+    await rm(directory, { recursive: true, force: true });
+  });
+
+  it("detects unused initialized bindings without flagging used or intentional bindings", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "lmp-evaluator-unused-"));
+    await writeFile(join(directory, "package.json"), "{}\n");
+    await writeFile(
+      join(directory, "tsconfig.json"),
+      JSON.stringify({ compilerOptions: { target: "ES2022" }, include: ["src.ts"] }),
+    );
+    await writeFile(
+      join(directory, "src.ts"),
+      "const stale = 1; const used = 2; const _intentional = 3; export function read() { return used; }\n",
+    );
+    const report = await evaluate({
+      directory,
+      packageDirectory: resolve(
+        dirname(new URL(import.meta.url).pathname),
+        "../../../profiles/baseline",
+      ),
+      mode: "advisory",
+      artifactMode: "none",
+      runCommands: false,
+    });
+    expect(report.results).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          ruleId: "typescript.unused-variable",
+          passed: false,
+          message: "Unused variable stale detected.",
+        }),
+      ]),
+    );
+    expect(
+      report.results
+        .filter((item) => item.ruleId === "typescript.unused-variable")
+        .map((item) => item.message),
+    ).toEqual(["Unused variable stale detected."]);
+    await rm(directory, { recursive: true, force: true });
+  });
+
+  it("maps compiler diagnostics to an explicit API/type finding", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "lmp-evaluator-types-"));
+    await writeFile(join(directory, "package.json"), "{}\n");
+    await writeFile(
+      join(directory, "tsconfig.json"),
+      JSON.stringify({ compilerOptions: { target: "ES2022", strict: true }, include: ["src.ts"] }),
+    );
+    await writeFile(
+      join(directory, "src.ts"),
+      "export function read() { return missingApi(1); }\n",
+    );
+    const report = await evaluate({
+      directory,
+      packageDirectory: resolve(
+        dirname(new URL(import.meta.url).pathname),
+        "../../../profiles/baseline",
+      ),
+      mode: "advisory",
+      artifactMode: "none",
+      runCommands: false,
+    });
+    expect(report.results).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ ruleId: "typescript.type-error", passed: false }),
+      ]),
+    );
+    await rm(directory, { recursive: true, force: true });
+  });
+
+  it("detects materially duplicated function bodies", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "lmp-evaluator-duplicate-"));
+    await writeFile(join(directory, "package.json"), "{}\n");
+    await writeFile(
+      join(directory, "tsconfig.json"),
+      JSON.stringify({ compilerOptions: { target: "ES2022" }, include: ["src.ts"] }),
+    );
+    await writeFile(
+      join(directory, "src.ts"),
+      "export function first(value: string) { const normalized = value.trim().toLowerCase(); if (normalized.length === 0) return undefined; return normalized; }\nexport function second(value: string) { const normalized = value.trim().toLowerCase(); if (normalized.length === 0) return undefined; return normalized; }\n",
+    );
+    const report = await evaluate({
+      directory,
+      packageDirectory: resolve(
+        dirname(new URL(import.meta.url).pathname),
+        "../../../profiles/baseline",
+      ),
+      mode: "advisory",
+      artifactMode: "none",
+      runCommands: false,
+    });
+    expect(report.results).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ ruleId: "typescript.duplicate-logic", passed: false }),
+      ]),
+    );
+    await rm(directory, { recursive: true, force: true });
+  });
+
+  it("detects named insecure defaults without treating ordinary values as unsafe", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "lmp-evaluator-insecure-default-"));
+    await writeFile(join(directory, "package.json"), "{}\n");
+    await writeFile(
+      join(directory, "tsconfig.json"),
+      JSON.stringify({ compilerOptions: { target: "ES2022" }, include: ["src.ts"] }),
+    );
+    await writeFile(
+      join(directory, "src.ts"),
+      "export const exposed = { origin: '*', dangerouslySetInnerHTML: value };\nexport const safe = { origin: 'https://example.test' };\n",
+    );
+    const report = await evaluate({
+      directory,
+      packageDirectory: resolve(
+        dirname(new URL(import.meta.url).pathname),
+        "../../../profiles/baseline",
+      ),
+      mode: "advisory",
+      artifactMode: "none",
+      runCommands: false,
+    });
+    expect(
+      report.results.filter((item) => item.ruleId === "security.insecure-default"),
+    ).toHaveLength(2);
+    await rm(directory, { recursive: true, force: true });
+  });
+
   it("enforces the explicit Supabase application-layer join rule", async () => {
     const directory = await mkdtemp(join(tmpdir(), "lmp-supabase-join-"));
     await writeFile(
@@ -173,7 +322,7 @@ describe("evaluator", () => {
     const artifactDir = await mkdtemp(join(tmpdir(), "lmp-artifacts-"));
     const report = await evaluate({
       directory: fixture,
-      packageDirectory: join(repository, "skills/baseline"),
+      packageDirectory: join(repository, "profiles/baseline"),
       artifactDir,
       mode: "enforced",
       artifactMode: "full",
@@ -213,7 +362,7 @@ describe("evaluator", () => {
       directory,
       packageDirectory: resolve(
         dirname(new URL(import.meta.url).pathname),
-        "../../../skills/typescript-minimal",
+        "../../../profiles/typescript-minimal",
       ),
       mode: "enforced",
       artifactMode: "none",
@@ -232,7 +381,7 @@ describe("evaluator", () => {
     const artifactDir = await mkdtemp(join(tmpdir(), "lmp-state-artifacts-"));
     const packageDirectory = resolve(
       dirname(new URL(import.meta.url).pathname),
-      "../../../skills/typescript-minimal",
+      "../../../profiles/typescript-minimal",
     );
     await writeFile(
       join(directory, "tsconfig.json"),
@@ -273,7 +422,7 @@ describe("evaluator", () => {
     const packageDirectory = join(packageRoot, "baseline");
     const sourcePackage = resolve(
       dirname(new URL(import.meta.url).pathname),
-      "../../../skills/baseline",
+      "../../../profiles/baseline",
     );
     await cp(sourcePackage, packageDirectory, { recursive: true });
     const manifestPath = join(packageDirectory, "signatures/manifest.sig");

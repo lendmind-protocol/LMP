@@ -1,0 +1,9 @@
+[package]
+name = "lmp-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0"
+lmp-core = { path = "../lmp-core" }
+lmp-evaluator = { path = "../lmp-evaluator" }

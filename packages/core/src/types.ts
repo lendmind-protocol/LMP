@@ -57,6 +57,11 @@ export interface RuleResult {
   column?: number;
   remediation?: string;
   limitations?: string[];
+  sourceId?: string;
+  sourceClaim?: string;
+  sourceLocator?: string;
+  implementation?: string;
+  fixture?: string;
 }
 
 export type EvaluationState = "pass" | "needs_revision" | "blocked" | "evaluation_error";

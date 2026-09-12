@@ -1,0 +1,8 @@
+node --test packages/create-lmp/bin.test.ts
+
+TAP summary:
+tests 12
+pass 12
+fail 0
+cancelled 0
+skipped 0

@@ -34,6 +34,7 @@ MAX_GITHUB_MANIFESTS = 8
 MAX_GITHUB_SOURCE_FILES = 24
 MAX_GITHUB_SOURCE_BYTES = 250_000
 MAX_GITHUB_TREE_ENTRIES = 2_000
+MAX_IMPORTED_RECORDS = 100
 USER_AGENT = "lending-mind-protocol/0.1 mind-harvester"
 
 LAYERS = {"textual", "implementation", "critique"}
@@ -696,7 +697,7 @@ def source_from_mapping(raw: dict[str, Any], allow_local: bool, fetch: bool) -> 
         if key in {
             "contentType", "fetched", "revision", "publishedAt", "publisher",
             "defaultBranch", "language", "topics", "dependencyManifestNames",
-            "dependencyNames", "codeExecuted",
+            "dependencyNames", "codeExecuted", "provider", "importFormat", "section",
         }
         and (
             isinstance(value, (str, int, float, bool, type(None)))
@@ -744,6 +745,88 @@ def source_from_mapping(raw: dict[str, Any], allow_local: bool, fetch: bool) -> 
         content=content,
         metadata=metadata,
     )
+
+
+def _safe_import_text(value: Any) -> str:
+    """Extract bounded evidence text from untrusted JSON values."""
+    if isinstance(value, str):
+        return value[:MAX_SOURCE_BYTES]
+    if isinstance(value, (int, float, bool)):
+        return str(value)
+    if isinstance(value, list):
+        return "\n".join(_safe_import_text(item) for item in value[:MAX_IMPORTED_RECORDS])
+    if isinstance(value, dict):
+        allowed = {"content", "markdown", "html", "text", "description", "rationale", "application", "key_takeaway", "rule", "decision", "concept", "topic", "method_name", "company_name"}
+        return "\n".join(f"{key}: {_safe_import_text(item)}" for key, item in list(value.items())[:MAX_IMPORTED_RECORDS] if key in allowed and _safe_import_text(item))[:MAX_SOURCE_BYTES]
+    return ""
+
+
+def _citation_url(value: Any) -> str:
+    return value if isinstance(value, str) and value.startswith("https://") else ""
+
+
+def _structured_profile_sources(payload: dict[str, Any], reference: str) -> list[dict[str, Any]]:
+    """Convert the canonical profile-source export into reviewable evidence records."""
+    fields = (("engineering_philosophies", "concept", "description"), ("technical_tradeoffs", "topic", "decision"), ("development_methods", "method_name", "application"), ("media_references", "title", "key_takeaway"), ("engineering_rules", "rule", "context"))
+    records = []
+    for section, title_key, detail_key in fields:
+        for index, entry in enumerate(payload.get(section, [])[:MAX_IMPORTED_RECORDS] if isinstance(payload.get(section), list) else []):
+            if not isinstance(entry, dict):
+                continue
+            title = str(entry.get(title_key) or f"{section} {index + 1}")
+            content = _safe_import_text({title_key: entry.get(title_key), detail_key: entry.get(detail_key)})
+            if not content:
+                continue
+            citation = next((_citation_url(value) for key, value in entry.items() if key.endswith("citation") and _citation_url(value)), "")
+            records.append({"id": stable_id("json", f"{reference}\0{section}\0{index}\0{title}"), "layer": "textual", "title": title, "url": citation or reference, "sourceType": "json-profile-source", "content": content, "rights": "user-supplied", "allowedUse": "analysis-only; attribution required", "evidenceTier": "primary" if citation else "secondary", "metadata": {"provider": "json-import", "importFormat": "engineering-profile-source", "section": section}})
+    return records
+
+
+def _company_sources(payload: dict[str, Any], reference: str) -> list[dict[str, Any]]:
+    records = []
+    for index, company in enumerate(payload.get("companies", [])[:MAX_IMPORTED_RECORDS] if isinstance(payload.get("companies"), list) else []):
+        if not isinstance(company, dict):
+            continue
+        name = str(company.get("company_name") or f"Company {index + 1}")
+        content = _safe_import_text(company)
+        if content:
+            citation = _citation_url(company.get("company_name_citation"))
+            records.append({"id": stable_id("json-company", f"{reference}\0{index}\0{name}"), "layer": "textual", "title": f"{name} structured engineering export", "url": citation or reference, "sourceType": "json-company-export", "content": content, "rights": "user-supplied", "allowedUse": "analysis-only; attribution required", "evidenceTier": "primary" if citation else "secondary", "metadata": {"provider": "json-import", "importFormat": "company-profile-export"}})
+    return records
+
+
+def _firecrawl_item(item: dict[str, Any], reference: str, index: int) -> dict[str, Any] | None:
+    data = item.get("data") if isinstance(item.get("data"), dict) else item
+    metadata = data.get("metadata") if isinstance(data.get("metadata"), dict) else {}
+    content = data.get("markdown") or data.get("text") or data.get("content") or data.get("html")
+    if not isinstance(content, str) or not content.strip():
+        return None
+    url = next((_citation_url(metadata.get(key)) for key in ("sourceURL", "sourceUrl", "url", "canonicalUrl") if _citation_url(metadata.get(key))), "")
+    title = str(metadata.get("title") or item.get("title") or url or f"Firecrawl import {index + 1}")
+    return {"id": stable_id("firecrawl", f"{reference}\0{index}\0{url}\0{title}"), "layer": "textual", "title": title, "url": url or reference, "sourceType": "firecrawl-json", "content": content[:MAX_SOURCE_BYTES], "rights": "user-supplied", "allowedUse": "analysis-only; attribution required", "evidenceTier": "primary" if url else "secondary", "metadata": {"provider": "firecrawl", "importFormat": "firecrawl-json", "contentType": "text/markdown" if data.get("markdown") else "text/plain"}}
+
+
+def json_input_sources(payload: Any, reference: str) -> list[dict[str, Any]]:
+    """Normalize profile exports, Firecrawl responses, and existing manifests."""
+    if isinstance(payload, dict) and any(key in payload for key in ("engineering_philosophies", "technical_tradeoffs", "development_methods")):
+        records = _structured_profile_sources(payload, reference)
+    elif isinstance(payload, dict) and isinstance(payload.get("companies"), list):
+        records = _company_sources(payload, reference)
+    else:
+        candidates = payload.get("data") if isinstance(payload, dict) and isinstance(payload.get("data"), list) else payload
+        candidates = [candidates] if isinstance(candidates, dict) else candidates
+        records = []
+        if isinstance(candidates, list):
+            for index, item in enumerate(candidates[:MAX_IMPORTED_RECORDS]):
+                if isinstance(item, dict):
+                    imported = _firecrawl_item(item, reference, index)
+                    if imported:
+                        records.append(imported)
+                    elif item.get("layer") in LAYERS and (item.get("content") or item.get("text")):
+                        records.append(item)
+        if not records:
+            raise ValueError("JSON input contains no supported analyzable records")
+    return records
 
 
 def scan_repository(path: Path) -> dict[str, Any]:
@@ -959,7 +1042,10 @@ def main(argv: list[str] | None = None) -> int:
         raw_sources: list[dict[str, Any]] = []
         for input_path in args.input:
             payload = json.loads(Path(input_path).read_text(encoding="utf-8"))
-            raw_sources.extend(payload.get("sources", payload) if isinstance(payload, dict) else payload)
+            if isinstance(payload, dict) and isinstance(payload.get("sources"), list):
+                raw_sources.extend(payload["sources"])
+            else:
+                raw_sources.extend(json_input_sources(payload, str(input_path)))
         raw_sources.extend({"url": url, "layer": "textual", "title": url} for url in args.url)
         for feed_url in args.rss:
             _, payload = fetch_public(feed_url)
