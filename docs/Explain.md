@@ -360,4 +360,4 @@ The LMP runtime makes that Mind available through guidance, validation, artifact
 
 ## Current verified boundary
 
-The local Rust evaluator, signed package checks, Docker qualification suite, MCP adapter tests, public vault validator, and self-hosting run are implemented and exercised in [`docs/evidence`](./evidence/). LMP does not guarantee private reasoning, universal language coverage, universal host enforcement, authorship, or production readiness. OCI/IPFS adapters are tested against controlled endpoints; public pinning and deployment are not claimed without immutable external evidence.
+The local Rust evaluator, signed package checks, Docker qualification suite, MCP adapter tests, public vault validator, and self-hosting run are implemented and exercised in [`docs/evidence`](./evidence/). LMP does not guarantee private reasoning, universal language coverage, universal host enforcement, authorship, or production readiness. OCI/IPFS adapters are tested against controlled endpoints; one current IPFS package is gateway-verified, while stale or missing package pins remain blocked by the release gate.

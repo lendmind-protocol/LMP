@@ -6,80 +6,78 @@
     {
       "id": "lmp:mind:tj-ponytail",
       "version": "1.0.0",
-      "manifestUrl": "https://gateway.pinata.cloud/ipfs/bafkreigogrpmlla65hqril5lqj7vla23qmhhkiunywyclmbxvu6j2qwhv4",
+      "manifestUrl": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/registry/definitions/tj-ponytail/mind.json",
       "sourceUrl": "https://github.com/lendmind-protocol/LMP/tree/main/registry/definitions/tj-ponytail",
       "digest": "c1de54e17ecdf59b53f39887c20042d1ed872114c8415f7392d83eb79ce06139",
       "signatureStatus": "verified",
       "signature": "0x05f1561a97f181e79cff2d2d9443876959ea1ce32c72a75fbb55142d5c03dd098a77e4e9474e918cfe7399b82cef0ce0add9b104428e7acd915118940fb76a0e",
       "publicKey": "0x808a2ce956026df895a262c9b5cef2056014e7f49791daaa0ddf911ef5415f97",
-      "ipfsCid": "bafkreigogrpmlla65hqril5lqj7vla23qmhhkiunywyclmbxvu6j2qwhv4",
       "packageFiles": [
         {
           "path": "evidence.json",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreiey53qo7slkszlbfy2lsq6hpzdkclvvhglfmqp7ppga3pkq7wdyd4",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/registry/definitions/tj-ponytail/evidence.json",
           "digest": "98eee0efc96a965612e34b943c77e46a12eb539965641ff7bcc0dbd50fd8781f"
         },
         {
           "path": "evidence/README.md",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreihsjyhr3dwxdgkabaqhjjud3zeif2trmifeb2clmx4ydk5dtofvh4",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/registry/definitions/tj-ponytail/evidence/README.md",
           "digest": "f24e0f1d8ed719940082074a683de4882ea71620a40e84b65f981aba39b8b53f"
         },
         {
           "path": "guidance.md",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreidnctagqno6sxne3u37qqskrwyf7fhnxszzequwgwmq4gatqnsfje",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/registry/definitions/tj-ponytail/guidance.md",
           "digest": "6d14c06835de95da4dd37f8424a8db05f94edbcb392429635990e18138364549"
         },
         {
           "path": "release.json",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreicek5r3v62cakxi2x64rmjxitgfoflk24aeu3yye3gnditjldlg7u",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/registry/definitions/tj-ponytail/release.json",
           "digest": "445763bafb4202ae8d5fdc8b13744cc57156ad7004a6f1826ccd1a26958d66fd"
         },
         {
           "path": "rules/commands.json",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreidyrxnfw5xyvr3vvfenldbqzqyrpv6cf3fuze5g5o3nbtiyejtviq",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/registry/definitions/tj-ponytail/rules/commands.json",
           "digest": "788dda5b76f8ac775a948d58c30cc3117d7c22ecb4c93a6ebb6d0cd182267544"
         },
         {
           "path": "rules/complexity.json",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreieh5yfbodszinj3srupru3cpaiowggprzv6yggqg7wkqugfk45zk4",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/registry/definitions/tj-ponytail/rules/complexity.json",
           "digest": "87ee0a170e594353b9468f8d3627810eb18cf8e6bec18d037eca850c5573b957"
         },
         {
           "path": "rules/dependencies.json",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreic7rh7u24vimllsrqjinkpkwyowsovpngt5svk2kvogetkxqulnmu",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/registry/definitions/tj-ponytail/rules/dependencies.json",
           "digest": "5f89ff4d72a862d728c1286a9eab61d693aaf69a7d9555a555c624d578516d65"
         },
         {
           "path": "rules/manifest.json",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreicrazlocn7hplgz4vbueez5gdnz5neqxq3caydoneuxz5eyugceca",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/registry/definitions/tj-ponytail/rules/manifest.json",
           "digest": "cb33a8d274d628c6d7087453392404d39139a63c0cb6cb49788bd03975b3e291"
         },
         {
           "path": "rules/typescript.json",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreihnfsw4jlsv4xtzm727o5glcyslivj2cddjijm24q3z7t2ehk772u",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/registry/definitions/tj-ponytail/rules/typescript.json",
           "digest": "ed2cadc4ae55e5e7967f5f774cb1624b4553a10c694259ae4379fcf443abffd5"
         },
         {
           "path": "signatures/manifest.sig",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreidnku5tby3flbpevynj2evdji3uet5sfsxmryynpjk7tkm573cmiq",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/registry/definitions/tj-ponytail/signatures/manifest.sig",
           "digest": "0b870cdaa1f057b0ed2a3f0ea0c0e3e752f176b3de6d2920d148f13e33d0867b"
         },
         {
           "path": "signatures/public-key.hex",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreidumizkh2umq7rnzjzlijl2gd42paurckelo4j2a3nkn7fc76dzxm",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/registry/definitions/tj-ponytail/signatures/public-key.hex",
           "digest": "9540ffa0fe99cae5f062bdc0e91f0b1bbca4addbe4a198da23b56ab3fdc1e63a"
         },
         {
           "path": "SKILL.md",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreidlsk7k2kj2h2jtqwiaxc2zfmlfsq5ywq6i3stoahhd7ntc6nqvo4",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/registry/definitions/tj-ponytail/SKILL.md",
           "digest": "6b92bead293a3e93385900b8b592b165943b8b43c8dca6e01ce3fb662f361577"
         }
       ],
       "distribution": {
-        "status": "VERIFIED_IPFS_PIN",
-        "ipfsCid": "bafkreigogrpmlla65hqril5lqj7vla23qmhhkiunywyclmbxvu6j2qwhv4",
-        "pinataGateway": "gateway.pinata.cloud",
-        "verifiedAt": "2026-09-12T11:23:16.543Z"
+        "status": "PENDING_IPFS_PIN",
+        "ipfsCid": null,
+        "mintingWorkflow": "Republish this exact signed package to a controlled immutable IPFS pin, record the resulting CID, then rerun the release gate."
       }
     },
     {
@@ -164,159 +162,155 @@
     {
       "id": "lmp:mind:supabase-core",
       "version": "1.0.0",
-      "manifestUrl": "https://gateway.pinata.cloud/ipfs/bafkreifhaox6j7ghlgod35ogmbldrnv63jnapemtoscwo6lfe7ntp6xfwa",
+      "manifestUrl": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/packages/create-lmp/profiles/supabase-core/mind.json",
       "sourceUrl": "https://github.com/lendmind-protocol/LMP/tree/main/packages/create-lmp/profiles/supabase-core",
       "digest": "8372c6f149a9c81071f86c4ff07b1f57589dc099f7cef613138cd1304ee37d13",
       "signatureStatus": "verified",
       "signature": "0x00892bb519673c05c247ba8893b90b37100cc2f809c8bc6128b4f8283613060d8ee40bd020440ed01abb8c93e1989db955a101e8f82dca172c2eb40534c03802",
       "publicKey": "0x2ca184576de16e0d4acdc367f062da18cfcd3d6cb35d5269dd19154048381c8a",
-      "ipfsCid": "bafkreifhaox6j7ghlgod35ogmbldrnv63jnapemtoscwo6lfe7ntp6xfwa",
       "packageFiles": [
         {
           "path": "evidence.json",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreie2zldxjhb25lm4rysoizsbalu6ta4dgmze5u54te3urolij74dve",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/packages/create-lmp/profiles/supabase-core/evidence.json",
           "digest": "9acac7749c3aead9c8e24e4664102e9e9838333324ed3bc993748b9684ff83a9"
         },
         {
           "path": "evidence/README.md",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreidr7g4nb7yvdb6ce7kthkttjex3xerq7ftg2xcarha5bxwmj2minm",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/packages/create-lmp/profiles/supabase-core/evidence/README.md",
           "digest": "71f9b8d0ff15187c227d533aa73492fbb9230f9666d5c4089c1d0decc4e9886b"
         },
         {
           "path": "guidance.md",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreifaac3eudyohntmtexfk63cfr2bv7sltwvz47wnoriuifi576yb5e",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/packages/create-lmp/profiles/supabase-core/guidance.md",
           "digest": "a000b64a0f0e3b66c992e557b622c741afe4b9dab9e7ecd745144151dffb01e9"
         },
         {
           "path": "release.json",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreid3ak2dybpoesyqza6nlgypsclncxxulcdjfmg6k5giiabhx2xezm",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/packages/create-lmp/profiles/supabase-core/release.json",
           "digest": "7b02b43c05ee24b10c83cd59b0f9096d15ef4588692b0de574c840027beae4cb"
         },
         {
           "path": "rules/commands.json",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreidyrxnfw5xyvr3vvfenldbqzqyrpv6cf3fuze5g5o3nbtiyejtviq",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/packages/create-lmp/profiles/supabase-core/rules/commands.json",
           "digest": "788dda5b76f8ac775a948d58c30cc3117d7c22ecb4c93a6ebb6d0cd182267544"
         },
         {
           "path": "rules/complexity.json",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreidxebwzp373rxpmtzrftpik5nl4mdsewjhyvc3o66of3si4des73m",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/packages/create-lmp/profiles/supabase-core/rules/complexity.json",
           "digest": "77206d97effb8ddec9e6259bd0aeb57c60e44b24f8a8b6ef79c5dc91c1925fdb"
         },
         {
           "path": "rules/dependencies.json",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreidbomri345zc3bn4arv2zxxkemz3w2kc7d44jbg4exegtekivkv3a",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/packages/create-lmp/profiles/supabase-core/rules/dependencies.json",
           "digest": "6173228df3b916c2de0235d66f751199ddb4a17c7ce2426e12e434c8a45555d8"
         },
         {
           "path": "rules/manifest.json",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreicrazlocn7hplgz4vbueez5gdnz5neqxq3caydoneuxz5eyugceca",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/packages/create-lmp/profiles/supabase-core/rules/manifest.json",
           "digest": "f90198625ab8e34a850197c7e35096ecd804d1639b15a9e66f6f6f06f3c76401"
         },
         {
           "path": "rules/typescript.json",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreifloagmjjydvacht5pi5ncn7uvdnpydvbftvnmudrtszkdcetrxr4",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/packages/create-lmp/profiles/supabase-core/rules/typescript.json",
           "digest": "ab700cc4a703a80479f5e8eb44dfd2a36bf03a84b3ab5941c672ca86224e378f"
         },
         {
           "path": "signatures/manifest.sig",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreid4dcfxco4akqrm7nx4ixkqbk2xdgfxummslirridxi7gnfky43iy",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/packages/create-lmp/profiles/supabase-core/signatures/manifest.sig",
           "digest": "43bb2a96f58d9a2f9e04a1d7dddcf58028e98d589d6327cd6101bb9f960079b6"
         },
         {
           "path": "signatures/public-key.hex",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreihh4udvaen5tsoo2tnneurcfnkt4rtvaubfnbianh4j2cld74qlmi",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/packages/create-lmp/profiles/supabase-core/signatures/public-key.hex",
           "digest": "8c22302e1a38bab3a6d797a183e12bdf7626861c5119174442de8febcda5140e"
         },
         {
           "path": "SKILL.md",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreibq72adool2dvlkgjrvzkq7wll2rxfpem6ifdmqswd6k6mxibi67q",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/packages/create-lmp/profiles/supabase-core/SKILL.md",
           "digest": "30fe8037397a1d56a32635caa1fb2d7a8dcaf233c828d909587e579974051efc"
         }
       ],
       "distribution": {
-        "status": "VERIFIED_IPFS_PIN",
-        "ipfsCid": "bafkreifhaox6j7ghlgod35ogmbldrnv63jnapemtoscwo6lfe7ntp6xfwa",
-        "pinataGateway": "gateway.pinata.cloud",
-        "verifiedAt": "2026-09-12T11:13:18.725Z"
+        "status": "PENDING_IPFS_PIN",
+        "ipfsCid": null,
+        "mintingWorkflow": "Republish this exact signed package to a controlled immutable IPFS pin, record the resulting CID, then rerun the release gate."
       }
     },
     {
       "id": "lmp:mind:linux-kernel",
       "version": "1.0.0",
-      "manifestUrl": "https://gateway.pinata.cloud/ipfs/bafkreigy5hkq6gbl45hbpfmkvi4dveagu3dvcbdwpspgpocdc3xgl3ou6m",
+      "manifestUrl": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/packages/create-lmp/profiles/linux-kernel/mind.json",
       "sourceUrl": "https://github.com/lendmind-protocol/LMP/tree/main/packages/create-lmp/profiles/linux-kernel",
       "digest": "9e7e825032712b1fdc53d7f7f9f7d845260a10dd7436cbc130f65da3df12556b",
       "signatureStatus": "verified",
       "signature": "0xc3094947c4b0b625f17a44c8cbfc1092d951b4973926f5acfc8fb20520655e7a95b8ba21bf568750041dee7243f8e30b8a33390df309e75aedea957e53a2770d",
       "publicKey": "0xdbda61f073efef882df6294f0f5f79e76d30fac3594ffd32d6f1668744c1a238",
-      "ipfsCid": "bafkreigy5hkq6gbl45hbpfmkvi4dveagu3dvcbdwpspgpocdc3xgl3ou6m",
       "packageFiles": [
         {
           "path": "evidence.json",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreiegqbquwarvivlvaiibjyk4gk4juwoy35zghm3qwwfpavcovez3me",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/packages/create-lmp/profiles/linux-kernel/evidence.json",
           "digest": "8680614b023545575021014e15c32b89a59d8df7263b370b58af0544ea933b61"
         },
         {
           "path": "evidence/README.md",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreidxgrgxis3mfnofw6pbpzmpb4qrkl7m45kphdzs4yozxapgy47iom",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/packages/create-lmp/profiles/linux-kernel/evidence/README.md",
           "digest": "77344d744b6c2b5c5b79e17e58f0f21152fece754f38f32e61d9b81e6c73e873"
         },
         {
           "path": "guidance.md",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreiaxjkxpmlyxm7tfmzptq3qb53cqroam5nn67z7ueaah7zwne62wzi",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/packages/create-lmp/profiles/linux-kernel/guidance.md",
           "digest": "174aaef62f1767e65665f386e01eec508b80ceb5befe7f420007fe6cd27b56ca"
         },
         {
           "path": "release.json",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreieind67m33npfy464u6nvlxhtykq2zkrcqxppzhm2pdggsy4663oe",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/packages/create-lmp/profiles/linux-kernel/release.json",
           "digest": "8868fdf66f6d7971cf729e6d5773cf0a86b2a88a177bf27669e331a58e7bdb71"
         },
         {
           "path": "rules/commands.json",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreiceb7sadzfk5krjcvbmkyzll7m7to54dk4qhmwyfuqilj5exklreq",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/packages/create-lmp/profiles/linux-kernel/rules/commands.json",
           "digest": "440fe401e4aaeaa291542c5632b5fd9f9bbbc1ab903b2d82d2085a7a4ba97124"
         },
         {
           "path": "rules/complexity.json",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreiaf43ci7ycmhd6v5wlcycqdadojjakbydxf3ws4ztywfkkuzxfjgy",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/packages/create-lmp/profiles/linux-kernel/rules/complexity.json",
           "digest": "05e6c48fe04c38fd5ed962c0a0300dc948141c0ee5dda5cccf162a954cdca936"
         },
         {
           "path": "rules/dependencies.json",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreigehdmzvie5bpdu6zkfyetx3ik552ysw53dno5r4kloeprrxr2zja",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/packages/create-lmp/profiles/linux-kernel/rules/dependencies.json",
           "digest": "c438d99aa09d0bc74f6545c1277da15deeb12b77636bbb1e296e23e31bc75948"
         },
         {
           "path": "rules/manifest.json",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreicrazlocn7hplgz4vbueez5gdnz5neqxq3caydoneuxz5eyugceca",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/packages/create-lmp/profiles/linux-kernel/rules/manifest.json",
           "digest": "379b867cea07249d1c85264262e64e166b4428d9ae8522ff26436952fa13f8bf"
         },
         {
           "path": "rules/typescript.json",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreigcle7oyib77tvkuwf6jbabenektqyprmco7oe2cikjrekz46i4aq",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/packages/create-lmp/profiles/linux-kernel/rules/typescript.json",
           "digest": "c2593eec203ffceaaa58be484012348a9c30f8b04efb89a1214989159e791c04"
         },
         {
           "path": "signatures/manifest.sig",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreihfmlqfydgcxkmmv6ekyr6jwkof6ni3fx3ty2bybqpb66a24swh2a",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/packages/create-lmp/profiles/linux-kernel/signatures/manifest.sig",
           "digest": "711fe38df24d78c72ea6b70630b37b5fff7544373911c455e6339f087ec87b71"
         },
         {
           "path": "signatures/public-key.hex",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreiciezhkuzftnsl2wpjfgv4sczlvp2byjnnvsiikigb3gxgxehgxji",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/packages/create-lmp/profiles/linux-kernel/signatures/public-key.hex",
           "digest": "3e1566be48f323b4bcaa9792c1979373dfbb0a1b15a3faa7c43da421a77a02a2"
         },
         {
           "path": "SKILL.md",
-          "url": "https://gateway.pinata.cloud/ipfs/bafkreigkf3gcp3vm3c6ig6w7oyl2cv5jghtbgixlucskc45y43bpomwzmu",
+          "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/packages/create-lmp/profiles/linux-kernel/SKILL.md",
           "digest": "ca2ecc27eeacd8bc837adf7617a157a931e61322eba0a4a173b8e6c2f732d965"
         }
       ],
       "distribution": {
-        "status": "VERIFIED_IPFS_PIN",
-        "ipfsCid": "bafkreigy5hkq6gbl45hbpfmkvi4dveagu3dvcbdwpspgpocdc3xgl3ou6m",
-        "pinataGateway": "gateway.pinata.cloud",
-        "verifiedAt": "2026-09-12T11:20:06.242Z"
+        "status": "PENDING_IPFS_PIN",
+        "ipfsCid": null,
+        "mintingWorkflow": "Republish this exact signed package to a controlled immutable IPFS pin, record the resulting CID, then rerun the release gate."
       }
     }
   ]

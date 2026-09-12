@@ -119,7 +119,11 @@ def validate_registry(
         if verify_manifests:
             if isinstance(manifest_url, str) and manifest_url.startswith("https://"):
                 try:
-                    payload = urllib.request.urlopen(manifest_url, timeout=15).read()
+                    request = urllib.request.Request(
+                        manifest_url,
+                        headers={"User-Agent": "lmp-release-gate/0.1"},
+                    )
+                    payload = urllib.request.urlopen(request, timeout=15).read()
                     actual = hashlib.sha256(payload).hexdigest()
                     if actual != digest:
                         errors.append(f"{identifier}: manifest digest mismatch")

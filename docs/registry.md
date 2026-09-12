@@ -5,7 +5,7 @@ LMP has two related registry surfaces:
 - `registry/` is the repository’s signed package source.
 - `public-web-vault/registry.json` is the public discovery catalog generated from those packages plus clearly labeled draft archetypes.
 
-The catalog is not allowed to manufacture deployment evidence. A production package must have a real package directory, a recomputable digest, a valid public key, and a detached signature over the canonical manifest. External distribution fields remain null until the package is actually pinned to IPFS and published through an OCI registry.
+The catalog is not allowed to manufacture deployment evidence. A production package must have a real package directory, a recomputable digest, a valid public key, and a detached signature over the canonical manifest. Distribution fields are populated only for exact immutable artifacts whose retrieved bytes match the current package; otherwise the package remains `PENDING_IPFS_PIN`.
 
 ## Validate and resolve
 
@@ -20,4 +20,4 @@ cargo run --locked --bin lmp -- mind resolve --mind rust-defensive-systems --reg
 
 ## Distribution status
 
-The existing OCI and IPFS adapters verify content and signatures when pointed at a real endpoint or gateway. They do not claim a public publication exists. The release gate remains blocked until an operator supplies real external artifacts, immutable references, and the corresponding release evidence.
+The existing OCI and IPFS adapters verify content and signatures when pointed at a real endpoint or gateway. One current package has a verified IPFS pin; three older pins were detected as stale and are no longer advertised. The release gate remains blocked until an operator supplies current immutable artifacts for every production package and the corresponding release evidence.
