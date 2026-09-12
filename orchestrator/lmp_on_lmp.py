@@ -258,7 +258,7 @@ def main() -> int:
         ("create-lmp-tests", ["node", "--test", "packages/create-lmp/bin.test.ts"]),
         ("docker-qualification", [sys.executable, "orchestrator/qualification_suite.py", "--output", "lmp-test-results/lmp-on-lmp-docker.json"]),
         ("required-status", [binary, "status", "--workspace", "."]),
-        ("required-self-hosting-evaluation", [binary, "evaluate", "--workspace", ".", "--mind", "lmp:mind:lmp-protocol-core", "--mode", "enforced", "--artifact-out", ".lmp/artifacts/self-hosting.json", "--json"]),
+        ("required-self-hosting-evaluation", [binary, "evaluate", "--workspace", ".", "--mind", "lmp:mind:lmp-protocol-core", "--scope", "crates,packages,registry,protocol", "--mode", "enforced", "--artifact-out", ".lmp/artifacts/self-hosting.json", "--json"]),
         ("required-rust-systems-evaluation", [binary, "evaluate", "--workspace", ".", "--mind", "lmp:mind:rust-defensive-systems", "--scope", "crates", "--mode", "enforced", "--artifact-out", ".lmp/artifacts/rust-systems.json", "--json"]),
         ("required-kernel-evaluation", [binary, "evaluate", "--workspace", ".", "--mind", "lmp:mind:kernel-inspired-systems", "--scope", "crates/lmp-core,crates/lmp-evaluator,crates/lmpd,crates/lmp-sync", "--mode", "advisory", "--artifact-out", ".lmp/artifacts/kernel-inspired.json", "--json"]),
         # The Python Mind is enforced by its Python orchestration and Docker
