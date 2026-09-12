@@ -15,10 +15,12 @@ use std::time::Duration;
 static SHUTDOWN_REQUESTED: AtomicBool = AtomicBool::new(false);
 static RELOAD_REQUESTED: AtomicBool = AtomicBool::new(false);
 
+#[cfg(unix)]
 extern "C" fn handle_signal(_: libc::c_int) {
     SHUTDOWN_REQUESTED.store(true, Ordering::SeqCst);
 }
 
+#[cfg(unix)]
 extern "C" fn handle_reload(_: libc::c_int) {
     RELOAD_REQUESTED.store(true, Ordering::SeqCst);
 }
@@ -55,10 +57,16 @@ struct Args {
     reload: bool,
 }
 
-fn read_pid(path: &Path) -> Result<libc::pid_t> {
+#[cfg(unix)]
+type ProcessId = libc::pid_t;
+
+#[cfg(windows)]
+type ProcessId = u32;
+
+fn read_pid(path: &Path) -> Result<ProcessId> {
     let value = fs::read_to_string(path)
         .with_context(|| format!("failed to read PID file {}", path.display()))?;
-    let pid: libc::pid_t = value
+    let pid: ProcessId = value
         .trim()
         .parse()
         .with_context(|| format!("PID file {} does not contain a valid PID", path.display()))?;
@@ -70,9 +78,32 @@ fn read_pid(path: &Path) -> Result<libc::pid_t> {
     Ok(pid)
 }
 
-fn process_is_alive(pid: libc::pid_t) -> bool {
+#[cfg(unix)]
+fn process_is_alive(pid: ProcessId) -> bool {
     let result = unsafe { libc::kill(pid, 0) };
     result == 0 || std::io::Error::last_os_error().raw_os_error() == Some(libc::EPERM)
+}
+
+#[cfg(windows)]
+fn process_is_alive(pid: ProcessId) -> bool {
+    std::process::Command::new("tasklist")
+        .args(["/FI", &format!("PID eq {pid}"), "/NH"])
+        .output()
+        .map(|output| {
+            output.status.success()
+                && String::from_utf8_lossy(&output.stdout).contains(&pid.to_string())
+        })
+        .unwrap_or(false)
+}
+
+#[cfg(windows)]
+fn stop_process(pid: ProcessId) -> Result<()> {
+    let status = std::process::Command::new("taskkill")
+        .args(["/PID", &pid.to_string(), "/T", "/F"])
+        .status()
+        .context("failed to invoke taskkill")?;
+    anyhow::ensure!(status.success(), "taskkill failed for process {pid}");
+    Ok(())
 }
 
 fn lifecycle_command(args: &Args) -> Result<()> {
@@ -110,16 +141,24 @@ fn lifecycle_command(args: &Args) -> Result<()> {
             pid
         );
     }
-    let signal = if args.stop {
-        libc::SIGTERM
-    } else {
-        libc::SIGHUP
-    };
-    anyhow::ensure!(
-        unsafe { libc::kill(pid, signal) } == 0,
-        "failed to signal process {pid}: {}",
-        std::io::Error::last_os_error()
-    );
+    #[cfg(unix)]
+    {
+        let signal = if args.stop {
+            libc::SIGTERM
+        } else {
+            libc::SIGHUP
+        };
+        anyhow::ensure!(
+            unsafe { libc::kill(pid, signal) } == 0,
+            "failed to signal process {pid}: {}",
+            std::io::Error::last_os_error()
+        );
+    }
+    #[cfg(windows)]
+    {
+        anyhow::ensure!(!args.reload, "--reload is not supported on Windows");
+        stop_process(pid)?;
+    }
     println!(
         "{}",
         json!({"status": "signal-sent", "signal": if args.stop { "SIGTERM" } else { "SIGHUP" }, "pid": pid, "pidFile": pid_file})
@@ -235,6 +274,7 @@ fn handle_event(event: Event, mind_dir: &Path, workspace: &Path, mode: &str) -> 
 fn release_startup_memory() {
     // The initial evaluation allocates transient parser and report buffers.
     // Return free glibc heap pages before measuring or entering the idle loop.
+    #[cfg(unix)]
     unsafe {
         libc::malloc_trim(0);
     }
@@ -274,6 +314,7 @@ fn main() -> Result<()> {
 
     release_startup_memory();
 
+    #[cfg(unix)]
     unsafe {
         anyhow::ensure!(
             libc::signal(
