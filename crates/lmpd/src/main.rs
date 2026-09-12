@@ -286,6 +286,15 @@ fn handle_watcher_error(error: notify::Error, mode: &str) -> Result<()> {
     Ok(())
 }
 
+fn handle_watcher_disconnect(mode: &str) -> Result<()> {
+    let error = anyhow::anyhow!("filesystem watcher event channel disconnected");
+    eprintln!("❌ {error:#}");
+    if mode == "enforced" {
+        return Err(error);
+    }
+    Ok(())
+}
+
 #[cfg(target_os = "linux")]
 fn release_startup_memory() {
     // The initial evaluation allocates transient parser and report buffers.
@@ -393,7 +402,7 @@ fn main() -> Result<()> {
                 Err(error) => handle_watcher_error(error, &args.mode)?,
             },
             Err(RecvTimeoutError::Timeout) => {}
-            Err(RecvTimeoutError::Disconnected) => break,
+            Err(RecvTimeoutError::Disconnected) => handle_watcher_disconnect(&args.mode)?,
         }
     }
     println!("🛑 lmpd stopped cleanly");
@@ -441,5 +450,15 @@ mod tests {
     fn advisory_watcher_errors_do_not_stop_the_daemon() {
         let error = notify::Error::generic("watch backend failed");
         assert!(handle_watcher_error(error, "advisory").is_ok());
+    }
+
+    #[test]
+    fn enforced_watcher_disconnect_stops_the_daemon() {
+        assert!(handle_watcher_disconnect("enforced").is_err());
+    }
+
+    #[test]
+    fn advisory_watcher_disconnect_does_not_stop_the_daemon() {
+        assert!(handle_watcher_disconnect("advisory").is_ok());
     }
 }
