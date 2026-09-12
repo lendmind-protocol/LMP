@@ -96,7 +96,7 @@ Use native disclosure semantics or an equivalent accessible button pattern. Ques
 | Logo | `/public/assets/logo.png` | Abstract, text-free mark; transparent background; recognizable at 24–32px |
 | README banner | `/public/assets/banner.png` | 2172×724 source; wide 3:1 composition; displayed at 800px max width |
 
-Prompts for recreating either asset live beside this file in [`LOGO_PROMPT.md`](./LOGO_PROMPT.md) and [`BANNER_PROMPT.md`](./BANNER_PROMPT.md).
+Asset-generation prompts are supplied as standalone text when requested; they are not repository assets or runtime documentation.
 
 ## Delivery checklist
 
