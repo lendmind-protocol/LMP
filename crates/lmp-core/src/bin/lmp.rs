@@ -415,14 +415,20 @@ fn configured_mode() -> String {
     let config = Path::new(".lending-mind/config.json");
     fs::read_to_string(config)
         .ok()
-        .and_then(|text| serde_json::from_str::<serde_json::Value>(&text).ok())
+        .and_then(|text| configured_mode_from_text(&text))
+        .unwrap_or_else(|| "advisory".into())
+}
+
+fn configured_mode_from_text(text: &str) -> Option<String> {
+    serde_json::from_str::<serde_json::Value>(text)
+        .ok()
         .and_then(|value| {
             value
                 .get("defaultMode")
                 .and_then(serde_json::Value::as_str)
+                .filter(|mode| ["advisory", "enforced", "audit"].contains(mode))
                 .map(str::to_owned)
         })
-        .unwrap_or_else(|| "enforced".into())
 }
 
 fn resolve_mind_path(input: PathBuf) -> PathBuf {
@@ -650,7 +656,7 @@ fn main() -> Result<()> {
             fs::write(
                 &config,
                 format!(
-                    "{{\n  \"version\": 1,\n  \"defaultMind\": \"{default_mind}\",\n  \"defaultMode\": \"enforced\",\n  \"network\": \"offline\",\n  \"commands\": \"disabled\"\n}}\n"
+                    "{{\n  \"version\": 1,\n  \"defaultMind\": \"{default_mind}\",\n  \"defaultMode\": \"advisory\",\n  \"network\": \"offline\",\n  \"commands\": \"disabled\"\n}}\n"
                 ),
             )?;
             if install_baseline {
@@ -1171,4 +1177,22 @@ fn main() -> Result<()> {
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::configured_mode_from_text;
+
+    #[test]
+    fn configured_mode_accepts_only_known_modes() {
+        assert_eq!(
+            configured_mode_from_text(r#"{"defaultMode":"enforced"}"#).as_deref(),
+            Some("enforced")
+        );
+        assert_eq!(
+            configured_mode_from_text(r#"{"defaultMode":"unsafe"}"#),
+            None
+        );
+        assert_eq!(configured_mode_from_text("not json"), None);
+    }
 }

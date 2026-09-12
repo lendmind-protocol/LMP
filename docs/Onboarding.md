@@ -8,7 +8,7 @@
 npx lmp --uninstall .
 ```
 
-The initializer preserves unrelated project guidance and existing MCP servers. Project-scoped integrations are written only for the selected host and report `runtime-unavailable` when verified Rust binaries are not present. In a Git workspace, onboarding installs the fail-closed `.git/hooks/pre-commit` boundary and records it in `.lmp_telemetry/enforcement.json`; `--install-hooks` remains available for an explicit request and non-Git workspaces report an install error rather than pretending enforcement exists. The Rust initializer records `defaultMode: "enforced"`; the Node initializer uses enforced mode when it can install the Git boundary and remains advisory only for a non-Git workspace.
+The initializer preserves unrelated project guidance and existing MCP servers. Project-scoped integrations are written only for the selected host and report `runtime-unavailable` when verified Rust binaries are not present. In a Git workspace, onboarding installs the fail-closed `.git/hooks/pre-commit` boundary and records it in `.lmp_telemetry/enforcement.json`; `--install-hooks` remains available for an explicit request and non-Git workspaces report an install error rather than pretending enforcement exists. Both initializers default to advisory evaluation unless an enforced Git boundary is explicitly installed; the Rust runtime also honors an explicit `defaultMode` from workspace configuration.
 
 When `lmp use` changes the active Mind in an enforced workspace, the generated
 pre-commit hook is updated to evaluate the newly selected profile. An existing
