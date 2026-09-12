@@ -227,10 +227,16 @@ fn dependency_findings(
 fn policy_values(
     package_dir: &Path,
     package: &crate::MindPackage,
-) -> (Vec<String>, usize, std::collections::HashMap<String, bool>) {
+) -> (
+    Vec<String>,
+    usize,
+    std::collections::HashMap<String, bool>,
+    Vec<String>,
+) {
     let mut prohibited = Vec::new();
     let mut complexity = 10;
     let mut flags = std::collections::HashMap::new();
+    let mut unsafe_exceptions = Vec::new();
     for path in package.enforcement.values() {
         let Ok(text) = fs::read_to_string(package_dir.join(path)) else {
             continue;
@@ -260,6 +266,14 @@ fn policy_values(
         {
             prohibited.extend(items.iter().filter_map(Value::as_str).map(String::from));
         }
+        if let Some(items) = value.get("unsafeExceptions").and_then(Value::as_array) {
+            unsafe_exceptions.extend(items.iter().filter_map(|item| {
+                item.as_object()
+                    .and_then(|object| object.get("path"))
+                    .and_then(Value::as_str)
+                    .map(String::from)
+            }));
+        }
         if let Some(limit) = value
             .get("max")
             .or_else(|| value.get("maxCyclomatic"))
@@ -269,7 +283,7 @@ fn policy_values(
             complexity = limit as usize;
         }
     }
-    (prohibited, complexity, flags)
+    (prohibited, complexity, flags, unsafe_exceptions)
 }
 
 fn source_findings(
@@ -389,6 +403,16 @@ fn source_findings(
     findings
 }
 
+fn unsafe_exception_matches(exception: &str, relative_file: &str, workspace: &Path) -> bool {
+    if exception == relative_file {
+        return true;
+    }
+    workspace
+        .file_name()
+        .and_then(|name| name.to_str())
+        .is_some_and(|name| exception == format!("{name}/{relative_file}"))
+}
+
 fn rfc3339_now() -> String {
     let seconds = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -493,7 +517,8 @@ fn evaluate_with_options_impl(
     let package_id = bundle.mind.id.clone();
     let package_version = bundle.mind.version.clone();
     let bundle_digest = bundle.digest.clone();
-    let (prohibited, max_complexity, flags) = policy_values(package_dir, &bundle.mind);
+    let (prohibited, max_complexity, flags, unsafe_exceptions) =
+        policy_values(package_dir, &bundle.mind);
     let mut all_files = Vec::new();
     walk(workspace, &mut all_files).context("failed to scan workspace")?;
     let scope = crate::scope::select(workspace, options.changed_only, options.git_base, all_files);
@@ -546,11 +571,35 @@ fn evaluate_with_options_impl(
             let source_digest =
                 crate::crypto::MindPackageVerifier::compute_sha256(source.as_bytes());
             let cache_path =
-                cache_dir.join(format!("ast-v2-{}-{}.json", source_digest, max_complexity));
+                cache_dir.join(format!("ast-v3-{}-{}.json", source_digest, max_complexity));
+            let relative_file = file
+                .strip_prefix(workspace)
+                .unwrap_or(file)
+                .to_string_lossy()
+                .replace('\\', "/");
             let cached: Option<Vec<String>> = fs::read(&cache_path)
                 .ok()
                 .and_then(|bytes| serde_json::from_slice(&bytes).ok());
             if let Some(messages) = cached {
+                if flags.get("unsafeAllow").copied() == Some(false)
+                    && crate::ast::contains_unsafe_block(&source)?
+                    && !unsafe_exceptions
+                        .iter()
+                        .any(|path| unsafe_exception_matches(path, &relative_file, workspace))
+                {
+                    findings.push(Finding {
+                        rule_id: "ast.unsafe-boundary".into(),
+                        passed: false,
+                        severity: "error".into(),
+                        message: "unsafe Rust block detected where the active Mind requires an explicit exception.".into(),
+                        evidence: json!({
+                            "file": relative_file,
+                            "allow": false,
+                            "status": "violation",
+                            "cache": "hit"
+                        }),
+                    });
+                }
                 findings.extend(messages.into_iter().map(|message| Finding {
                     rule_id: "rust.ast".into(),
                     passed: false,
@@ -566,6 +615,9 @@ fn evaluate_with_options_impl(
             }
             if flags.get("unsafeAllow").copied() == Some(false)
                 && crate::ast::contains_unsafe_block(&source)?
+                && !unsafe_exceptions
+                    .iter()
+                    .any(|path| unsafe_exception_matches(path, &relative_file, workspace))
             {
                 findings.push(Finding {
                     rule_id: "ast.unsafe-boundary".into(),
@@ -573,7 +625,7 @@ fn evaluate_with_options_impl(
                     severity: "error".into(),
                     message: "unsafe Rust block detected where the active Mind requires an explicit exception.".into(),
                     evidence: json!({
-                        "file": file.strip_prefix(workspace).unwrap_or(file).display().to_string(),
+                        "file": relative_file,
                         "allow": false,
                         "status": "violation"
                     }),

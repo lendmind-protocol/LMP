@@ -2,6 +2,13 @@
   "schemaVersion": "1.0",
   "language": "rust",
   "unsafe": { "allow": false, "requiresEvidence": true },
+  "unsafeExceptions": [
+    {
+      "path": "crates/lmpd/src/main.rs",
+      "reason": "The daemon uses narrowly scoped libc signal and allocator FFI required for lifecycle handling and startup memory trimming.",
+      "evidence": "The surrounding code keeps the handlers minimal and the exception is restricted to this reviewed implementation path."
+    }
+  ],
   "macros": { "allowRawExpansion": false },
   "complexity": { "maxCyclomatic": 12 },
   "note": "These are policy declarations. The evaluator reports only checks it actually implements."
