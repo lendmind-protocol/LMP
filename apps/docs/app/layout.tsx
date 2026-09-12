@@ -9,7 +9,7 @@ import { sitePath } from "@/lib/site";
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://lmp-six.vercel.app"),
+  metadataBase: new URL("https://lendmind-protocol.github.io/LMP/"),
   title: {
     default: "Lending-Mind Protocol",
     template: "%s · Lending-Mind Protocol",
