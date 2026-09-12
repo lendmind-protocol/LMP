@@ -397,6 +397,7 @@ fn handle(request: Request, state: &mut ServerState) -> Option<Response> {
             state.initialized = true;
             None
         }
+        "ping" => request.id.map(|_| ok(id, json!({}))),
         "tools/list" => {
             if !state.initialized {
                 return request
@@ -956,6 +957,17 @@ mod tests {
             "2025-11-25"
         );
         assert!(state.initialized);
+    }
+
+    #[test]
+    fn ping_returns_an_empty_result_before_initialization() {
+        let response = process_line(
+            r#"{"jsonrpc":"2.0","id":"ping","method":"ping"}"#,
+            &mut ServerState { initialized: false },
+        )
+        .expect("ping response");
+        assert_eq!(response.result.expect("result"), json!({}));
+        assert!(response.error.is_none());
     }
 
     #[test]

@@ -25,6 +25,8 @@ jobs:
         run: corepack enable && pnpm install --frozen-lockfile
       - name: Build the Rust MCP binary before adapter tests
         run: cargo build --workspace
+      - name: Run official MCP conformance smoke scenarios
+        run: pnpm verify:mcp-conformance
       - run: pnpm lint
       - run: pnpm test
       - run: pnpm typecheck
