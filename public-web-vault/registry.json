@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1",
-  "generatedAt": "2026-09-12T18:00:28.529Z",
+  "generatedAt": "2026-09-12T20:37:24.587Z",
   "production": [
     {
       "mindKey": "documentation-truthfulness",
@@ -28,7 +28,7 @@
       "category": "Systems & Languages",
       "verified_status": "COMMUNITY_CONTRIBUTED",
       "packagePath": "registry/minds/kernel-inspired-systems",
-      "sha256": "sha256:e948d1cca286770f44661ca82a9878084432af0ffb3dcbebf7baa4c70912999c",
+      "sha256": "sha256:c630130dc8b57dd2e93b447d5643e08d156e776468e2208d2cad5fdeb1c87e16",
       "trustAnchor": "0xddecaabb06bfee900fe93560064e9d780b80593d70438b1968e35c396b4ffdb4",
       "source": "https://raw.githubusercontent.com/lendmind-protocol/LMP/146a2df4c6b222634acbac4419fabce81249431e/README.md",
       "distribution": {
@@ -46,7 +46,7 @@
       "category": "Systems & Languages",
       "verified_status": "COMMUNITY_CONTRIBUTED",
       "packagePath": "registry/minds/linux-kernel",
-      "sha256": "sha256:674ab252a366c3ea288f8da229e9e6857b2c7a32c98c677110b686b94095f120",
+      "sha256": "sha256:df7303f00053958d74a51cfcc320ff408f9e343d2c0b8ab9ef5ae889908a5f7a",
       "trustAnchor": "0xc0438581f53986609b26d65e17c60e260e2905b3385b0745af3efd93d6f69c63",
       "source": "https://www.kernel.org/doc/html/latest/process/coding-style.html",
       "distribution": {
@@ -64,7 +64,7 @@
       "category": "Systems & Languages",
       "verified_status": "COMMUNITY_CONTRIBUTED",
       "packagePath": "registry/minds/lmp-protocol-core",
-      "sha256": "sha256:5d15239cdd3ecd1b5c784a41be18424a4a9842393a0745c3021820ebb6c6542c",
+      "sha256": "sha256:81c7ed0a275240d5edef79e8b87d9e6624bf12d91aac376147f78261a9785314",
       "trustAnchor": "0xca250e239f28c449fe8e32991daa1ccda0c4a418843442004fe02dcd75070081",
       "source": "https://www.kernel.org/doc/html/latest/process/coding-style.html",
       "distribution": {
@@ -82,7 +82,7 @@
       "category": "Systems & Languages",
       "verified_status": "COMMUNITY_CONTRIBUTED",
       "packagePath": "registry/minds/monorepo-and-release-discipline",
-      "sha256": "sha256:4903164ba7979b6d7667a99b0140c72f66081c84c61e94e4e53917dc2d8d6b2f",
+      "sha256": "sha256:136cab40d8334b687341ad33be521b278740fab6e6c47a8cd70405ac19cd47b2",
       "trustAnchor": "0x0e2161b82cfb389e36f029cc171a541156f5d2f8eaa2cd8d1aa2cd8591f973b3",
       "source": "https://raw.githubusercontent.com/lendmind-protocol/LMP/146a2df4c6b222634acbac4419fabce81249431e/README.md",
       "distribution": {
@@ -100,7 +100,7 @@
       "category": "Systems & Languages",
       "verified_status": "COMMUNITY_CONTRIBUTED",
       "packagePath": "registry/minds/node-onboarding-safety",
-      "sha256": "sha256:0903828557143e8bddae36a5ea46b4d5676768e702b3c3f1e0d2a7a0ce646790",
+      "sha256": "sha256:f8470e6e9057e429e8bf52e5292e4005a72666bed69c143c2f711a4cfd6e40ec",
       "trustAnchor": "0xed0f4dbfc8786d6d366b044a691b1c3b2750091eb4acf249e32e589cf510aea1",
       "source": "https://raw.githubusercontent.com/lendmind-protocol/LMP/146a2df4c6b222634acbac4419fabce81249431e/README.md",
       "distribution": {
@@ -118,7 +118,7 @@
       "category": "Systems & Languages",
       "verified_status": "COMMUNITY_CONTRIBUTED",
       "packagePath": "registry/minds/python-orchestration-safety",
-      "sha256": "sha256:59c84ec6a42b4bfda9973852c9a65cdac8c59671a4528225e8534099bad154ea",
+      "sha256": "sha256:a937334ba02139b3bfc7ee7719dbd6582404f723c7e61ffdfd2f5f41b32faffb",
       "trustAnchor": "0x7983b5d32f8c76761b01c70a969a69701e68d75eed84fd11b226fd0cfa4e91b3",
       "source": "https://raw.githubusercontent.com/lendmind-protocol/LMP/146a2df4c6b222634acbac4419fabce81249431e/README.md",
       "distribution": {
@@ -136,7 +136,7 @@
       "category": "Systems & Languages",
       "verified_status": "COMMUNITY_CONTRIBUTED",
       "packagePath": "registry/minds/rust-defensive-systems",
-      "sha256": "sha256:a0b3d305a1685773cd6592eeb756bf49f821125a9d50a2b60d3e72a97084ef73",
+      "sha256": "sha256:830ec3f3983347d1b1268102365c4bff689cd2822e0826f6c28f1ac01d900a06",
       "trustAnchor": "0xc90ed6e56eb804e236f08d4fd59f0c1294748c03d2a1fdc9d427ed42408ab154",
       "source": "https://raw.githubusercontent.com/lendmind-protocol/LMP/146a2df4c6b222634acbac4419fabce81249431e/README.md",
       "distribution": {
@@ -154,7 +154,7 @@
       "category": "Systems & Languages",
       "verified_status": "COMMUNITY_CONTRIBUTED",
       "packagePath": "registry/minds/security-and-trust-boundaries",
-      "sha256": "sha256:f4adff4698cd955a3d02e9016e18bf85b5f9e1d95d15be4ad8f2f7f89a580fc7",
+      "sha256": "sha256:cd97085cf641a77f67d2d6e8344813cce18d72de1b45189c751f126e6fe4324e",
       "trustAnchor": "0xe0e070e8048174a9530adfff0b6b138999220768140c2ca982df9e7db8454b50",
       "source": "https://raw.githubusercontent.com/lendmind-protocol/LMP/146a2df4c6b222634acbac4419fabce81249431e/README.md",
       "distribution": {
@@ -190,7 +190,7 @@
       "category": "Agentic Frameworks & Context Engineering",
       "verified_status": "COMMUNITY_CONTRIBUTED",
       "packagePath": "registry/minds/tj-ponytail",
-      "sha256": "sha256:4e7fa367a3c493f80d8a69eab6dee0c5ab622d52c0803e6bdc1fb505b4857086",
+      "sha256": "sha256:dac2061794cb3a1d33a169d9a021a17e84759b03693695c56fdfaf0d7746fcac",
       "trustAnchor": "0x4f2ca685096d9b48b0bca1fbad75f5ebb3b48e65129c13f838f09cd28ffc0986",
       "source": "https://nodejs.org/en/learn/getting-started/security-best-practices",
       "distribution": {
