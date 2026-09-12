@@ -1148,7 +1148,9 @@ polka()
 
 ------------------------------
 ## 🛡️ 2. How We Guarantee and Determine Code Quality
-To mathematically guarantee the generated code is excellent, LMP replaces subjective evaluation with a precise, closed-loop scoring engine:
+The historical proposal described a score-based loop as a way to organize
+evaluation. It cannot mathematically guarantee that generated code is
+excellent; current LMP reports bounded findings and evidence instead:
 
 [Agent Output Code] ──► [1. Static AST Check] ──► [2. Dynamic Sandbox Profile] ──► [3. Code Health Matrix]
 
@@ -1948,7 +1950,13 @@ The protocol operates via three main components:
 2. A tool-mutation layer that forces developer agents to use their system privileges to align configuration files (such as cargo.toml or package.json), automatically stripping out bloated, unauthorized dependencies.
 3. An isolated Docker telemetry sandbox that physically runs the code to measure microsecond latency metrics and edge cold-start processing footprints before allowing the build to pass.
 
-To verify the system, I executed a benchmark matrix running standard AI models versus models restricted by the LMP "TJ-Ponytail Minimalist" schema across 50 project environments. The resulting telemetry showed a 90% reduction in structural anti-patterns, a 70% decrease in serverless runtimes, and a guarantee against application-layer multi-tenant data leaks by forcing security rules directly down to the database engine.
+> Historical proposal claim — not verified evidence. The percentages, project
+> count, model comparison, runtime reduction, and multi-tenant guarantee in the
+> original launch draft have no retained controlled experiment or independent
+> review supporting them. The current technical benchmark is documented in
+> [`docs/real-world-benchmark.md`](./real-world-benchmark.md) and remains
+> bounded: it does not prove causal quality improvement or eliminate security
+> risk.
 
 LMP is completely free, zero-dependency, open-source, and natively compliant with the Model Context Protocol (MCP). It hooks into Cursor, Claude Desktop, and modern multi-agent systems via standard stdio JSON-RPC transport layers.
 
