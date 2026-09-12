@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { execFileSync } from "node:child_process";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { execFileSync, spawnSync } from "node:child_process";
+import { copyFile, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -17,6 +17,8 @@ const packages = [
 const forbiddenPath = /(?:\.test\.|\.tsbuildinfo$|(?:^|\/)\.turbo\/)/;
 const failures = [];
 const verified = [];
+const archiveRoot = await mkdtemp(join(tmpdir(), "lmp-package-archives-"));
+const packedArchives: string[] = [];
 
 for (const [relative, expectedName] of packages) {
   const directory = join(root, relative);
@@ -39,6 +41,9 @@ for (const [relative, expectedName] of packages) {
     // from the final JSON object rather than assuming stdout is JSON-only.
     const payloadStart = output.lastIndexOf("\n{");
     pack = JSON.parse(output.slice(payloadStart >= 0 ? payloadStart + 1 : 0)) as typeof pack;
+    const archivedPackage = join(archiveRoot, `${manifest.name.replaceAll("/", "-")}-${manifest.version}.tgz`);
+    await copyFile(pack.filename, archivedPackage);
+    packedArchives.push(archivedPackage);
     const packedManifest = JSON.parse(
       execFileSync("tar", ["-xOf", pack.filename, "package/package.json"], {
         encoding: "utf8",
@@ -88,6 +93,38 @@ for (const [relative, expectedName] of packages) {
   if (!hasRuntime) failures.push(`${relative}: runtime output is missing from release`);
   verified.push({ name: manifest.name, version: manifest.version, files: files.length });
 }
+
+if (!failures.length) {
+  const consumer = await mkdtemp(join(tmpdir(), "lmp-package-consumer-"));
+  try {
+    const publishedCliVersion = JSON.parse(await readFile(join(root, "packages/cli/package.json"), "utf8")).version as string;
+    execFileSync("npm", [
+      "install",
+      "--ignore-scripts",
+      "--no-audit",
+      "--no-fund",
+      "--prefix",
+      consumer,
+      ...packedArchives,
+    ], { encoding: "utf8", stdio: "ignore" });
+    const launcher = spawnSync(process.execPath, [join(consumer, "node_modules", "lmp", "dist", "bin.js"), "--version"], {
+      cwd: consumer,
+      encoding: "utf8",
+    });
+    if (![0, 2].includes(launcher.status ?? -1) || !`${launcher.stdout}${launcher.stderr}`.includes(publishedCliVersion)) {
+      throw new Error(`packed lmp launcher returned ${launcher.status} without version ${publishedCliVersion}`);
+    }
+  } catch (error) {
+    const detail = error && typeof error === "object" && "stderr" in error
+      ? String((error as { stderr?: unknown }).stderr ?? "").trim()
+      : "";
+    failures.push(`isolated packed install: ${error instanceof Error ? error.message : String(error)}${detail ? `; stderr: ${detail}` : ""}`);
+  } finally {
+    await rm(consumer, { recursive: true, force: true });
+  }
+}
+
+await rm(archiveRoot, { recursive: true, force: true });
 
 if (failures.length) {
   console.error(JSON.stringify({ status: "blocked", failures }, null, 2));
