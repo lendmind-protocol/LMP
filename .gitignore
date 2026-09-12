@@ -18,6 +18,7 @@ private-key.pem
 .temp
 .tools
 .lending-mind
+.lmp/
 .turbo
 __pycache__
 *.py[cod]

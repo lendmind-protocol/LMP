@@ -13,6 +13,7 @@
       "**/.turbo/**",
       "**/.next/**",
       "**/.tools/**",
+      "**/.lmp/**",
       "**/.source/**",
       "**/target/**",
       "lmp-test-results/**",

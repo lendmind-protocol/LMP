@@ -1,215 +1,108 @@
-# Design System Master File
+# Lending-Mind Protocol — Design System Master
 
-> **LOGIC:** When building a specific page, first check `design-system/pages/[page-name].md`.
-> If that file exists, its rules **override** this Master file.
-> If not, strictly follow the rules below.
+> This is the canonical visual reference for the public landing page and documentation portal. Page-specific guidance in `design-system/pages/[page-name].md` may refine these rules, but must not contradict accessibility or content-integrity requirements here.
 
----
+**Updated:** 2026-09-12
+**Product:** Lending-Mind Protocol (LMP)
+**Surface:** Rust-first developer portal and protocol landing page
+**Canonical UI:** `apps/docs/app/page.tsx` and `apps/docs/app/global.css`
 
-**Project:** Lending-Mind Protocol
-**Generated:** 2026-09-11 14:03:57
-**Category:** API Developer Portal
+## Product and audience
 
----
+LMP makes engineering judgment inspectable: a profile becomes a signed package, an evaluation becomes a bounded result, and the result preserves evidence. The primary audience is engineers evaluating an AI-assisted development control plane, not consumers browsing a generic SaaS site.
 
-## Global Rules
+The interface should feel precise, calm, skeptical, local-first, and technically credible. Every visual claim must be supportable by repository evidence or clearly labeled as planned.
 
-### Color Palette
+## Visual direction
 
-| Role | Hex | CSS Variable |
-|------|-----|--------------|
-| Primary | `#0F172A` | `--color-primary` |
-| On Primary | `#FFFFFF` | `--color-on-primary` |
-| Secondary | `#1E293B` | `--color-secondary` |
-| On Secondary | `#FFFFFF` | `--color-on-secondary` |
-| Accent/CTA | `#22C55E` | `--color-accent` |
-| On Accent/CTA | `#0F172A` | `--color-on-accent` |
-| Background | `#020617` | `--color-background` |
-| Foreground | `#F8FAFC` | `--color-foreground` |
-| Card | `#0E1223` | `--color-card` |
-| Card Foreground | `#F8FAFC` | `--color-card-foreground` |
-| Muted | `#1A1E2F` | `--color-muted` |
-| Muted Foreground | `#94A3B8` | `--color-muted-foreground` |
-| Border | `#334155` | `--color-border` |
-| Destructive | `#EF4444` | `--color-destructive` |
-| On Destructive | `#000000` | `--color-on-destructive` |
-| Ring | `#FFFFFF` | `--color-ring` |
+Use a monochrome editorial system with a restrained green status accent. The landing page is intentionally high-contrast and dark in the active theme; the documentation shell remains readable in light and dark themes. Favor long horizontal rules, compact metadata, generous whitespace, and code-like labels over decorative gradients or ornamental UI.
 
-**Color Notes:** Code dark + endpoint green + syntax colors
+### Tokens
+
+| Role | Light | Dark / landing | Usage |
+| --- | --- | --- | --- |
+| Page background | `oklch(0.99 0 0)` | `#090a0b` | Page canvas |
+| Primary ink | `oklch(0.145 0 0)` | `#f3f4f3` | Headings and body |
+| Panel | `oklch(0.965 0 0)` | `#0d0f10` | Code, cards, previews |
+| Border | `oklch(0.145 0 0 / 14%)` | `rgb(255 255 255 / 10%)` | Dividers and controls |
+| Muted text | `oklch(0.145 0 0 / 62%)` | `rgb(255 255 255 / 60%)` | Supporting copy |
+| Subtle text | `oklch(0.145 0 0 / 42%)` | `rgb(255 255 255 / 35%)` | Metadata and labels |
+| Status accent | `#047857` | `#34d399` | Links, pass states, active markers |
+| Error | `#b91c1c` | `#f87171` | Blocking findings and failures |
+
+Do not use pure black as a page background in the documentation shell. “Black text” means the light-theme foreground and highlighted keywords use dark ink; it does not mean a black fill behind text. Keep text contrast at or above WCAG AA 4.5:1 for normal text and 3:1 for large text.
 
 ### Typography
 
-- **Heading Font:** JetBrains Mono
-- **Body Font:** IBM Plex Sans
-- **Mood:** code, developer, technical, precise, functional, hacker
-- **Google Fonts:** [JetBrains Mono + IBM Plex Sans](https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap)
+- Headings and technical labels: Geist Sans from the app shell, with `font-mono` for protocol names, commands, IDs, and eyebrow labels.
+- Body: Geist Sans, readable line-height, no all-caps paragraphs.
+- Labels: `10–11px`, uppercase, letter spacing around `0.12–0.18em`.
+- Hero heading: responsive clamp, tight tracking, maximum two lines on desktop where possible.
+- Code: preserve wrapping on narrow screens; never create horizontal page overflow.
 
-**CSS Import:**
-```css
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
-```
+### Layout
 
-### Spacing Variables
+- Maximum content width: `1180px` on the landing page.
+- Horizontal padding: `clamp(1rem, 4vw, 2rem)`.
+- Section rhythm: `3–6rem` vertical hero padding; `1–2rem` internal panel padding.
+- Use a visible grid or rule to separate concepts; avoid floating card piles.
+- Maintain usable layouts at 375px, 768px, 1024px, and 1440px.
+- Keep primary calls to action close to the user’s next decision: install, read protocol, inspect evidence, or open docs.
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--space-xs` | `4px` / `0.25rem` | Tight gaps |
-| `--space-sm` | `8px` / `0.5rem` | Icon gaps, inline spacing |
-| `--space-md` | `16px` / `1rem` | Standard padding |
-| `--space-lg` | `24px` / `1.5rem` | Section padding |
-| `--space-xl` | `32px` / `2rem` | Large gaps |
-| `--space-2xl` | `48px` / `3rem` | Section margins |
-| `--space-3xl` | `64px` / `4rem` | Hero padding |
+## Component rules
 
-### Shadow Depths
+### Navigation
 
-| Level | Value | Usage |
-|-------|-------|-------|
-| `--shadow-sm` | `0 1px 2px rgba(0,0,0,0.05)` | Subtle lift |
-| `--shadow-md` | `0 4px 6px rgba(0,0,0,0.1)` | Cards, buttons |
-| `--shadow-lg` | `0 10px 15px rgba(0,0,0,0.1)` | Modals, dropdowns |
-| `--shadow-xl` | `0 20px 25px rgba(0,0,0,0.15)` | Hero images, featured cards |
+Use a compact wordmark, version metadata, and no more than three primary links. External links must have an accessible label and an external-link icon. The logo is an image mark without text; the product name is rendered separately.
 
----
+### Buttons and links
 
-## Component Specs
+- Prefer text links with arrow or external-link SVG icons for documentation actions.
+- Minimum interactive target: `44px` in both dimensions.
+- Use `cursor-pointer`, visible `:focus-visible` rings, and `150–300ms` transitions.
+- Hover must change color or border, not shift layout.
+- The green accent communicates an available or passing state; it is not decoration.
 
-### Buttons
+### Cards, tables, and code
 
-```css
-/* Primary Button */
-.btn-primary {
-  background: #22C55E;
-  color: white;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: all 200ms ease;
-  cursor: pointer;
-}
+- Use panels as evidence containers, not as generic marketing cards.
+- Tables must remain readable on mobile: short headers, aligned numeric values, and a scroll-safe wrapper when required.
+- Code blocks must show the exact command or schema being documented; do not use invented output as proof.
+- Findings should distinguish `pass`, `warning`, `needs_revision`, `blocked`, and `error` visibly and textually.
 
-.btn-primary:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
+### FAQ accordion
 
-/* Secondary Button */
-.btn-secondary {
-  background: transparent;
-  color: #0F172A;
-  border: 2px solid #0F172A;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: all 200ms ease;
-  cursor: pointer;
-}
-```
+Use native disclosure semantics or an equivalent accessible button pattern. Questions should be skeptical and specific. Answers may highlight keywords and citations with dark ink in light mode and light ink in dark mode; never use highlighted text as the only carrier of meaning. Keep related context on the canonical page to avoid click fatigue.
 
-### Cards
+## Content integrity
 
-```css
-.card {
-  background: #020617;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: var(--shadow-md);
-  transition: all 200ms ease;
-  cursor: pointer;
-}
+- Say “local verification,” “CI verification,” or “external review” precisely.
+- Never imply that signatures prove policy correctness, that static checks prove universal quality, or that a deployment exists without a reachable URL check.
+- Separate implemented, evidence-incomplete, blocked, and planned states.
+- Prefer one canonical page with clear sections over fragmenting closely related material into thin pages.
+- Use direct language for limitations and community criticism; avoid hype, vague “AI-powered” claims, and unsupported performance numbers.
 
-.card:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
-}
-```
+## Motion and accessibility
 
-### Inputs
+- Respect `prefers-reduced-motion: reduce`; disable marquee and nonessential animations.
+- Never use emoji as functional icons; use Lucide or another consistent SVG set.
+- Preserve focus order, semantic headings, alt text, keyboard operation, and visible state changes.
+- Check 375px width for clipped commands, tables, accordions, and navigation.
 
-```css
-.input {
-  padding: 12px 16px;
-  border: 1px solid #E2E8F0;
-  border-radius: 8px;
-  font-size: 16px;
-  transition: border-color 200ms ease;
-}
+## Asset specifications
 
-.input:focus {
-  border-color: #0F172A;
-  outline: none;
-  box-shadow: 0 0 0 3px #0F172A20;
-}
-```
+| Asset | Path | Specification |
+| --- | --- | --- |
+| Logo | `/public/assets/logo.png` | Abstract, text-free mark; transparent background; recognizable at 24–32px |
+| README banner | `/public/assets/banner.png` | 2172×724 source; wide 3:1 composition; displayed at 800px max width |
 
-### Modals
+Prompts for recreating either asset live beside this file in [`LOGO_PROMPT.md`](./LOGO_PROMPT.md) and [`BANNER_PROMPT.md`](./BANNER_PROMPT.md).
 
-```css
-.modal-overlay {
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-}
+## Delivery checklist
 
-.modal {
-  background: white;
-  border-radius: 16px;
-  padding: 32px;
-  box-shadow: var(--shadow-xl);
-  max-width: 500px;
-  width: 90%;
-}
-```
-
----
-
-## Style Guidelines
-
-**Style:** Minimalism & Swiss Style
-
-**Keywords:** Clean, simple, spacious, functional, white space, high contrast, geometric, sans-serif, grid-based, essential
-
-**Best For:** Enterprise apps, dashboards, documentation sites, SaaS platforms, professional tools
-
-**Key Effects:** Subtle hover (200-250ms), smooth transitions, sharp shadows if any, clear type hierarchy, fast loading
-
-### Page Pattern
-
-**Pattern Name:** FAQ/Documentation Landing
-
-- **Conversion Strategy:** Reduce support tickets. Track search analytics. Show related articles. Contact escalation path.
-- **CTA Placement:** Search bar prominent + Contact CTA for unresolved questions
-- **Section Order:** Hero with search bar > Popular categories > FAQ accordion > Contact/support CTA
-
----
-
-## Anti-Patterns (Do NOT Use)
-
-- ❌ Buried endpoints
-- ❌ Broken version switching
-- ❌ missing rate-limit state
-
-### Additional Forbidden Patterns
-
-- ❌ **Emojis as icons**: Use SVG icons (Heroicons, Lucide, Simple Icons)
-- ❌ **Missing cursor:pointer**: All clickable elements must have cursor:pointer
-- ❌ **Layout-shifting hovers**: Avoid scale transforms that shift layout
-- ❌ **Low contrast text**: Maintain 4.5:1 minimum contrast ratio
-- ❌ **Instant state changes**: Always use transitions (150-300ms)
-- ❌ **Invisible focus states**: Focus states must be visible for a11y
-
----
-
-## Pre-Delivery Checklist
-
-Before delivering any UI code, verify:
-
-- [ ] No emojis used as icons (use SVG instead)
-- [ ] All icons from consistent icon set (Heroicons/Lucide)
-- [ ] `cursor-pointer` on all clickable elements
-- [ ] Hover states with smooth transitions (150-300ms)
-- [ ] Light mode: text contrast 4.5:1 minimum
-- [ ] Focus states visible for keyboard navigation
-- [ ] `prefers-reduced-motion` respected
-- [ ] Responsive: 375px, 768px, 1024px, 1440px
-- [ ] No content hidden behind fixed navbars
-- [ ] No horizontal scroll on mobile
+- [ ] Landing page uses the current palette and the banner asset is not substituted with a remote image.
+- [ ] README and docs link to real routes and the local MIT license.
+- [ ] No unsupported deployment, adoption, authorship, or security claims are presented as facts.
+- [ ] All interactive controls have focus states and keyboard behavior.
+- [ ] Reduced-motion and mobile layouts are tested.
+- [ ] `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm verify:docs` pass for UI changes.
