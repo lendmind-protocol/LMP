@@ -21,7 +21,12 @@ allowed_paths = ["crates", "orchestrator", "packages", "registry/minds", "docs",
 mode = "enforced"
 rust = ["cargo fmt --check", "cargo test --workspace", "cargo build --locked"]
 python = ["python3 -m unittest discover -s orchestrator -p test_*.py"]
-node = ["pnpm --filter @lending-mind/lmp typecheck", "pnpm --filter @lending-mind/lmp test -- --run"]
+node = [
+    "pnpm --filter @lending-mind/sdk build",
+    "pnpm --filter @lending-mind/skill build",
+    "pnpm --filter @lending-mind/lmp typecheck",
+    "pnpm --filter @lending-mind/lmp test -- --run",
+]
 max_command_duration_seconds = 900
 max_output_bytes = 1048576
 
