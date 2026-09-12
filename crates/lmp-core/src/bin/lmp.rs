@@ -638,7 +638,12 @@ fn main() -> Result<()> {
             if config.exists() && !force {
                 anyhow::bail!("configuration exists; use --force")
             }
-            let install_baseline = install_baseline || baseline;
+            // A released Rust binary cannot assume the source repository's
+            // `profiles/baseline` directory is present in the target project.
+            // Install the embedded baseline whenever the repository does not
+            // already provide one, so init always leaves an evaluable project.
+            let install_baseline =
+                install_baseline || baseline || !Path::new("profiles/baseline").exists();
             let default_mind = if install_baseline {
                 let destination = dir.join("skills/baseline");
                 if destination.exists() && !force {
