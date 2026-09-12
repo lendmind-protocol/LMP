@@ -22,6 +22,13 @@ LMP does not claim to clone a person, reproduce private reasoning, train base-mo
 - Planned
 - Optional Advanced Capability
 
+The current evidence table above is authoritative. The acceptance checkboxes
+below are the original milestone contract and remain intentionally unchecked
+until a dedicated release audit records evidence for that exact criterion;
+they are not a claim that the criterion is currently missing. Partial and
+external-only criteria must remain unchecked even when the local implementation
+exists.
+
 ## Current Evidence-Based Status — 2026-09-12
 
 This summary is the current status index for the acceptance criteria below. A
