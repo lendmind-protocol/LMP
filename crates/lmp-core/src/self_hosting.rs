@@ -216,6 +216,13 @@ fn run_configured_command(
         "configured command executable is not allowlisted: {}",
         parts[0]
     );
+    for argument in &parts[1..] {
+        let path = Path::new(argument);
+        anyhow::ensure!(
+            !path.is_absolute() && !path.components().any(|part| part.as_os_str() == ".."),
+            "configured command argument escapes the workspace: {argument}"
+        );
+    }
     let toolchain_path = |tool: &str| {
         Command::new("rustup")
             .args(["which", tool, "--toolchain", "1.98.1"])
@@ -236,6 +243,8 @@ fn run_configured_command(
     command_builder
         .args(&parts[1..])
         .current_dir(root)
+        .env_clear()
+        .env("PATH", std::env::var_os("PATH").unwrap_or_default())
         .env("LMP_NETWORK", "disabled")
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
@@ -401,6 +410,16 @@ mod tests {
             max_output_bytes: 1024,
         };
         assert!(run_configured_commands(&root, &rejected).is_err());
+
+        let escaped = ValidationPolicy {
+            mode: "enforced".into(),
+            rust: vec!["cargo metadata --manifest-path ../outside/Cargo.toml".into()],
+            python: vec![],
+            node: vec![],
+            max_command_duration_seconds: 1,
+            max_output_bytes: 1024,
+        };
+        assert!(run_configured_commands(&root, &escaped).is_err());
 
         let sleep_root =
             std::env::temp_dir().join(format!("lmp-command-timeout-{}", std::process::id()));
