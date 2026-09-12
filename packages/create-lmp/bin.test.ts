@@ -192,6 +192,30 @@ test("writes a copy-ready Claude Desktop MCP entry without touching global setti
   assert.equal(integrations.integrations[0].status, "config-artifact-written");
 });
 
+test("installs a fail-closed project commit gate when explicitly requested", async () => {
+  const root = await mkdtemp(join(tmpdir(), "lmp-hooks-"));
+  const workspace = join(root, "workspace");
+  await mkdir(join(workspace, ".git", "hooks"), { recursive: true });
+  const result = await runBootstrapper(workspace, "greenfield", {}, "cursor", ["--install-hooks"]);
+  assert.equal(result.code, 0, result.output);
+  const hook = await readFile(join(workspace, ".git/hooks/pre-commit"), "utf8");
+  assert.match(hook, /self-govern --mind tj-ponytail/);
+  assert.match(hook, /npx --no-install @lending-mind\/lmp self-govern/);
+  assert.match(hook, /LMP enforcement unavailable/);
+  const enforcement = JSON.parse(await readFile(join(workspace, ".lmp_telemetry/enforcement.json"), "utf8"));
+  assert.equal(enforcement.status, "installed");
+  assert.equal(enforcement.boundary, "git-pre-commit");
+});
+
+test("rejects hook installation before writing generated state when Git is absent", async () => {
+  const root = await mkdtemp(join(tmpdir(), "lmp-hooks-preflight-"));
+  const result = await runBootstrapper(root, "greenfield", {}, "cursor", ["--install-hooks"]);
+  assert.notEqual(result.code, 0);
+  assert.match(result.output, /cannot install enforcement hook/);
+  assert.equal(existsSync(join(root, ".lending-mind")), false);
+  assert.equal(existsSync(join(root, ".lmp_telemetry")), false);
+});
+
 test("downloads and verifies a matching Rust runtime release asset", async () => {
   const root = await mkdtemp(join(tmpdir(), "lmp-runtime-download-"));
   const payload = join(root, "payload");

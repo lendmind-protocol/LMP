@@ -6,8 +6,10 @@ host and bundled Mind, verifies the bundled Ed25519 signature, installs the
 active profile under `.lending-mind/mind`, writes agent-discovery guidance, and
 creates a local MCP adapter manifest under `.lmp_telemetry`.
 
-The package does not download source code, install dependencies, modify Git
-hooks, or claim that a workspace is correct. It can install the matching
+The package does not download source code, install dependencies, or claim that
+a workspace is correct. Git hooks are never installed implicitly; pass
+`--install-hooks` to explicitly create a fail-closed project-local
+`.git/hooks/pre-commit` gate. It can install the matching
 precompiled Rust runtime from a release archive, but only after verifying the
 archive against the release `SHA256SUMS` file. Build the Rust runtime
 separately when no compatible release asset is available:
@@ -33,6 +35,18 @@ Code (`.mcp.json`) or Cursor (`.cursor/mcp.json`) without replacing existing
 servers. Cline and Roo Code receive project-scoped entries in `.cline/mcp.json`
 and `.roo/mcp.json`; global host settings are never modified. The generated
 `host-integrations.json` records each project-scoped result and any conflict.
+
+To request the commit-boundary gate during onboarding:
+
+```bash
+npx @lending-mind/create-lending-mind --yes --install-hooks /path/to/project
+```
+
+The gate invokes `lmp self-govern` in enforced mode and exits nonzero when the
+active Mind reports a finding. If no verified CLI runtime is available, it
+fails closed with an actionable error; `.lmp_telemetry/enforcement.json`
+records the boundary and installation status. This is a Git commit control,
+not a universal filesystem pre-write interceptor.
 
 ## Strategy detection
 

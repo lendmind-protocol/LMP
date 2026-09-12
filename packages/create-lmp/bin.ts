@@ -19,6 +19,7 @@ const workspaceArg = args.find((value, index) => !value.startsWith("--") && !val
 const workspace = resolve(workspaceArg ?? process.cwd());
 const flags = new Map(args.filter((value) => value.startsWith("--")).map((value) => [value, true]));
 const force = flags.has("--force");
+const installHooks = flags.has("--install-hooks");
 
 // A greenfield target may be a path that does not exist yet. Create it before
 // probing its contents so the same bootstrap path works for both new and
@@ -88,6 +89,53 @@ async function ensureGitignore() {
     `${prefix}${prefix ? "\n" : ""}${headerLine}${missing.join("\n")}\n`,
   );
   return true;
+}
+
+async function installEnforcedHook(mind: string) {
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(mind)) {
+    throw new Error(`invalid Mind id for enforcement hook: ${mind}`);
+  }
+  const gitDirectory = join(workspace, ".git");
+  if (!existsSync(gitDirectory)) {
+    throw new Error(`cannot install enforcement hook: ${gitDirectory} is missing`);
+  }
+  const hook = join(gitDirectory, "hooks", "pre-commit");
+  if (existsSync(hook) && !force) {
+    throw new Error(`pre-commit hook exists at ${hook}; use --force to replace it`);
+  }
+  await mkdir(join(gitDirectory, "hooks"), { recursive: true });
+  await writeFile(hook, `#!/bin/sh
+set -eu
+root="$(git rev-parse --show-toplevel)"
+cd "$root"
+if command -v lmp >/dev/null 2>&1; then
+  exec lmp self-govern --mind ${mind} --workspace . --artifact-dir .lending-mind/artifacts --changed-only
+fi
+if [ -x "$root/.lmp_telemetry/bin/lmp" ]; then
+  exec "$root/.lmp_telemetry/bin/lmp" self-govern --mind ${mind} --workspace . --artifact-dir .lending-mind/artifacts --changed-only
+fi
+if command -v npx >/dev/null 2>&1; then
+  exec npx --no-install @lending-mind/lmp self-govern --mind ${mind} --workspace . --artifact-dir .lending-mind/artifacts --changed-only
+fi
+echo "LMP enforcement unavailable: install @lending-mind/lmp or provide .lmp_telemetry/bin/lmp" >&2
+exit 3
+`);
+  await chmod(hook, 0o755);
+  return hook;
+}
+
+function assertHookInstallable(mind: string) {
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(mind)) {
+    throw new Error(`invalid Mind id for enforcement hook: ${mind}`);
+  }
+  const gitDirectory = join(workspace, ".git");
+  if (!existsSync(gitDirectory)) {
+    throw new Error(`cannot install enforcement hook: ${gitDirectory} is missing`);
+  }
+  const hook = join(gitDirectory, "hooks", "pre-commit");
+  if (existsSync(hook) && !force) {
+    throw new Error(`pre-commit hook exists at ${hook}; use --force to replace it`);
+  }
 }
 
 function detectStack() {
@@ -393,6 +441,7 @@ const selectedStrategy = await choose("Is this a greenfield or brownfield worksp
 await confirmStrategyMismatch(detectedWorkspace, selectedStrategy);
 const profile = await profileFiles(selectedMind);
 await assertOnboardingTargetIsWritable();
+if (installHooks) assertHookInstallable(selectedMind);
 const gitignoreUpdated = await ensureGitignore();
 
 const lmpDirectory = join(workspace, ".lending-mind");
@@ -408,6 +457,7 @@ const config = {
   defaultMind: ".lending-mind/mind",
   defaultMindId: selectedMindInfo[1],
   defaultMode: "advisory",
+  enforcementBoundary: installHooks ? "git-pre-commit" : "none",
   network: "offline",
   commands: "disabled",
   agent: selectedAgent,
@@ -599,6 +649,18 @@ if (selectedAgent === "claudedesktop") {
 }
 await writeFile(join(telemetryDirectory, "host-integrations.json"), `${JSON.stringify({ agent: selectedAgent, integrations: hostIntegrations }, null, 2)}\n`);
 
+let enforcement = { status: "not-requested", path: null };
+if (installHooks) {
+  const path = await installEnforcedHook(selectedMind);
+  enforcement = { status: "installed", path: path.replace(`${workspace}/`, "") };
+}
+await writeFile(join(telemetryDirectory, "enforcement.json"), `${JSON.stringify({
+  boundary: "git-pre-commit",
+  mode: "enforced",
+  ...enforcement,
+  limitation: "This gate evaluates the staged commit boundary; it is not a universal pre-write filesystem interceptor.",
+}, null, 2)}\n`);
+
 console.log("\n🔒 Ingesting cryptographically sealed Mind manifest configuration layers...");
 console.log(`✅ Verified signature for ${selectedMindInfo[1]}.`);
 console.log(`✅ ${selectedAgent} integration guidance written to AGENTS.md and CLAUDE.md.`);
@@ -607,6 +669,7 @@ console.log(`✅ Host detected: ${platform}/${arch}; stack selected: ${selectedS
 console.log(`✅ Local generated files: ${gitignoreUpdated ? "added to .gitignore" : "already protected by .gitignore"}.`);
 console.log(`✅ Rust sidecar status: ${installedBinaries.length === 2 ? "ready" : "requires local release binaries"}.`);
 console.log(`✅ Host MCP integration: ${hostIntegrations.map((entry) => `${entry.path} (${entry.status})`).join(", ")}.`);
+console.log(`✅ Commit enforcement: ${enforcement.status}${enforcement.path ? ` (${enforcement.path})` : ""}.`);
 console.log("\nNext check: cargo run --bin lmp -- evaluate --mind .lending-mind/mind --workspace . --mode advisory --changed-only --json");
 console.log("MCP adapter manifest: .lmp_telemetry/agent-mcp.json");
 console.log("\n🛠️  Create your own Mind later: sign a package with mind-signer, validate it, then install it under .lending-mind/mind.");

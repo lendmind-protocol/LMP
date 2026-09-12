@@ -8,7 +8,7 @@
 npx lmp --uninstall .
 ```
 
-The initializer preserves unrelated project guidance and existing MCP servers. Project-scoped integrations are written only for the selected host and report `runtime-unavailable` when verified Rust binaries are not present. Build or install the signed runtime before enabling enforcement.
+The initializer preserves unrelated project guidance and existing MCP servers. Project-scoped integrations are written only for the selected host and report `runtime-unavailable` when verified Rust binaries are not present. Build or install the signed runtime before enabling enforcement. Pass `--install-hooks` when you explicitly want onboarding to create the fail-closed `.git/hooks/pre-commit` boundary; the resulting status is recorded in `.lmp_telemetry/enforcement.json`.
 
 For non-technical users, the public Mind Vault is the visual path: select a package, use its export action to download a plain-English `LMP_INSTRUCTIONS.md`, and add that file to the AI project’s knowledge/context area. This is guidance injection, not proof that the host obeyed the guidance; a local LMP evaluation is the verification boundary.
 
