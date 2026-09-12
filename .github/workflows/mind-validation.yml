@@ -28,6 +28,8 @@ jobs:
           pnpm --filter @lending-mind/lmp build
       - name: Validate every shipped Mind package and evidence manifest
         run: pnpm validate:skills
+      - name: Verify every canonical provenance source by its declared bytes
+        run: pnpm verify:provenance
       - run: pnpm verify:self-hosting
       - run: cargo test --workspace --locked
       - run: pnpm verify:docs
