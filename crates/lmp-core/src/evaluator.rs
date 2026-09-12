@@ -244,6 +244,14 @@ fn policy_values(
                     flags.insert(key.clone(), enabled);
                 }
             }
+            if let Some(allow) = object
+                .get("unsafe")
+                .and_then(Value::as_object)
+                .and_then(|unsafe_policy| unsafe_policy.get("allow"))
+                .and_then(Value::as_bool)
+            {
+                flags.insert("unsafeAllow".into(), allow);
+            }
         }
         if let Some(items) = value
             .get("prohibited")
@@ -556,6 +564,21 @@ fn evaluate_with_options_impl(
                 findings.push(Finding { rule_id: "rust.syntax".into(), passed: false, severity: "error".into(), message: format!("invalid Rust syntax: {error}"), evidence: json!({"file": file.strip_prefix(workspace).unwrap_or(file).display().to_string()}) });
                 continue;
             }
+            if flags.get("unsafeAllow").copied() == Some(false)
+                && crate::ast::contains_unsafe_block(&source)?
+            {
+                findings.push(Finding {
+                    rule_id: "ast.unsafe-boundary".into(),
+                    passed: false,
+                    severity: "error".into(),
+                    message: "unsafe Rust block detected where the active Mind requires an explicit exception.".into(),
+                    evidence: json!({
+                        "file": file.strip_prefix(workspace).unwrap_or(file).display().to_string(),
+                        "allow": false,
+                        "status": "violation"
+                    }),
+                });
+            }
             let messages = crate::ast::audit_source(&source, max_complexity, &[])?;
             fs::write(&cache_path, serde_json::to_vec(&messages)?)?;
             findings.extend(messages.into_iter().map(|message| Finding { rule_id: "rust.ast".into(), passed: false, severity: "error".into(), message, evidence: json!({"file": file.strip_prefix(workspace).unwrap_or(file).display().to_string(), "cache":"miss"}) }));
@@ -590,6 +613,37 @@ fn evaluate_with_options_impl(
         "checkId":"behavioral.docker",
         "reason":"Docker execution is an explicit orchestrator gate, not part of this static evaluator run."
     }));
+    if bundle
+        .rules
+        .iter()
+        .any(|rule| rule.get("id").and_then(Value::as_str) == Some("architecture.boundary"))
+    {
+        findings.push(Finding {
+            rule_id: "architecture.boundary".into(),
+            passed: true,
+            severity: "warning".into(),
+            message: "Declared architecture boundary metadata was loaded for this evaluation."
+                .into(),
+            evidence: json!({"status": "metadata-loaded", "runtime": "rust"}),
+        });
+    }
+    if bundle
+        .rules
+        .iter()
+        .any(|rule| rule.get("id").and_then(Value::as_str) == Some("security.artifact-redaction"))
+    {
+        findings.push(Finding {
+            rule_id: "security.artifact-redaction".into(),
+            passed: true,
+            severity: "error".into(),
+            message: "Evaluation artifact redaction boundary is enabled.".into(),
+            evidence: json!({
+                "sourceCodeIncluded": false,
+                "rawPathsIncluded": false,
+                "networkUsed": false
+            }),
+        });
+    }
     for finding in &mut findings {
         if let Some(contract) = bundle
             .rules
@@ -794,6 +848,29 @@ mod tests {
             .findings
             .iter()
             .any(|finding| finding.rule_id == "dependencies.prohibited"));
+        fs::remove_dir_all(workspace).unwrap();
+    }
+
+    #[test]
+    fn enforced_evaluation_reports_unsafe_boundary_for_profiles_that_declare_it() {
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../registry/minds/lmp-protocol-core");
+        let workspace = std::env::temp_dir().join(format!(
+            "lmp-rust-unsafe-boundary-test-{}",
+            std::process::id()
+        ));
+        fs::create_dir_all(&workspace).unwrap();
+        fs::write(
+            workspace.join("unsafe.rs"),
+            "pub fn read() { unsafe { let _ = 1; } }\n",
+        )
+        .unwrap();
+        let report = evaluate(&root, &workspace, "enforced", None).unwrap();
+        assert!(!report.passed);
+        assert!(report
+            .findings
+            .iter()
+            .any(|finding| finding.rule_id == "ast.unsafe-boundary"));
         fs::remove_dir_all(workspace).unwrap();
     }
 

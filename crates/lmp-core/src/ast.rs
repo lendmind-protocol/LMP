@@ -127,6 +127,27 @@ pub fn audit_source(
     audit_source_impl(source, max_complexity, forbidden_ast_nodes)
 }
 
+/// Return whether the Rust source contains an unsafe block.
+///
+/// This is deliberately a structural signal. It does not claim that safe Rust
+/// is correct, only that a profile can require explicit review for unsafe code.
+pub fn contains_unsafe_block(source: &str) -> Result<bool> {
+    struct UnsafeVisitor {
+        found: bool,
+    }
+
+    impl<'ast> Visit<'ast> for UnsafeVisitor {
+        fn visit_expr_unsafe(&mut self, _node: &'ast syn::ExprUnsafe) {
+            self.found = true;
+        }
+    }
+
+    let syntax_tree = syn::parse_file(source)?;
+    let mut visitor = UnsafeVisitor { found: false };
+    visitor.visit_file(&syntax_tree);
+    Ok(visitor.found)
+}
+
 fn audit_source_impl(
     source: &str,
     max_complexity: usize,
@@ -165,7 +186,7 @@ fn audit_source_impl(
 
 #[cfg(test)]
 mod tests {
-    use super::audit_source;
+    use super::{audit_source, contains_unsafe_block};
     use std::panic::{catch_unwind, AssertUnwindSafe};
 
     #[test]
@@ -193,6 +214,12 @@ mod tests {
                 "expected a syn::Error, got: {error:#}"
             );
         }
+    }
+
+    #[test]
+    fn detects_unsafe_blocks_structurally() {
+        assert!(contains_unsafe_block("fn read() { unsafe { let _ = 1; } }").unwrap());
+        assert!(!contains_unsafe_block("fn read() { let _ = 1; }").unwrap());
     }
 
     #[test]
