@@ -34,9 +34,11 @@ outcomes beyond a strong ordinary engineering stack.
 
 ## Production qualification
 
-The configured hosted target `https://lmp-six.vercel.app/` was probed on
-2026-09-12; both `/` and `/registry.json` returned HTTP 404. The target is
-therefore not counted as deployed evidence.
+The GitHub Pages deployment at `https://lendmind-protocol.github.io/LMP/` was
+published by workflow run `34699927888` and probed on 2026-09-12. The root
+served HTTP 200 and `/docs/` served the expected documentation title. The
+former Vercel target remains unavailable and is not counted as deployment
+evidence.
 
 The local checkout currently returns `LOCAL_QUALIFIED` from its deliberately
 bounded core-runtime scope:

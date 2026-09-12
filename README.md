@@ -10,12 +10,12 @@
 
 LMP turns explicit engineering preferences into signed Mind Packages, bounded evaluations, and reviewable evidence for AI-assisted software development.
 
-[Website](https://lmp-six.vercel.app/) · [Documentation](https://lmp-six.vercel.app/docs) · [GitHub](https://github.com/lendmind-protocol/LMP) · [MIT License](./LICENSE)
+[Website](https://lendmind-protocol.github.io/LMP/) · [Documentation](https://lendmind-protocol.github.io/LMP/docs/) · [GitHub](https://github.com/lendmind-protocol/LMP) · [MIT License](./LICENSE)
 
 </div>
 
 > [!WARNING]
-> The hosted Website and Documentation links are configured release targets, not a current availability claim. The last verified probe on 2026-09-12 returned HTTP 404 for the hosted root and `/registry.json`; use the repository documentation until deployment evidence is published.
+> The public Website and Documentation are deployed through GitHub Pages and were verified with HTTP 200 on 2026-09-12. The former Vercel target remains unavailable and is not used as release evidence.
 
 > [!WARNING]
 > LMP is a local-first control plane, not a claim that static analysis proves software quality. Signatures establish content integrity and key possession; they do not prove authorship, correctness, or good policy. Human review remains part of the boundary.
@@ -184,6 +184,6 @@ AI-assisted contributions are welcome. Explain the important decisions, limitati
 
 <div align="center">
 
-Built for inspectable engineering judgment · [Documentation](https://lmp-six.vercel.app/docs) · [GitHub](https://github.com/lendmind-protocol/LMP) · [MIT License](./LICENSE)
+Built for inspectable engineering judgment · [Documentation](https://lendmind-protocol.github.io/LMP/docs/) · [GitHub](https://github.com/lendmind-protocol/LMP) · [MIT License](./LICENSE)
 
 </div>

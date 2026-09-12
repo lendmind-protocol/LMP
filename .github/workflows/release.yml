@@ -111,7 +111,7 @@ jobs:
         run: cp target/release/lmp lmp-test-results/lmp
       - name: Verify deployed static portal
         env:
-          LMP_DEPLOYMENT_URL: https://lmp-six.vercel.app
+          LMP_DEPLOYMENT_URL: https://lendmind-protocol.github.io/LMP
         run: |
           python3 orchestrator/verify_static_deployment.py "$LMP_DEPLOYMENT_URL" \
             --expected-registry registry/registry.json \
@@ -197,7 +197,7 @@ jobs:
           --lmp lmp-test-results/lmp
           --resource-report lmp-test-results/resource-gate.json
           --onboarding lmp-test-results/onboarding-current.json
-          --deployment https://lmp-six.vercel.app
+          --deployment https://lendmind-protocol.github.io/LMP
           --expected-registry registry/registry.json
           --check-manifests
           --verify-cids
