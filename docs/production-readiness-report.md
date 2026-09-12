@@ -54,7 +54,7 @@ claim.
 
 ## Quality improvement evidence
 
-> No controlled benchmark evidence exists yet. LMP has not demonstrated that it improves AI-generated code quality beyond a strong combination of instructions, skills, testing, CI, static analysis, and human review.
+> A reproducible 64-scenario technical benchmark exists and its configured execution controls passed. It is not a causal quality study: it uses fixed candidate patches, does not execute repository-owned lint/test/CI commands, and has no independent reviewer annotations. LMP therefore has not demonstrated that it improves AI-generated code quality beyond a strong combination of instructions, skills, testing, CI, static analysis, and human review.
 
 ## Final truth statement
 
