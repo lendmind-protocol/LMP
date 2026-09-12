@@ -40,22 +40,36 @@ const validateCanonicalEvidence = async (directory: string) => {
   if (!Array.isArray(sources) || sources.length === 0)
     throw new Error(`${directory}: sources.json must contain at least one source`);
   for (const source of sources) {
-    if (!source || typeof source !== "object") throw new Error(`${directory}: invalid source record`);
+    if (!source || typeof source !== "object")
+      throw new Error(`${directory}: invalid source record`);
     const record = source as Record<string, unknown>;
-    if (typeof record.id !== "string" || typeof record.title !== "string" || typeof record.url !== "string")
+    if (
+      typeof record.id !== "string" ||
+      typeof record.title !== "string" ||
+      typeof record.url !== "string"
+    )
       throw new Error(`${directory}: source records require id, title, and url`);
     if (!/^sha256:[0-9a-f]{64}$/.test(String(record.contentDigest ?? "")))
       throw new Error(`${directory}: source ${record.id} must have a sha256 content digest`);
   }
   const evidence = await readJson(join(directory, "evidence.json"));
   const tests = evidence.tests;
-  if (!Array.isArray(tests) || new Set(tests.map((test) => (test as Record<string, unknown>).id)).size !== 3)
+  if (
+    !Array.isArray(tests) ||
+    new Set(tests.map((test) => (test as Record<string, unknown>).id)).size !== 3
+  )
     throw new Error(`${directory}: evidence.json must declare three distinct fixtures`);
   for (const kind of ["positive", "negative", "exception"])
     if (!tests.some((test) => (test as Record<string, unknown>).kind === kind))
       throw new Error(`${directory}: evidence.json is missing a ${kind} fixture`);
-  await requireNonEmptyDirectory(join(directory, "fixtures/compliant"), `${directory} compliant fixtures`);
-  await requireNonEmptyDirectory(join(directory, "fixtures/violating"), `${directory} violating fixtures`);
+  await requireNonEmptyDirectory(
+    join(directory, "fixtures/compliant"),
+    `${directory} compliant fixtures`,
+  );
+  await requireNonEmptyDirectory(
+    join(directory, "fixtures/violating"),
+    `${directory} violating fixtures`,
+  );
   const rules = await readJson(join(directory, "rules/manifest.json"));
   if (!Array.isArray(rules.rules) || rules.rules.length === 0)
     throw new Error(`${directory}: rules/manifest.json must declare executable rule contracts`);
