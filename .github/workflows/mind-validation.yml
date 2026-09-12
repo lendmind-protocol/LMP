@@ -21,6 +21,11 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Build workspace packages required by self-hosting checks
+        run: |
+          pnpm --filter @lending-mind/sdk build
+          pnpm --filter @lending-mind/skill build
+          pnpm --filter @lending-mind/lmp build
       - run: pnpm verify:self-hosting
       - run: cargo test --workspace --locked
       - run: pnpm verify:docs
