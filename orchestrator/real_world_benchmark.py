@@ -46,14 +46,25 @@ TASKS = [
 EXPECTED_SCENARIOS = len(REPOSITORIES) * len(TASKS)
 SANDBOX_IMAGE = "lmp-sandbox:local"
 CONTROL_TIMEOUT_SECONDS = 30
+COMMAND_TIMEOUT_SECONDS = 120
 
 
 def run(command: list[str], cwd: Path | None = None, check: bool = True) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(command, cwd=cwd, text=True, capture_output=True, check=check)
+    return subprocess.run(
+        command,
+        cwd=cwd,
+        text=True,
+        capture_output=True,
+        check=check,
+        timeout=COMMAND_TIMEOUT_SECONDS,
+    )
 
 
 def command_version(command: list[str], cwd: Path | None = None) -> str | None:
-    result = run(command, cwd=cwd, check=False)
+    try:
+        result = run(command, cwd=cwd, check=False)
+    except subprocess.TimeoutExpired:
+        return None
     if result.returncode != 0:
         return None
     return (result.stdout or result.stderr).strip().splitlines()[0] if (result.stdout or result.stderr).strip() else None
