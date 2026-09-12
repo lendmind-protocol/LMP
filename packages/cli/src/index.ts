@@ -389,12 +389,17 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
     return EXIT.ok;
   } catch (error) {
     const commanderUsage = error instanceof Error && error.name === "CommanderError";
-    const code = commanderUsage
-      ? EXIT.usage
-      : typeof error === "object" && error && "exitCode" in error
-        ? Number(error.exitCode)
-        : EXIT.runtime;
-    console.error(error instanceof Error ? error.message : String(error));
+    const commanderCode =
+      typeof error === "object" && error && "code" in error ? String(error.code) : "";
+    const code =
+      commanderUsage && ["commander.helpDisplayed", "commander.version"].includes(commanderCode)
+        ? EXIT.ok
+        : commanderUsage
+          ? EXIT.usage
+          : typeof error === "object" && error && "exitCode" in error
+            ? Number(error.exitCode)
+            : EXIT.runtime;
+    if (code !== EXIT.ok) console.error(error instanceof Error ? error.message : String(error));
     return code;
   }
 }

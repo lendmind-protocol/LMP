@@ -11,11 +11,7 @@ const execFileAsync = promisify(execFile);
 const packageRoot = fileURLToPath(new URL(".", import.meta.url));
 
 test("forwards the public npx launcher to the scoped CLI", async () => {
-  const result = await execFileAsync(process.execPath, [
-    join(packageRoot, "bin.ts"),
-    "--help",
-  ]).catch((error) => error);
-  assert.equal(result.code, 2);
+  const result = await execFileAsync(process.execPath, [join(packageRoot, "bin.ts"), "--help"]);
   assert.match(result.stdout, /Usage: lmp/);
 });
 
