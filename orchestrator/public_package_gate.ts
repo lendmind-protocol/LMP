@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { execFileSync } from "node:child_process";
-import { readFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
 const root = resolve(new URL("..", import.meta.url).pathname);
@@ -23,11 +24,32 @@ for (const [relative, expectedName] of packages) {
   if (manifest.name !== expectedName) failures.push(`${relative}: expected package name ${expectedName}`);
   if (!Array.isArray(manifest.files) || !manifest.files.length)
     failures.push(`${relative}: package must explicitly publish its runtime files`);
-  const output = execFileSync("npm", ["pack", "--dry-run", "--json"], {
-    cwd: directory,
-    encoding: "utf8",
-  });
-  const pack = JSON.parse(output)[0];
+  const staging = await mkdtemp(join(tmpdir(), "lmp-package-gate-"));
+  let pack: { filename: string; files: Array<{ path: string }> };
+  try {
+    // pnpm is the workspace publisher and rewrites workspace:* dependencies
+    // to concrete versions in the packed manifest. Inspect that exact output
+    // rather than npm's dry-run view, which can preserve workspace protocols.
+    const output = execFileSync("pnpm", ["pack", "--pack-destination", staging, "--json"], {
+      cwd: directory,
+      encoding: "utf8",
+    });
+    pack = JSON.parse(output) as typeof pack;
+    const packedManifest = JSON.parse(
+      execFileSync("tar", ["-xOf", pack.filename, "package/package.json"], {
+        encoding: "utf8",
+      }),
+    ) as { dependencies?: Record<string, string>; devDependencies?: Record<string, string> };
+    const unresolved = Object.entries({
+      ...packedManifest.dependencies,
+      ...packedManifest.devDependencies,
+    })
+      .filter(([, version]) => version.startsWith("workspace:"))
+      .map(([name, version]) => `${name}@${version}`);
+    if (unresolved.length) failures.push(`${relative}: packed manifest has workspace dependencies: ${unresolved.join(", ")}`);
+  } finally {
+    await rm(staging, { recursive: true, force: true });
+  }
   const files = pack.files.map((entry) => entry.path);
   const bad = files.filter((path) => forbiddenPath.test(path));
   if (bad.length) failures.push(`${relative}: release contains test/build files: ${bad.join(", ")}`);
