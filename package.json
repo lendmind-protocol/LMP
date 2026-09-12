@@ -37,6 +37,7 @@
     "benchmark:onboarding": "python3 orchestrator/onboarding_benchmark.py --output lmp-test-results/onboarding-current.json",
     "sync:public-registry": "tsx scripts/sync-public-registry.ts",
     "publish:ipfs:pinata": "tsx scripts/publish-ipfs-pinata.ts",
+    "publish:oci:ghcr": "tsx scripts/publish-oci-ghcr.ts",
     "generate:docs": "tsx scripts/generate-docs.ts",
     "changeset": "changeset"
   },

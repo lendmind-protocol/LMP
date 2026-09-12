@@ -38,6 +38,8 @@ export interface OciRegistryOptions {
   registry: string;
   repository: string;
   token?: string;
+  username?: string;
+  password?: string;
   fetch?: typeof globalThis.fetch;
 }
 
@@ -633,6 +635,8 @@ export class OciRegistryClient {
   private readonly baseUrl: string;
   private readonly repository: string;
   private readonly token?: string;
+  private readonly username?: string;
+  private readonly password?: string;
   private readonly request: typeof globalThis.fetch;
 
   constructor(options: OciRegistryOptions) {
@@ -643,6 +647,10 @@ export class OciRegistryClient {
       .map((part) => safePart(part, "OCI repository segment"))
       .join("/");
     this.token = options.token;
+    this.username = options.username;
+    this.password = options.password;
+    if ((this.username && !this.password) || (!this.username && this.password))
+      throw new Error("OCI username and password must be provided together");
     this.request = options.fetch ?? globalThis.fetch;
   }
 
@@ -835,7 +843,12 @@ export class OciRegistryClient {
 
   private async http(path: string, init: RequestInit = {}): Promise<Response> {
     const headers = new Headers(init.headers);
-    if (this.token) headers.set("Authorization", `Bearer ${this.token}`);
+    if (this.username && this.password)
+      headers.set(
+        "Authorization",
+        `Basic ${Buffer.from(`${this.username}:${this.password}`).toString("base64")}`,
+      );
+    else if (this.token) headers.set("Authorization", `Bearer ${this.token}`);
     const url = path.startsWith("http") ? path : `${this.baseUrl}${path}`;
     const response = await this.request(url, { ...init, headers });
     if (!response.ok) throw new Error(`OCI request failed (${response.status}): ${url}`);

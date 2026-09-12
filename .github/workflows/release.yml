@@ -251,3 +251,42 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-oci-minds:
+    needs: verify
+    runs-on: ubuntu-latest
+    if: ${{ vars.PUBLISH_OCI == 'true' }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Enable pnpm
+        run: corepack enable
+      - name: Install JavaScript workspace dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build registry client
+        run: pnpm --filter @lending-mind/internal-registry build
+      - name: Publish and pull-verify signed Mind packages
+        env:
+          LMP_OCI_REGISTRY: https://ghcr.io
+          LMP_OCI_REPOSITORY: ${{ github.repository_owner }}/lmp-minds
+          LMP_OCI_USERNAME: ${{ github.actor }}
+          LMP_OCI_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          LMP_OCI_EVIDENCE: lmp-test-results/oci-publication.json
+        run: pnpm publish:oci:ghcr
+      - name: Upload OCI publication evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: oci-publication-evidence
+          path: lmp-test-results/oci-publication.json
+          if-no-files-found: error

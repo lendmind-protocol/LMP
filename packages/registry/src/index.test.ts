@@ -94,6 +94,9 @@ describe("LocalRegistryClient", () => {
     expect(() => new OciRegistryClient({ registry: "", repository: "minds" })).toThrow(
       "OCI registry is required",
     );
+    expect(
+      () => new OciRegistryClient({ registry: "https://ghcr.io", repository: "minds", username: "octo" }),
+    ).toThrow("must be provided together");
     await rm(root, { recursive: true, force: true });
   });
 
