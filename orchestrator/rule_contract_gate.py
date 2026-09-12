@@ -22,14 +22,20 @@ def main() -> None:
     if mapping.get("version") != 1 or not isinstance(rules, dict):
         raise SystemExit("rule evaluator map has an invalid schema")
     declared: dict[str, list[str]] = {}
+    errors: list[str] = []
     for manifest_path in sorted(MANIFESTS):
         manifest = json.loads(manifest_path.read_text())
         for rule in manifest.get("rules", []):
             rule_id = rule.get("id")
             if not isinstance(rule_id, str) or not rule_id:
                 raise SystemExit(f"{manifest_path}: rule id is missing")
+            evidence = rule.get("evidence", {})
+            fixture = evidence.get("fixture") if isinstance(evidence, dict) else None
+            if isinstance(fixture, str) and (fixture.startswith("/") or "\\" in fixture):
+                errors.append(
+                    f"{manifest_path}: {rule_id} evidence.fixture must be a portable relative locator"
+                )
             declared.setdefault(rule_id, []).append(str(manifest_path.relative_to(ROOT)))
-    errors: list[str] = []
     for rule_id, locations in sorted(declared.items()):
         entry = rules.get(rule_id)
         if not isinstance(entry, dict) or not REQUIRED.issubset(entry):

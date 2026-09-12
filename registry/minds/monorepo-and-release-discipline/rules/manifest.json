@@ -21,7 +21,7 @@
         "sourceClaim": "Profile-local contract: Explicit command boundaries prevent unreviewed execution. The cited source provides context only and does not establish external authorship or endorsement.",
         "sourceLocator": "https://github.com/lendmind-protocol/LMP",
         "implementation": "The LMP evaluator applies rules/commands.json at the configured analysis boundary.",
-        "fixture": "/home/justine/Downloads/lend-mind-protocol/registry/minds/monorepo-and-release-discipline/evidence.json#tests"
+        "fixture": "evidence.json#tests"
       }
     },
     {
@@ -44,7 +44,7 @@
         "sourceClaim": "Profile-local contract: Unsafe Rust is an explicit trust boundary. The cited source provides context only and does not establish external authorship or endorsement.",
         "sourceLocator": "https://github.com/lendmind-protocol/LMP",
         "implementation": "The LMP evaluator applies rules/ast.json at the configured analysis boundary.",
-        "fixture": "/home/justine/Downloads/lend-mind-protocol/registry/minds/monorepo-and-release-discipline/evidence.json#tests"
+        "fixture": "evidence.json#tests"
       }
     },
     {
@@ -67,7 +67,7 @@
         "sourceClaim": "Profile-local contract: Layer boundaries keep policy, evaluation, and artifact handling inspectable. The cited source provides context only and does not establish external authorship or endorsement.",
         "sourceLocator": "https://github.com/lendmind-protocol/LMP",
         "implementation": "The LMP evaluator applies rules/architecture.json at the configured analysis boundary.",
-        "fixture": "/home/justine/Downloads/lend-mind-protocol/registry/minds/monorepo-and-release-discipline/evidence.json#tests"
+        "fixture": "evidence.json#tests"
       }
     },
     {
@@ -90,7 +90,7 @@
         "sourceClaim": "Profile-local contract: Artifacts must not disclose source or machine-local paths by default. The cited source provides context only and does not establish external authorship or endorsement.",
         "sourceLocator": "https://github.com/lendmind-protocol/LMP",
         "implementation": "The LMP evaluator applies rules/security.json at the configured analysis boundary.",
-        "fixture": "/home/justine/Downloads/lend-mind-protocol/registry/minds/monorepo-and-release-discipline/evidence.json#tests"
+        "fixture": "evidence.json#tests"
       }
     },
     {
@@ -113,7 +113,7 @@
         "sourceClaim": "Profile-local contract: Bounded control-flow complexity keeps changes reviewable. The cited source provides context only and does not establish external authorship or endorsement.",
         "sourceLocator": "https://github.com/lendmind-protocol/LMP",
         "implementation": "The LMP evaluator applies rules/complexity.json at the configured analysis boundary.",
-        "fixture": "/home/justine/Downloads/lend-mind-protocol/registry/minds/monorepo-and-release-discipline/evidence.json#tests"
+        "fixture": "evidence.json#tests"
       }
     },
     {
@@ -136,7 +136,7 @@
         "sourceClaim": "Profile-local contract: Dependency policy makes supply-chain and footprint choices explicit. The cited source provides context only and does not establish external authorship or endorsement.",
         "sourceLocator": "https://github.com/lendmind-protocol/LMP",
         "implementation": "The LMP evaluator applies rules/dependencies.json at the configured analysis boundary.",
-        "fixture": "/home/justine/Downloads/lend-mind-protocol/registry/minds/monorepo-and-release-discipline/evidence.json#tests"
+        "fixture": "evidence.json#tests"
       }
     },
     {
@@ -159,7 +159,7 @@
         "sourceClaim": "Profile-local contract: Implicitly untyped values weaken the declared type boundary. The cited source provides context only and does not establish external authorship or endorsement.",
         "sourceLocator": "https://github.com/lendmind-protocol/LMP",
         "implementation": "The LMP evaluator applies rules/typescript.json at the configured analysis boundary.",
-        "fixture": "/home/justine/Downloads/lend-mind-protocol/registry/minds/monorepo-and-release-discipline/evidence.json#tests"
+        "fixture": "evidence.json#tests"
       }
     },
     {
@@ -182,7 +182,7 @@
         "sourceClaim": "Profile-local contract: Dynamic evaluation defeats static review and expands execution risk. The cited source provides context only and does not establish external authorship or endorsement.",
         "sourceLocator": "https://github.com/lendmind-protocol/LMP",
         "implementation": "The LMP evaluator applies rules/typescript.json at the configured analysis boundary.",
-        "fixture": "/home/justine/Downloads/lend-mind-protocol/registry/minds/monorepo-and-release-discipline/evidence.json#tests"
+        "fixture": "evidence.json#tests"
       }
     },
     {
@@ -205,7 +205,7 @@
         "sourceClaim": "Profile-local contract: Production logging should use the repository's observable logging boundary. The cited source provides context only and does not establish external authorship or endorsement.",
         "sourceLocator": "https://github.com/lendmind-protocol/LMP",
         "implementation": "The LMP evaluator applies rules/typescript.json at the configured analysis boundary.",
-        "fixture": "/home/justine/Downloads/lend-mind-protocol/registry/minds/monorepo-and-release-discipline/evidence.json#tests"
+        "fixture": "evidence.json#tests"
       }
     },
     {
@@ -228,7 +228,7 @@
         "sourceClaim": "Profile-local contract: Data locality rules keep relational isolation close to the data boundary. The cited source provides context only and does not establish external authorship or endorsement.",
         "sourceLocator": "https://github.com/lendmind-protocol/LMP",
         "implementation": "The LMP evaluator applies rules/typescript.json at the configured analysis boundary.",
-        "fixture": "/home/justine/Downloads/lend-mind-protocol/registry/minds/monorepo-and-release-discipline/evidence.json#tests"
+        "fixture": "evidence.json#tests"
       }
     }
   ]
