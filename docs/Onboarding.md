@@ -8,7 +8,7 @@
 npx lmp --uninstall .
 ```
 
-The initializer preserves unrelated project guidance and existing MCP servers. Project-scoped integrations are written only for the selected host and report `runtime-unavailable` when verified Rust binaries are not present. Build or install the signed runtime before enabling enforcement. Pass `--install-hooks` when you explicitly want onboarding to create the fail-closed `.git/hooks/pre-commit` boundary; the resulting status is recorded in `.lmp_telemetry/enforcement.json`.
+The initializer preserves unrelated project guidance and existing MCP servers. Project-scoped integrations are written only for the selected host and report `runtime-unavailable` when verified Rust binaries are not present. In a Git workspace, onboarding installs the fail-closed `.git/hooks/pre-commit` boundary and records it in `.lmp_telemetry/enforcement.json`; `--install-hooks` remains available for an explicit request and non-Git workspaces report an install error rather than pretending enforcement exists. A non-Git initialization remains advisory because there is no commit boundary to install.
 
 For non-technical users, the public Mind Vault is the visual path: select a package, use its export action to download a plain-English `LMP_INSTRUCTIONS.md`, and add that file to the AI project’s knowledge/context area. This is guidance injection, not proof that the host obeyed the guidance; a local LMP evaluation is the verification boundary.
 
@@ -31,7 +31,7 @@ The first-run experience must be:
 - No network.
 - No uploads.
 - No package installation.
-- No automatic Git hooks.
+- Automatic fail-closed Git hook when the target is a Git workspace.
 
 The user should understand LMP in one sentence:
 
@@ -64,7 +64,7 @@ Expected behavior:
 - Installs or references the baseline profile.
 - Creates `.lending-mind/artifacts/`.
 - Does not overwrite existing configuration without `--force`.
-- Does not install Git hooks unless `--install-hooks` is explicitly passed.
+- Installs the fail-closed Git hook automatically in a Git workspace; a pre-existing hook requires `--force` before replacement.
 - Does not modify source files.
 - Does not run package scripts.
 - Does not use the network.
@@ -362,7 +362,7 @@ Onboarding must not:
 - Modify source files.
 - Install packages.
 - Overwrite configuration.
-- Install Git hooks without explicit approval.
+- Install a Git hook in a non-Git workspace or overwrite an existing hook without `--force`.
 - Run arbitrary profile-supplied commands.
 
 ## Success condition

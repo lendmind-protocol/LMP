@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
+import { access, cp, mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { rotateMindPackageKey, signMindPackage, verifyMindPackage } from "@lending-mind/sdk";
@@ -42,6 +42,10 @@ export function createProgram() {
     .option("--baseline", "alias for --install-baseline")
     .option("--install-hooks")
     .action(async (options) => {
+      const hasGitBoundary = await access(resolve(".git"))
+        .then(() => true)
+        .catch(() => false);
+      const installHooks = options.installHooks || hasGitBoundary;
       const path = resolve(".lending-mind/config.json");
       if (!options.force) {
         try {
@@ -55,7 +59,7 @@ export function createProgram() {
       await ensureGitignore();
       await writeFile(
         path,
-        `${JSON.stringify({ $schema: "https://lmp-six.vercel.app/schema/workspace-config-v1.json", version: 1, defaultMind: "lmp:mind:baseline", defaultMode: "advisory", excludedPaths: ["generated/**", "vendor/**"], commandPolicy: { allowPackageScripts: false, timeoutMs: 120000 }, artifactPolicy: { directory: ".lending-mind/artifacts", includeSourceCode: false, redactCommandOutput: true }, registry: { mode: "local", remoteEnabled: false } }, null, 2)}\n`,
+        `${JSON.stringify({ $schema: "https://lmp-six.vercel.app/schema/workspace-config-v1.json", version: 1, defaultMind: "lmp:mind:baseline", defaultMode: installHooks ? "enforced" : "advisory", enforcementBoundary: installHooks ? "git-pre-commit" : "none", excludedPaths: ["generated/**", "vendor/**"], commandPolicy: { allowPackageScripts: false, timeoutMs: 120000 }, artifactPolicy: { directory: ".lending-mind/artifacts", includeSourceCode: false, redactCommandOutput: true }, registry: { mode: "local", remoteEnabled: false } }, null, 2)}\n`,
       );
       if (options.installBaseline || options.baseline) {
         await mkdir(resolve(".lending-mind/skills"), { recursive: true });
@@ -69,7 +73,7 @@ export function createProgram() {
           },
         );
       }
-      if (options.installHooks) {
+      if (installHooks) {
         const hook = resolve(".git/hooks/pre-commit");
         if (!options.force) {
           try {

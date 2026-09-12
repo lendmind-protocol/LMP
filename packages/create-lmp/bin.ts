@@ -19,7 +19,7 @@ const workspaceArg = args.find((value, index) => !value.startsWith("--") && !val
 const workspace = resolve(workspaceArg ?? process.cwd());
 const flags = new Map(args.filter((value) => value.startsWith("--")).map((value) => [value, true]));
 const force = flags.has("--force");
-const installHooks = flags.has("--install-hooks");
+const installHooks = flags.has("--install-hooks") || existsSync(join(workspace, ".git"));
 
 // A greenfield target may be a path that does not exist yet. Create it before
 // probing its contents so the same bootstrap path works for both new and
@@ -456,7 +456,7 @@ const config = {
   version: 2,
   defaultMind: ".lending-mind/mind",
   defaultMindId: selectedMindInfo[1],
-  defaultMode: "advisory",
+  defaultMode: installHooks ? "enforced" : "advisory",
   enforcementBoundary: installHooks ? "git-pre-commit" : "none",
   network: "offline",
   commands: "disabled",

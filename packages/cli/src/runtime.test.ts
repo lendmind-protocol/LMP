@@ -151,6 +151,25 @@ describe("CLI runtime", () => {
     }
   });
 
+  it("installs enforced onboarding by default in a Git workspace", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "lmp-cli-enforced-init-"));
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(directory);
+      await mkdir(join(directory, ".git"), { recursive: true });
+      expect(await runCli(["init", "--install-baseline"])).toBe(0);
+      await expect(readFile(join(directory, ".git", "hooks", "pre-commit"), "utf8")).resolves.toContain(
+        "self-govern --mind baseline",
+      );
+      await expect(readFile(join(directory, ".lending-mind", "config.json"), "utf8")).resolves.toContain(
+        '"defaultMode": "enforced"',
+      );
+    } finally {
+      process.chdir(originalCwd);
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
   it("installs an executable enforced self-governance hook", async () => {
     const directory = await mkdtemp(join(tmpdir(), "lmp-cli-self-governance-"));
     try {
