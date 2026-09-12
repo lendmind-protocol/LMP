@@ -278,6 +278,14 @@ fn handle_reload_error(error: anyhow::Error, mode: &str) -> Result<()> {
     Ok(())
 }
 
+fn handle_watcher_error(error: notify::Error, mode: &str) -> Result<()> {
+    eprintln!("❌ filesystem watcher failed: {error:#}");
+    if mode == "enforced" {
+        return Err(anyhow::anyhow!("filesystem watcher failed: {error:#}"));
+    }
+    Ok(())
+}
+
 #[cfg(target_os = "linux")]
 fn release_startup_memory() {
     // The initial evaluation allocates transient parser and report buffers.
@@ -382,7 +390,7 @@ fn main() -> Result<()> {
                         }
                     }
                 }
-                Err(error) => eprintln!("❌ watcher error: {error}"),
+                Err(error) => handle_watcher_error(error, &args.mode)?,
             },
             Err(RecvTimeoutError::Timeout) => {}
             Err(RecvTimeoutError::Disconnected) => break,
@@ -421,5 +429,17 @@ mod tests {
     fn advisory_reload_errors_are_logged_without_stopping() {
         let error = anyhow::anyhow!("reload finding");
         assert!(handle_reload_error(error, "advisory").is_ok());
+    }
+
+    #[test]
+    fn enforced_watcher_errors_stop_the_daemon() {
+        let error = notify::Error::generic("watch backend failed");
+        assert!(handle_watcher_error(error, "enforced").is_err());
+    }
+
+    #[test]
+    fn advisory_watcher_errors_do_not_stop_the_daemon() {
+        let error = notify::Error::generic("watch backend failed");
+        assert!(handle_watcher_error(error, "advisory").is_ok());
     }
 }
