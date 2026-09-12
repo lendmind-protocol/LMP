@@ -38,7 +38,7 @@ The GitHub Pages deployment at `https://lendmind-protocol.github.io/LMP/` was
 published by workflow run `34699927888` and probed on 2026-09-12. The root
 served HTTP 200 and `/docs/` served the expected documentation title. The
 former Vercel target remains unavailable and is not counted as deployment
-evidence. Hosted qualification run [34701539468](https://github.com/lendmind-protocol/LMP/actions/runs/34701539468)
+evidence. Hosted qualification run [34710288767](https://github.com/lendmind-protocol/LMP/actions/runs/34710288767)
 passed all four target build/package/smoke jobs and aggregate archive verification.
 
 The local checkout currently returns `LOCAL_QUALIFIED` from its deliberately
