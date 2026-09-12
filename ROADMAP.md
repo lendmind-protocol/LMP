@@ -43,7 +43,7 @@ remain partial even when the local implementation path is ready.
 | 10 — Human-reviewed profile evolution | Productized locally | Promotion proposals, semver bumps, review state, and non-automatic telemetry promotion are implemented and tested. |
 | 11 — Benchmark and proof of value | Technical evidence only | The 64-scenario benchmark passes its configured controls; causal improvement and independent review remain unproven. |
 | 12 — Protocol core productization | Productized locally, release-bounded | One-shot/daemon contracts, signing, sync verification, self-hosting, and lifecycle checks pass; public release artifacts remain external. |
-| 13 — Optional sandbox and remote distribution | Partial | Docker, local OCI/IPFS paths, GitHub Pages deployment, and three hosted release targets are verified; macOS Intel is queued, while immutable public package publication remains pending. |
+| 13 — Optional sandbox and remote distribution | Productized locally, hosted qualification verified | Docker, local OCI/IPFS paths, GitHub Pages deployment, and all four hosted release targets plus aggregate archive verification pass in qualification run 34701539468; immutable public package publication remains pending. |
 | 14 — Optional fleet and graph orchestration | Planned | No multi-agent fleet is required for the current single-agent product scope. |
 
 ## Product Layers
