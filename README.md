@@ -42,7 +42,7 @@ Engineering preference
 
 | Recommended path | What it does |
 | --- | --- |
-| `npx lmp init --baseline` | Installs the baseline profile through the public launcher |
+| `npx lmp init` | Creates an offline workspace and installs the baseline profile through the public launcher |
 | `npx lmp instructions --mind profiles/baseline` | Prints visible guidance for an agent or human |
 | `npx lmp evaluate --mind profiles/baseline --workspace . --mode advisory` | Evaluates without executing commands or mutating source |
 | `npx lmp self-govern --mind linux-kernel --workspace crates/lmp-core --install-hook` | Runs enforced self-governance and installs a local pre-commit gate |

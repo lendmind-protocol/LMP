@@ -85,14 +85,16 @@ upload is intentionally reported as `not-configured` until a real endpoint and
 credentials are supplied; the command never fabricates a CID or claims that a
 network publication occurred.
 
-The published npm CLI carries the baseline profile. Therefore
-`npx lmp init --baseline` (or `--install-baseline`) is self-contained and does not require the
-user to run the command from an LMP repository checkout.
+The published npm CLI carries the baseline profile. Therefore plain
+`npx lmp init` is self-contained and does not require the user to run the
+command from an LMP repository checkout. `--baseline` and
+`--install-baseline` remain explicit aliases for the same installation path.
 
 The standalone Rust `lmp` release binary embeds the same signed baseline at
-build time. Its `lmp init --baseline` path therefore works from a clean
-directory without access to the LMP source checkout; the release integration
-smoke test exercises this path before any external publication claim.
+build time. Its plain `lmp init` path installs that baseline when the target
+directory has no source-checkout profile, so it works from a clean directory
+without access to the LMP source checkout; the release integration smoke test
+exercises this path before any external publication claim.
 
 ## Governed profile evolution
 
