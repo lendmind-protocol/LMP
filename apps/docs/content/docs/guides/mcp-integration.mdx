@@ -219,6 +219,12 @@ per workspace or tenant; do not share a writable workspace root between users.
 
 ## Pinata IPFS publishing
 
+For local verification without a pinning provider, install the official Kubo
+CLI from the [IPFS Kubo installation guide](https://docs.ipfs.tech/install/command-line/).
+The repository records Kubo `v0.43.0` adding and retrieving a signed Mind
+package by CID. A local CID is not a public pin and must not be copied into
+release metadata as proof of public availability.
+
 IPFS publishing is a release operation, not a browser operation. Configure
 these repository or environment secrets in the release runner:
 

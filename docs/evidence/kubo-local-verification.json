@@ -1,0 +1,26 @@
+{
+  "artifactVersion": "1.0",
+  "status": "verified-local",
+  "tool": {
+    "name": "Kubo",
+    "version": "0.43.0",
+    "source": "https://github.com/ipfs/kubo/releases/tag/v0.43.0"
+  },
+  "package": {
+    "path": "registry/definitions/tj-ponytail",
+    "cid": "QmUb8SoeoqaFXW7Rt21Pwg9rjGMv14v2gqPhccdE6nvPim",
+    "file": "mind.json",
+    "sha256": "c1de54e17ecdf59b53f39887c20042d1ed872114c8415f7392d83eb79ce06139"
+  },
+  "checks": [
+    "A clean temporary Kubo repository was initialized with the server profile.",
+    "The canonical signed Mind package was added with Kubo's content-addressed importer.",
+    "mind.json was retrieved by CID and its SHA-256 matched the canonical file."
+  ],
+  "privacy": {
+    "sourceCodeIncluded": false,
+    "secretsIncluded": false,
+    "temporaryRepositoryRetained": false
+  },
+  "boundary": "This proves local Kubo add/retrieval only. It does not prove public pin persistence, gateway availability, or IPFS/OCI release publication."
+}

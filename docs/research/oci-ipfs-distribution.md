@@ -47,5 +47,7 @@ remote source behavior.
 
 ## Known limitation
 
-No public immutable deployment is claimed until its CID and retrieval evidence
-are recorded.
+Local Kubo add/retrieval is recorded in
+[`docs/evidence/kubo-local-verification.json`](../evidence/kubo-local-verification.json)
+for Kubo v0.43.0. No public immutable deployment is claimed until a pinning
+provider or public Kubo node supplies independently retrievable CID evidence.
