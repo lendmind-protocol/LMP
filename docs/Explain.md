@@ -9,7 +9,7 @@ Right now, if you use Claude Code, Pi Agent, or standard developer tools, they a
 
 If you ask a default AI agent to build a simple web page or an API, it will pull in 50 heavy dependencies, write massive nested loops, and create a codebase that is hard to maintain. It does this because it is just mimicking the average code found on the internet. It does not know why a veteran engineer would choose a lightweight tool instead of a heavy framework. It lacks "battle scars."
 
-**Lending-Mind**, solves this practically by doing something no default agent can do on its own: **It forces the AI to look at the world through the eyes of a specific expert.**
+**Lending-Mind** addresses part of this gap by packaging a declared engineering stance as guidance, executable checks, and reviewable evidence. It can constrain supported changes at a connected evaluation boundary; it does not control an agent's private reasoning.
 
 > **Status note:** Rust is the canonical LMP runtime. TypeScript references describe secondary Node.js integration and target-project tooling, not a second LMP implementation.
 
@@ -18,25 +18,25 @@ Think of a default AI agent like a highly skilled rental car driver. They know h
 
 But if you put that driver on a dangerous, icy mountain road, they are going to crash because they don't have the experience of a local mountain driver.
 
-- A traditional prompt or markdown file is like shouting out the window: "_Hey, please be careful on the ice!_"The driver hears you, but they still don't know how to navigate the curves.
+- A traditional prompt or markdown file is like shouting out the window: "_Hey, please be careful on the ice!_" The driver may hear you, but there is no independent record that the rule was followed.
 
-- **Lending-Mind** is like downloading the exact driving habits, muscle memory, and historical experience of a veteran mountain driver and injecting it directly into the driver's head. Suddenly, they shift gears differently, they brake early, and they respect the environment.
+- **Lending-Mind** is more like carrying documented route guidance and placing checks at the road boundaries. The driver still chooses how to drive; a connected evaluator can reject a change when a declared, implemented rule is violated.
 
-When you use **LMP**, the AI agent stops guessing. It modifies `package.json` or `Cargo.toml` automatically because it "remembers" that a heavy framework will slow down the application. It writes cleaner loops because it is mimicking an expert who values performance.
+When you use **LMP**, the selected Mind makes its trade-offs discoverable and returns concrete findings. An agent may use that feedback to change `package.json`, `Cargo.toml`, or implementation code, but LMP does not autonomously rewrite source or guarantee that the agent follows every recommendation.
 
-> By creating a system that forces an AI to adopt a specific person's philosophy, trade-offs, and design choices, we are building the missing piece of the puzzle. we are moving AI code generation away from generic internet code and moving it toward true, high-quality human craftsmanship.
+> By creating a system that records source-backed philosophy, trade-offs, and design choices alongside executable checks, LMP makes review claims more inspectable. It does not prove that a generated patch has achieved human-level craftsmanship.
 
 ## If those skills already exist as raw configurations, why should you build Lending-Mind Protocol (LMP)? Why not just use them out of the box?
 open-source community's initial hype from reality. In the current ecosystem, skills like `ponytail`, `caveman`, or `emil-kowalski-design` are blowing up on GitHub because they are fantastic _instruction lists_.
 
-**The short answer is**: Those skills are just plain text files, and independent benchmarks prove that AI agents frequently ignore them, bypass them, or fail to activate them under stress. LMP is the actual mechanical runtime that makes them work.
+**The short answer is**: Skills are primarily guidance assets. LMP adds a versioned package, integrity checks, and bounded evaluation at connected protocol, daemon, or Git boundaries. It does not make a skill universally active or prevent every host-level bypass.
 
 # The Reality of Modern AI Skills
-Independent tracking studies (including deep multi-run tests by teams like _JetBrains_) revealed a massive flaw in the traditional skill model: **AI agents suffer from "Non-Invocation"**.
+The practical limitation of the traditional skill model is **non-invocation**: a host or model may not load guidance when it is needed.
 
 - When you install a skill like `ponytail` or `caveman` by dropping a .md file into an agent's directory, the AI model has to choose to read it and obey it.
-- In real-world coding sessions, when the model faces a complex bug or a massive codebase, it focuses heavily on the task text and **completely forgets the skill rules**. In fact, tests showed that passive skills often self-activated 0% of the time unless forced.
-- Furthermore, if an agent decides to bypass `ponytail` and write 200 lines of bloated code anyway, there is no physical guardrail to stop it from saving that file to your computer.
+- Under pressure, an agent can overlook guidance. LMP records the active package and can evaluate supported source and policy boundaries, but it cannot inspect private model attention or guarantee that every host invokes the guidance.
+- If an agent writes outside a connected LMP boundary, that write is outside LMP's enforcement scope. Git hooks, daemon watching, and MCP checks provide distinct, documented boundaries rather than a universal filesystem firewall.
 
 ### Do not think of LMP project as a duplicate of `ponytail`.
 - `ponytail` is a specific profile asset. It tells the AI: "_Be a lazy senior developer, write less code, use native standard libraries._"
@@ -52,7 +52,7 @@ The protocol accomplishes this via a two-part workspace contract: **discoverable
 - When a user runs `npx create-lmp`, the script checks the environment. Whether the environment is a greenfield or brownfield project, the bootstrapper adds an explicit, marked LMP section to the workspace guidance files without overwriting existing instructions. It installs the local adapter contract and, when available, a checksum-verified Rust sidecar. The evaluator then enforces the selected policy on the scoped change before the result can be treated as passing.
 
 ### The Lifecycle Stream: What Happens Post-Install
-``[Agent Initialized] ──► [1. Reads CLAUDE.md/AGENTS.md] ──► [2. Host invokes configured LMP MCP adapter] ──► [3. Code Enforced]``
+``[Agent Initialized] ──► [1. Reads CLAUDE.md/AGENTS.md] ──► [2. Host invokes configured LMP MCP adapter] ──► [3. Candidate evaluated at the connected boundary]``
 The LMP MCP adapter receives the host request and keeps a persistent Rust session for the request lifecycle. The Rust side validates the workspace scope, loads the selected local Mind package, and returns typed guidance, findings, remediation state, or an explicit blocked/error result. It does not silently clone dependencies or pretend that an unavailable host integration was installed.
 
 By setting up the protocol this way, the workspace contract remains portable across agent vendors. LMP uses their **file-reading habits** to make the active policy discoverable, and their **MCP capabilities** to pass requests to the local Rust validation rules. The host still needs to consume `.lmp_telemetry/agent-mcp.json`; onboarding does not silently edit global agent settings, and a missing adapter is reported rather than treated as enforcement.
@@ -354,9 +354,9 @@ Artifact stored
 Mind calibration proposal
 ```
 
-<p>An executable engineering cognition layer for AI agents. LMP Minds package the decision-making systems of experienced engineers and teams: their philosophy, trade-offs, architectural boundaries, implementation archetypes, tool behavior, review standards, and verified outcomes.
+<p>An executable engineering evidence layer for AI-assisted development. LMP Minds package documented engineering stances: philosophy, trade-offs, architectural boundaries, implementation archetypes, tool behavior, review standards, and verified outcomes.
 
-The LMP runtime synchronizes that Mind across the agent’s prompt, context, tools, execution loop, validation, artifacts, and optional multi-agent workflow. It detects when code deviates from the Mind, forces a critique/remediation cycle within the configured harness, and uses verified artifacts to evolve future versions of the Mind.</p>
+The LMP runtime makes that Mind available through guidance, validation, artifacts, and optional agent integrations. It detects deviations only for declared checks within the evaluated scope, returns findings for remediation, and uses verified artifacts to inform future human-reviewed Mind proposals.</p>
 
 ## Current verified boundary
 
