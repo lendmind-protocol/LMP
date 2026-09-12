@@ -14,7 +14,6 @@ enum SourceLanguage {
     Rust,
     TypeScript,
     JavaScript,
-    Python,
 }
 
 impl SourceLanguage {
@@ -23,7 +22,6 @@ impl SourceLanguage {
             Self::Rust => "rust",
             Self::TypeScript => "typescript",
             Self::JavaScript => "javascript",
-            Self::Python => "python",
         }
     }
 
@@ -31,7 +29,6 @@ impl SourceLanguage {
         match self {
             Self::Rust => "syn-2",
             Self::TypeScript | Self::JavaScript => "line-policy-v1",
-            Self::Python => "line-policy-v1",
         }
     }
 
@@ -40,7 +37,6 @@ impl SourceLanguage {
             Self::Rust => "2021",
             Self::TypeScript => "syntax-version-agnostic",
             Self::JavaScript => "syntax-version-agnostic",
-            Self::Python => "syntax-version-agnostic",
         }
     }
 }
@@ -55,7 +51,6 @@ fn source_language(path: &Path) -> Option<SourceLanguage> {
         "rs" => Some(SourceLanguage::Rust),
         "ts" | "tsx" => Some(SourceLanguage::TypeScript),
         "js" | "jsx" | "mjs" | "cjs" => Some(SourceLanguage::JavaScript),
-        "py" | "pyi" => Some(SourceLanguage::Python),
         _ => None,
     }
 }
@@ -110,6 +105,7 @@ fn unsupported_source_language(path: &Path) -> Option<&'static str> {
         "c" | "h" | "cc" | "cpp" | "cxx" | "hpp" => Some("c-family"),
         "sql" => Some("sql"),
         "hcl" | "tf" => Some("hcl"),
+        "py" | "pyi" => Some("python"),
         _ => None,
     }
 }
@@ -858,6 +854,7 @@ mod tests {
         fs::create_dir_all(&workspace).unwrap();
         fs::write(workspace.join("src.ts"), "export const value = 1;\n").unwrap();
         fs::write(workspace.join("worker.go"), "package main\n").unwrap();
+        fs::write(workspace.join("worker.py"), "def run():\n    return True\n").unwrap();
 
         let report = evaluate(&root, &workspace, "enforced", None).unwrap();
         assert_eq!(report.state, "needs_revision");
@@ -865,6 +862,10 @@ mod tests {
             .findings
             .iter()
             .any(|finding| finding.rule_id == "language.unsupported.go"));
+        assert!(report
+            .findings
+            .iter()
+            .any(|finding| finding.rule_id == "language.unsupported.python"));
         assert_eq!(report.artifact["analysis"]["checkedFiles"], 1);
         assert!(report.artifact["analysis"]["languages"]
             .as_array()
@@ -876,6 +877,11 @@ mod tests {
             .unwrap()
             .iter()
             .any(|item| item["checkId"] == "language.go"));
+        assert!(report.artifact["skippedChecks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|item| item["checkId"] == "language.python"));
         fs::remove_dir_all(workspace).unwrap();
     }
 
