@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { join, resolve } from "node:path";
 import { OciRegistryClient } from "@lending-mind/internal-registry";
 
@@ -13,6 +15,7 @@ const output = resolve(
   root,
   process.env.LMP_OCI_EVIDENCE ?? "lmp-test-results/oci-publication.json",
 );
+const execFileAsync = promisify(execFile);
 
 if (!repository) throw new Error("LMP_OCI_REPOSITORY is required");
 if (!username || !password) throw new Error("LMP_OCI_USERNAME and LMP_OCI_PASSWORD are required");
@@ -38,13 +41,17 @@ for (const slug of profiles) {
   });
 }
 
+const sourceRevision =
+  process.env.GITHUB_SHA ??
+  (await execFileAsync("git", ["rev-parse", "HEAD"], { cwd: root })).stdout.trim();
+
 const evidence = {
   schema: "lmp-oci-publication-v1",
   status: "verified",
   registry,
   repository,
   published,
-  sourceRevision: (await readFile(join(root, ".git/HEAD"), "utf8")).trim(),
+  sourceRevision,
   createdAt: new Date().toISOString(),
 };
 await mkdir(join(root, "lmp-test-results"), { recursive: true });
