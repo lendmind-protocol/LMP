@@ -273,6 +273,39 @@ describe("evaluator", () => {
     await rm(directory, { recursive: true, force: true });
   });
 
+  it("fails closed when a profile declares a rule outside this evaluator's coverage", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "lmp-evaluator-unsupported-rule-"));
+    await writeFile(join(directory, "package.json"), "{}\n");
+    await writeFile(join(directory, "src.ts"), "export const ready = true;\n");
+    const report = await evaluate({
+      directory,
+      packageDirectory: resolve(
+        dirname(new URL(import.meta.url).pathname),
+        "../../../registry/minds/documentation-truthfulness",
+      ),
+      mode: "enforced",
+      artifactMode: "full",
+      runCommands: false,
+    });
+    expect(report.passed).toBe(false);
+    expect(report.unsupportedRules).toContain("ast.unsafe-boundary");
+    expect(report.results).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          ruleId: "rule.unsupported.ast.unsafe-boundary",
+          severity: "error",
+        }),
+      ]),
+    );
+    expect(report.artifact).toMatchObject({
+      analysis: { unsupportedRules: expect.arrayContaining(["ast.unsafe-boundary"]) },
+      skippedChecks: expect.arrayContaining([
+        expect.objectContaining({ checkId: "rule.ast.unsafe-boundary", status: "unsupported" }),
+      ]),
+    });
+    await rm(directory, { recursive: true, force: true });
+  });
+
   it("detects materially duplicated function bodies", async () => {
     const directory = await mkdtemp(join(tmpdir(), "lmp-evaluator-duplicate-"));
     await writeFile(join(directory, "package.json"), "{}\n");

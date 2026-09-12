@@ -332,6 +332,7 @@ export const EvaluationArtifactSchema = z
         checkedFiles: z.number().int().nonnegative(),
         unsupportedLanguages: z.array(z.string()).optional(),
         unsupportedFiles: z.record(z.array(z.string())).optional(),
+        unsupportedRules: z.array(z.string()).optional(),
       })
       .strict()
       .optional(),

@@ -64,6 +64,7 @@ export interface EvaluationReport {
   results: RuleResult[];
   dependency: DependencyReport;
   ast: AstReport;
+  unsupportedRules: string[];
   commands: CommandResult[];
   state: EvaluationState;
   artifactPath?: string;
@@ -414,6 +415,71 @@ const unsupportedLanguageExtensions: Record<string, string> = {
   ".rs": "rust",
   ".swift": "swift",
 };
+
+const supportedRuleIds = new Set([
+  "commands.allowlist",
+  "complexity.cyclomatic",
+  "complexity.function-lines",
+  "complexity.cyclomatic.summary",
+  "complexity.function-lines.summary",
+  "dependencies.deny",
+  "typescript.any",
+  "typescript.eval",
+  "typescript.dynamic-require",
+  "typescript.console",
+  "typescript.empty-catch",
+  "typescript.type-error",
+  "typescript.unused-variable",
+  "typescript.duplicate-logic",
+  "security.hardcoded-secret",
+  "security.insecure-default",
+  "database.app-layer-join",
+  "typescript.ast",
+  "typescript.strict",
+  "typescript.noImplicitAny",
+  "typescript.requireTestFile",
+]);
+
+const supportedPolicyRuleIds = new Set([
+  "commandPolicy.allow",
+  "commandPolicy.deny",
+  "commandPolicy.requiredScripts",
+  "commandPolicy.allowPackageScripts",
+  "commandPolicy.timeoutMs",
+  "complexityPolicy.maxCyclomatic",
+  "complexityPolicy.maxExportedCyclomatic",
+  "complexityPolicy.maxFunctionLines",
+  "complexityPolicy.severity",
+  "dependencyPolicy.deny",
+  "dependencyPolicy.allow",
+  "dependencyPolicy.productionOnly",
+  "dependencyPolicy.severity",
+  "typescriptPolicy.strict",
+  "typescriptPolicy.noImplicitAny",
+  "typescriptPolicy.requireTestFile",
+  "typescriptPolicy.errorAny",
+  "typescriptPolicy.warnAny",
+  "typescriptPolicy.errorConsoleLog",
+  "typescriptPolicy.warnConsoleLog",
+  "typescriptPolicy.errorEmptyCatch",
+  "typescriptPolicy.warnEmptyCatch",
+  "typescriptPolicy.errorHardcodedSecret",
+  "typescriptPolicy.warnHardcodedSecret",
+  "typescriptPolicy.errorUnusedVariable",
+  "typescriptPolicy.warnUnusedVariable",
+  "typescriptPolicy.errorTypeErrors",
+  "typescriptPolicy.warnTypeErrors",
+  "typescriptPolicy.errorDuplicateLogic",
+  "typescriptPolicy.warnDuplicateLogic",
+  "typescriptPolicy.errorInsecureDefault",
+  "typescriptPolicy.warnInsecureDefault",
+  "typescriptPolicy.errorDynamicRequire",
+  "typescriptPolicy.warnDynamicRequire",
+  "typescriptPolicy.errorEval",
+  "typescriptPolicy.warnEval",
+  "typescriptPolicy.errorAppLayerJoin",
+  "typescriptPolicy.warnAppLayerJoin",
+]);
 
 async function unsupportedSourceFiles(
   directory: string,
@@ -1021,12 +1087,17 @@ export async function evaluate(options: EvaluationOptions): Promise<EvaluationRe
   const unsupportedFiles = await unsupportedSourceFiles(directory, options.exclusions ?? []);
   ast.unsupportedFiles = unsupportedFiles;
   ast.unsupportedLanguages = Object.keys(unsupportedFiles);
+  const unsupportedRules = bundle.rules
+    .map((rule) => rule.id)
+    .filter((ruleId) => !supportedRuleIds.has(ruleId) && !supportedPolicyRuleIds.has(ruleId))
+    .sort();
   const results: RuleResult[] = sourceFindings(
     directory,
     options.tsconfig,
     options.exclusions ?? [],
     policies.typescript ?? policies.typescriptPolicy ?? {},
   );
+  const sourceViolationCount = results.length;
   if (selectedMode === "enforced")
     for (const language of ast.unsupportedLanguages)
       results.push(
@@ -1038,12 +1109,22 @@ export async function evaluate(options: EvaluationOptions): Promise<EvaluationRe
           { language, files: unsupportedFiles[language] },
         ),
       );
+  if (selectedMode === "enforced")
+    for (const ruleId of unsupportedRules)
+      results.push(
+        simpleResult(
+          `rule.unsupported.${ruleId}`,
+          false,
+          "error",
+          `Unsupported rule contract: ${ruleId}.`,
+          { ruleId },
+        ),
+      );
   const tsPolicy = policies.typescript ?? policies.typescriptPolicy ?? {};
   if (tsPolicy.errorTypeErrors === true || tsPolicy.warnTypeErrors === true)
     results.push(
       ...compilerFindings(directory, options.tsconfig, options.exclusions ?? [], tsPolicy),
     );
-  const sourceViolationCount = results.length;
   results.push(
     simpleResult(
       "typescript.ast",
@@ -1315,6 +1396,11 @@ export async function evaluate(options: EvaluationOptions): Promise<EvaluationRe
       reason: `No JavaScript evaluator is available for ${language} source files in this runtime.`,
       status: "unsupported" as const,
     })),
+    ...unsupportedRules.map((ruleId) => ({
+      checkId: `rule.${ruleId}`,
+      reason: `This evaluator does not implement the declared ${ruleId} contract.`,
+      status: "unsupported" as const,
+    })),
   ];
   const loopTransitions = [
     { state: "evaluating", event: "evaluation_started", attempt: 0 },
@@ -1388,6 +1474,7 @@ export async function evaluate(options: EvaluationOptions): Promise<EvaluationRe
       checkedFiles: ast.files,
       unsupportedLanguages: ast.unsupportedLanguages,
       unsupportedFiles: ast.unsupportedFiles,
+      unsupportedRules,
     },
     skippedChecks,
     loopTransitions,
@@ -1419,6 +1506,7 @@ export async function evaluate(options: EvaluationOptions): Promise<EvaluationRe
     results: normalizedResults,
     dependency,
     ast,
+    unsupportedRules,
     commands,
     state,
     artifactPath,
