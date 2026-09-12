@@ -276,13 +276,13 @@ Add structured local events first. Each event should carry `runId`, `stepId`, `a
 
 ### Aspirational or misleading material
 
-`docs/Concept.md` contains a much broader system narrative than the current implementation, including decentralized telemetry, dynamic weight optimization, an LMSF sync fabric, and remote artifact layers. Those sections conflict with the more honest boundaries in `docs/architecture.md`, `docs/claim-ledger.md`, and `docs/production-readiness-report.md`.
+The former `docs/Concept.md` contained a much broader system narrative than the current implementation, including decentralized telemetry, dynamic weight optimization, an LMSF sync fabric, and remote artifact layers. That material has now been removed and replaced with an evidence-bounded concept page. The claim ledger and production-readiness report remain the authoritative status sources.
 
 This is not a cosmetic documentation issue. Old concept text is a product claim surface. Investors, users, and contributors will read it as a roadmap or capability statement.
 
 ### Required cleanup
 
-Mark `docs/Concept.md` as historical or rewrite it to match shipped behavior. Delete code-shaped pseudocode for unavailable remote systems. Keep future work in `ROADMAP.md` with explicit status and external gates.
+Keep `docs/Concept.md` aligned with shipped behavior. Do not reintroduce code-shaped pseudocode for unavailable remote systems; keep future work in `ROADMAP.md` with explicit status and external gates.
 
 ## 11. Long-Term Evolution and Happy Path
 
@@ -355,7 +355,7 @@ The product’s actual value sits in the protocol enforcement and evidence layer
 
 ## 14. Risk Findings
 
-1. Production-ready language is mostly corrected in current documents, but `docs/Concept.md` still creates overclaim risk.
+1. Production-ready language is corrected in the current concept page; future edits must preserve its bounded claims.
 
 2. Audit language is safe only when tied to selected checks and artifacts. A user could still read “audit” as a security audit. Use “policy evaluation” for the default CLI surface.
 
@@ -428,7 +428,7 @@ The product’s actual value sits in the protocol enforcement and evidence layer
 | Priority | Action | Scope | Why it matters | Effort |
 | --- | --- | --- | --- | --- |
 | 1 | Make one evaluator canonical | `crates/lmp-core`, `packages/evaluator`, shared fixtures | Prevents contradictory pass and fail decisions | L |
-| 2 | Rewrite historical concept claims | `docs/Concept.md`, `README.md`, docs portal | Stops users from mistaking roadmap text for shipped behavior | S |
+| 2 | Preserve bounded concept claims | `docs/Concept.md`, `README.md`, docs portal | Stops users from mistaking roadmap text for shipped behavior | S |
 | 3 | Add real agent-host integration | `crates/lmp-mcp`, `packages/mcp-server`, one supported host | Proves LMP receives actual agent traffic and reaches a real boundary | M |
 | 4 | Add run, step, and attempt lineage | artifact schemas, CLI, orchestrator | Makes failures and retries reviewable | M |
 | 5 | Replace benchmark fixtures with model-generated trials | `orchestrator/real_world_benchmark.py` | Tests the product claim rather than the evaluator’s hand-built examples | L |
