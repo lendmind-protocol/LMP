@@ -2,11 +2,16 @@
   "name": "lending-mind-protocol",
   "private": true,
   "version": "0.1.0",
-  "repository": { "type": "git", "url": "https://github.com/lendmind-protocol/LMP.git" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lendmind-protocol/LMP.git"
+  },
   "homepage": "https://lmp-six.vercel.app/",
   "type": "module",
   "packageManager": "pnpm@9.15.4",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "turbo run dev",
     "lmp": "cargo run --bin lmp --",
@@ -24,6 +29,7 @@
     "verify:public-packages": "node orchestrator/public_package_gate.mjs",
     "verify:docs": "python3 orchestrator/docs_quality_gate.py",
     "verify:self-audit": "python3 orchestrator/self_audit.py",
+    "verify:self-governance": "pnpm --filter @lending-mind/lmp build && node packages/lmp/bin.js self-govern --mind linux-kernel --workspace crates/lmp-core --install-hook --json",
     "benchmark:onboarding": "python3 orchestrator/onboarding_benchmark.py --output lmp-test-results/onboarding-current.json",
     "sync:public-registry": "node scripts/sync-public-registry.mjs",
     "generate:docs": "tsx scripts/generate-docs.ts",
@@ -31,13 +37,21 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
+    "@changesets/cli": "^2.27.11",
     "@lending-mind/skill": "workspace:*",
     "@types/node": "^22.10.2",
-    "@vitest/coverage-v8": "^2.1.8",
-    "@changesets/cli": "^2.27.11",
+    "@vitest/coverage-v8": "^3.2.7",
+    "js-yaml": "^4.3.2",
     "tsx": "^4.19.2",
     "turbo": "^2.3.3",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "vite": "^7.1.5",
+    "vitest": "^3.2.7"
+  },
+  "pnpm": {
+    "overrides": {
+      "js-yaml@3": "3.15.2",
+      "js-yaml@4": "4.3.2"
+    }
   }
 }

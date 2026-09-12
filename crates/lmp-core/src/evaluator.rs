@@ -112,6 +112,11 @@ fn walk(path: &Path, out: &mut Vec<PathBuf>) -> std::io::Result<()> {
             "dist",
             "build",
             "coverage",
+            ".next",
+            ".turbo",
+            ".cache",
+            ".lmp-real-world-work",
+            "lmp-test-results",
             ".lending-mind",
         ]
         .contains(&n.to_string_lossy().as_ref())
@@ -359,6 +364,16 @@ pub fn evaluate_with_options(
     artifact_dir: Option<&Path>,
     options: EvaluationOptions<'_>,
 ) -> Result<Evaluation> {
+    evaluate_with_options_impl(package_dir, workspace, mode, artifact_dir, options)
+}
+
+fn evaluate_with_options_impl(
+    package_dir: &Path,
+    workspace: &Path,
+    mode: &str,
+    artifact_dir: Option<&Path>,
+    options: EvaluationOptions<'_>,
+) -> Result<Evaluation> {
     let profile_cache = workspace.join(".lending-mind/cache/profiles");
     let bundle = compiler::compile_cached(package_dir, &profile_cache)?;
     let signature_status = crate::crypto::package_signature_status(package_dir)
@@ -426,7 +441,7 @@ pub fn evaluate_with_options(
                 findings.extend(messages.into_iter().map(|message| Finding {
                     rule_id: "rust.ast".into(),
                     passed: false,
-                    severity: "warning".into(),
+                    severity: "error".into(),
                     message,
                     evidence: json!({"file": file.strip_prefix(workspace).unwrap_or(file).display().to_string(), "cache":"hit"}),
                 }));
@@ -438,7 +453,7 @@ pub fn evaluate_with_options(
             }
             let messages = crate::ast::audit_source(&source, max_complexity, &[])?;
             fs::write(&cache_path, serde_json::to_vec(&messages)?)?;
-            findings.extend(messages.into_iter().map(|message| Finding { rule_id: "rust.ast".into(), passed: false, severity: "warning".into(), message, evidence: json!({"file": file.strip_prefix(workspace).unwrap_or(file).display().to_string(), "cache":"miss"}) }));
+            findings.extend(messages.into_iter().map(|message| Finding { rule_id: "rust.ast".into(), passed: false, severity: "error".into(), message, evidence: json!({"file": file.strip_prefix(workspace).unwrap_or(file).display().to_string(), "cache":"miss"}) }));
         } else {
             findings.extend(source_findings(file, workspace, &source, &flags));
         }
@@ -462,7 +477,7 @@ pub fn evaluate_with_options(
         .iter()
         .filter(|f| !f.passed && f.severity == "warning")
         .count();
-    let passed = mode != "enforced" || errors == 0;
+    let passed = mode != "enforced" || (errors == 0 && warnings == 0);
     let state = if signature_status == "invalid" {
         "blocked"
     } else if errors > 0 || warnings > 0 {

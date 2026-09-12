@@ -100,6 +100,18 @@ target/debug/lmp evaluate \
 An audit result is scoped evidence. If the selected files, profile, runtime,
 or toolchain changes, rerun it and keep the new artifact with the new revision.
 
+The complete repository workflow is also available as one gate:
+
+```bash
+pnpm verify:self-governance
+```
+
+This activates `linux-kernel`, evaluates the foundational Rust runtime in
+`crates/lmp-core` in enforced mode, and writes an executable
+`.git/hooks/pre-commit` hook that reruns that enforced LMP evaluation before
+each commit. The hook is local state, not a replacement for CI; CI runs the
+same gate independently.
+
 ## Safe interpretation of the paradox
 
 AI assistance can generate a starting point. It cannot supply independent

@@ -21,8 +21,13 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+      - uses: dtolnay/rust-toolchain@1.98.1
+        with:
+          toolchain: 1.98.1
       - name: Install JavaScript workspace dependencies
         run: corepack enable && pnpm install --frozen-lockfile
+      - name: Build the Rust MCP binary before adapter tests
+        run: cargo build --workspace
       - run: pnpm lint
       - run: pnpm test
       - run: pnpm typecheck
@@ -39,9 +44,6 @@ jobs:
           python3 orchestrator/render_evaluation_summary.py \
             lmp-test-results/evaluator-integration/"$(find lmp-test-results/evaluator-integration -maxdepth 1 -name '*.json' | sort | head -n 1 | xargs -n1 basename)" \
             --output lmp-test-results/evaluator-integration-summary.md
-      - uses: dtolnay/rust-toolchain@1.98.1
-        with:
-          toolchain: 1.98.1
       - run: cargo test --workspace
       - run: cargo build --release --workspace
       - name: Verify Rust and Node onboarding integration

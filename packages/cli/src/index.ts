@@ -158,15 +158,16 @@ export function createProgram() {
     .option("--json")
     .action(async (options) => {
       const workspace = resolve(options.workspace);
-      const activated = await activateMind(options.mind, workspace);
+      const projectRoot = process.cwd();
+      const activated = await activateMind(options.mind, projectRoot);
       const artifact = await evaluate(
-        await loadMind(activated.path, workspace),
+        await loadMind(activated.path, projectRoot),
         workspace,
         "enforced",
         { artifactDir: options.artifactDir, mindPath: activated.path },
       );
       const hook = options.installHook
-        ? await installEnforcedHook(workspace, options.mind)
+        ? await installEnforcedHook(projectRoot, options.mind)
         : undefined;
       const result = {
         profile: { id: activated.id, version: activated.version, path: activated.path },

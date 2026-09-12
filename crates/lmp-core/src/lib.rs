@@ -262,6 +262,10 @@ pub fn load_package(path: &Path) -> anyhow::Result<MindPackage> {
 }
 
 pub fn validate_package_dir(dir: &Path) -> anyhow::Result<MindPackage> {
+    validate_package_dir_impl(dir)
+}
+
+fn validate_package_dir_impl(dir: &Path) -> anyhow::Result<MindPackage> {
     let manifest = if dir.is_dir() {
         let mind = dir.join("mind.json");
         if mind.exists() {

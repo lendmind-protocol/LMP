@@ -31,7 +31,7 @@ jobs:
         uses: taiki-e/install-action@v2
         with:
           tool: cargo-audit
-      - run: cargo audit --locked
+      - run: cargo audit
 
   node-audit:
     name: Audit Node dependencies

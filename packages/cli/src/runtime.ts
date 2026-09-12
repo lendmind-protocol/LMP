@@ -3,6 +3,7 @@ import { createPrivateKey, createPublicKey } from "node:crypto";
 import {
   access,
   appendFile,
+  chmod,
   cp,
   mkdir,
   readFile,
@@ -112,7 +113,12 @@ async function resolveMindInputPath(input: string | undefined, cwd: string): Pro
     const packagePath = await resolveMindPath(selected, cwd);
     return (await stat(packagePath)).isDirectory() ? join(packagePath, "mind.json") : packagePath;
   }
-  return resolve(cwd, selected ?? join("skills", "baseline", "mind.json"));
+  const resolved = resolve(cwd, selected ?? join("skills", "baseline", "mind.json"));
+  try {
+    return (await stat(resolved)).isDirectory() ? join(resolved, "mind.json") : resolved;
+  } catch {
+    return resolved;
+  }
 }
 
 export async function resolveMindPath(id: string, cwd = process.cwd()): Promise<string> {
@@ -130,10 +136,13 @@ export async function resolveMindPath(id: string, cwd = process.cwd()): Promise<
   ];
   for (const candidate of candidates) {
     try {
-      await access(candidate);
+      const candidateType = await stat(candidate);
+      if (candidateType.isDirectory()) {
+        await access(join(candidate, "mind.json"));
+      }
       return candidate;
     } catch {
-      /* continue through local registry locations */
+      /* continue through local registry locations and ignore non-profile directories */
     }
   }
   throw new Error(`mind profile '${id}' was not found in the local registry`);
@@ -255,6 +264,35 @@ export async function activateMind(id: string, cwd = process.cwd()) {
   await mkdir(root(cwd), { recursive: true });
   await writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`);
   return installed;
+}
+
+export async function installEnforcedHook(
+  cwd = process.cwd(),
+  mind = "linux-kernel",
+): Promise<string> {
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(mind))
+    throw new Error("self-governance mind must be a kebab-case profile name");
+  const gitDirectory = join(cwd, ".git");
+  try {
+    await stat(gitDirectory);
+  } catch {
+    throw new Error(`cannot install self-governance hook: ${gitDirectory} is missing`);
+  }
+  const hook = join(gitDirectory, "hooks", "pre-commit");
+  await mkdir(join(gitDirectory, "hooks"), { recursive: true });
+  await writeFile(
+    hook,
+    `#!/bin/sh
+set -eu
+root="$(git rev-parse --show-toplevel)"
+if [ -f "$root/packages/lmp/bin.js" ]; then
+  exec node "$root/packages/lmp/bin.js" self-govern --mind ${mind} --workspace crates/lmp-core --artifact-dir .lending-mind/artifacts
+fi
+exec npx --no-install lmp self-govern --mind ${mind} --workspace crates/lmp-core --artifact-dir .lending-mind/artifacts
+`,
+  );
+  await chmod(hook, 0o755);
+  return hook;
 }
 
 export async function shareMind(
