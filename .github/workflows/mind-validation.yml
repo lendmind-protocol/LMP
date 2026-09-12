@@ -21,6 +21,8 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Validate every shipped Mind package and evidence manifest
+        run: pnpm validate:skills
       - name: Build workspace packages required by self-hosting checks
         run: |
           pnpm --filter @lending-mind/sdk build
