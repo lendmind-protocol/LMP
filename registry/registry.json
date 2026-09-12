@@ -51,7 +51,7 @@
         {
           "path": "rules/manifest.json",
           "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/main/registry/definitions/tj-ponytail/rules/manifest.json",
-          "digest": "cb33a8d274d628c6d7087453392404d39139a63c0cb6cb49788bd03975b3e291"
+          "digest": "154e64a9de3d39b842bef9675e5184f95afd66e450e788a5035f03b26270278a"
         },
         {
           "path": "rules/typescript.json",
