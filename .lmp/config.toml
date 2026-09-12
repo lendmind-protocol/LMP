@@ -15,7 +15,10 @@ require_signature = true
 
 [repository]
 root = "."
-allowed_paths = ["crates", "orchestrator", "packages", "registry/minds", "docs", "apps/docs/content/docs", "scripts"]
+# Static Rust/TypeScript/JavaScript evaluation scope. The Python orchestration
+# layer is covered by the pinned `validation.python` command below; it is not
+# silently treated as statically analyzed by the Rust evaluator.
+allowed_paths = ["crates", "packages", "registry/minds", "docs", "apps/docs/content/docs", "scripts"]
 
 [validation]
 mode = "enforced"
