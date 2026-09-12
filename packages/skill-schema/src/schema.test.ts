@@ -280,6 +280,42 @@ describe("mind package schema", () => {
     ).toThrow(/scope/);
   });
 
+  it("does not promote inferred or unsupported evidence into hard rules", () => {
+    const rule = {
+      id: "style.inferred",
+      policyFile: "rules/style.json",
+      severity: "warning" as const,
+      classification: "judgment-guided" as const,
+      rationale: "A hypothesis needs review before enforcement.",
+      assertion: "The implementation follows the proposed style.",
+      scope: ["source"],
+      remediation: "Review the evidence and update the profile.",
+      limitations: ["The source does not establish a universal rule."],
+      evidence: { classification: "inferred-hypothesis" as const, sourceId: "source-1" },
+    };
+    expect(() =>
+      RuleContractManifestSchema.parse({
+        schemaVersion: "1.0",
+        rules: [{ ...rule, severity: "error" }],
+      }),
+    ).toThrow(/inferred hypothesis/);
+    expect(() =>
+      RuleContractManifestSchema.parse({
+        schemaVersion: "1.0",
+        rules: [{ ...rule, classification: "verifiable" }],
+      }),
+    ).toThrow(/inferred hypothesis/);
+    expect(() =>
+      RuleContractManifestSchema.parse({
+        schemaVersion: "1.0",
+        rules: [{ ...rule, evidence: { classification: "unsupported", sourceId: "source-1" } }],
+      }),
+    ).toThrow(/unsupported evidence/);
+    expect(RuleContractManifestSchema.parse({ schemaVersion: "1.0", rules: [rule] })).toMatchObject(
+      { rules: [rule] },
+    );
+  });
+
   it("rejects a canonical package that impersonates verified authorship", () => {
     const canonical = {
       $schema: "https://lendingmind.org/schemas/mind.json",
