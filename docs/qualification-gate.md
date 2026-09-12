@@ -20,7 +20,7 @@ python3 -m unittest discover -s orchestrator -p 'test_*.py'
 ```
 
 The qualification artifact is authoritative for this gate. It must contain
-`status: "complete"`, `scenarioCount: 38`, `expectedScenarioCount: 38`, and
+`status: "complete"`, `scenarioCount: 39`, `expectedScenarioCount: 39`, and
 `dockerRequired: true`. Missing Rust binaries, a stopped Docker daemon, or a
 missing `lmp-sandbox:local` image produce `status: "blocked"`; a run with
 failed or missing checks produces `status: "incomplete"`. Neither state is a
@@ -47,7 +47,7 @@ release result.
   qualified rather than silently treated as passing.
 - The Docker sandbox can mount only explicitly selected changed paths.
 
-The current qualification suite contains 38 executable scenarios, including
+The current qualification suite contains 39 executable scenarios, including
 bounded fleet graph validation, report merging, and disagreement blocking; a
 5,000-file, approximately million-line brownfield scan and a 32-profile
 matrix. Passing it is necessary but not sufficient for release: the separate

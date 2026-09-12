@@ -71,7 +71,7 @@ The repository pins Rust `1.98.1` in [`rust-toolchain.toml`](./rust-toolchain.to
 | `packages/create-lmp` | Agent-host onboarding wrapper | [`packages/create-lmp`](./packages/create-lmp) |
 | `orchestrator/` | Python sandbox, qualification suite, benchmarks, and artifact gates | [`orchestrator`](./orchestrator) |
 | `registry/` | Versioned Mind definitions and public registry metadata | [`registry`](./registry) |
-| `public-web-vault/` | Generated 65-entry public catalog: 10 locally validated packages and 55 explicitly marked drafts | [`public-web-vault`](./public-web-vault) |
+| `public-web-vault/` | Generated 67-entry public catalog: 11 locally validated packages and 56 explicitly marked drafts | [`public-web-vault`](./public-web-vault) |
 | `apps/docs` | Landing page and canonical documentation portal | [`apps/docs`](./apps/docs) |
 
 ### Public Mind Vault

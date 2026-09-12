@@ -14,7 +14,7 @@ package and prepares it for a pull request to the community registry.
 
 `npx lmp init --baseline` (or the explicit
 `--install-baseline` spelling) installs the bundled baseline profile from the
-published CLI package, so it works from a project directory without a
+bundled CLI package, so it works from a project directory without a
 repository checkout.
 
 The baseline is installed under `.lending-mind/skills/baseline` and is the
