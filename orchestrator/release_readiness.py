@@ -245,11 +245,11 @@ def readiness(args: argparse.Namespace) -> dict[str, object]:
         try:
             payload = json.loads(benchmark.read_text(encoding="utf-8"))
             annotations = (payload.get("evidenceMetadata") or {}).get("reviewerAnnotations")
-            if args.require_clean and not isinstance(annotations, list):
+            if not isinstance(annotations, list):
                 checks["independentReview"] = absent(
                     "benchmark reviewerAnnotations must be an array", "human"
                 )
-            elif args.require_clean and not annotations:
+            elif not annotations:
                 checks["independentReview"] = absent(
                     "independent benchmark review annotations are missing", "human"
                 )

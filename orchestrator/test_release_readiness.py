@@ -50,6 +50,8 @@ class ReleaseReadinessTests(unittest.TestCase):
         self.assertEqual(report["checks"]["staticDeployment"]["boundary"], "external")
         self.assertEqual(report["checks"]["humanAdoptionPilot"]["status"], "blocked")
         self.assertEqual(report["checks"]["humanAdoptionPilot"]["boundary"], "human")
+        self.assertEqual(report["checks"]["independentReview"]["status"], "blocked")
+        self.assertEqual(report["checks"]["independentReview"]["boundary"], "human")
         qualification = ROOT / "lmp-test-results" / "qualification-result.json"
         expected_status = "pass" if qualification.is_file() else "blocked"
         self.assertEqual(report["checks"]["qualificationEvidence"]["status"], expected_status)
