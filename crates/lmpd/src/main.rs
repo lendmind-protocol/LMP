@@ -270,6 +270,14 @@ fn handle_event(event: Event, mind_dir: &Path, workspace: &Path, mode: &str) -> 
     validate_workspace(mind_dir, workspace, mode)
 }
 
+fn handle_reload_error(error: anyhow::Error, mode: &str) -> Result<()> {
+    eprintln!("❌ reload evaluation failed: {error:#}");
+    if mode == "enforced" {
+        return Err(error);
+    }
+    Ok(())
+}
+
 #[cfg(target_os = "linux")]
 fn release_startup_memory() {
     // The initial evaluation allocates transient parser and report buffers.
@@ -354,7 +362,7 @@ fn main() -> Result<()> {
                 workspace,
                 &args.mode,
             ) {
-                eprintln!("❌ reload evaluation failed: {error:#}");
+                handle_reload_error(error, &args.mode)?;
             } else {
                 println!("🔄 lmpd reloaded and re-evaluated {}", workspace.display());
             }
@@ -401,5 +409,17 @@ mod tests {
         assert!(!is_relevant_event(&EventKind::Access(
             notify::event::AccessKind::Any
         )));
+    }
+
+    #[test]
+    fn enforced_reload_errors_stop_the_daemon() {
+        let error = anyhow::anyhow!("reload finding");
+        assert!(handle_reload_error(error, "enforced").is_err());
+    }
+
+    #[test]
+    fn advisory_reload_errors_are_logged_without_stopping() {
+        let error = anyhow::anyhow!("reload finding");
+        assert!(handle_reload_error(error, "advisory").is_ok());
     }
 }
