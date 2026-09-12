@@ -38,8 +38,11 @@ enum Command {
         mind: Option<PathBuf>,
         #[arg(long, default_value = ".")]
         workspace: PathBuf,
-        #[arg(long, default_value = "advisory")]
-        mode: String,
+        #[arg(
+            long,
+            help = "Evaluation mode; defaults to the workspace configuration"
+        )]
+        mode: Option<String>,
         #[arg(long)]
         artifact_dir: Option<PathBuf>,
         #[arg(long)]
@@ -408,6 +411,20 @@ fn configured_mind() -> PathBuf {
         .unwrap_or_else(|| PathBuf::from("./profiles/baseline"))
 }
 
+fn configured_mode() -> String {
+    let config = Path::new(".lending-mind/config.json");
+    fs::read_to_string(config)
+        .ok()
+        .and_then(|text| serde_json::from_str::<serde_json::Value>(&text).ok())
+        .and_then(|value| {
+            value
+                .get("defaultMode")
+                .and_then(serde_json::Value::as_str)
+                .map(str::to_owned)
+        })
+        .unwrap_or_else(|| "enforced".into())
+}
+
 fn resolve_mind_path(input: PathBuf) -> PathBuf {
     if input.exists() {
         return input;
@@ -633,7 +650,7 @@ fn main() -> Result<()> {
             fs::write(
                 &config,
                 format!(
-                    "{{\n  \"version\": 1,\n  \"defaultMind\": \"{default_mind}\",\n  \"defaultMode\": \"advisory\",\n  \"network\": \"offline\",\n  \"commands\": \"disabled\"\n}}\n"
+                    "{{\n  \"version\": 1,\n  \"defaultMind\": \"{default_mind}\",\n  \"defaultMode\": \"enforced\",\n  \"network\": \"offline\",\n  \"commands\": \"disabled\"\n}}\n"
                 ),
             )?;
             if install_baseline {
@@ -655,6 +672,7 @@ fn main() -> Result<()> {
             scope,
             artifact_out,
         } => {
+            let mode = mode.unwrap_or_else(configured_mode);
             anyhow::ensure!(
                 ["advisory", "enforced", "audit"].contains(&mode.as_str()),
                 "invalid mode: {mode}"

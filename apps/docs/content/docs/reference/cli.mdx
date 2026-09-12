@@ -13,7 +13,7 @@ The examples below use `cargo run` because they assume a checkout of the reposit
 | Operation | Purpose | Output |
 | --- | --- | --- |
 | `init` | Create LMP workspace files; optionally install the baseline profile | Workspace files |
-| `evaluate` | Apply rules to a workspace or Git delta | Findings and exit state |
+| `evaluate` | Apply rules to a workspace or Git delta | Findings and exit state; defaults to the workspace-configured mode, or enforced when no configuration exists |
 | `instructions` | Print agent-facing guidance from a selected Mind | Guidance text |
 | `validate` | Validate a Mind or policy path | Validation result |
 | `verify` | Verify a signed artifact or package | Verification result |

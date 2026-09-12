@@ -8,7 +8,7 @@
 npx lmp --uninstall .
 ```
 
-The initializer preserves unrelated project guidance and existing MCP servers. Project-scoped integrations are written only for the selected host and report `runtime-unavailable` when verified Rust binaries are not present. In a Git workspace, onboarding installs the fail-closed `.git/hooks/pre-commit` boundary and records it in `.lmp_telemetry/enforcement.json`; `--install-hooks` remains available for an explicit request and non-Git workspaces report an install error rather than pretending enforcement exists. A non-Git initialization remains advisory because there is no commit boundary to install.
+The initializer preserves unrelated project guidance and existing MCP servers. Project-scoped integrations are written only for the selected host and report `runtime-unavailable` when verified Rust binaries are not present. In a Git workspace, onboarding installs the fail-closed `.git/hooks/pre-commit` boundary and records it in `.lmp_telemetry/enforcement.json`; `--install-hooks` remains available for an explicit request and non-Git workspaces report an install error rather than pretending enforcement exists. The Rust initializer records `defaultMode: "enforced"`; the Node initializer uses enforced mode when it can install the Git boundary and remains advisory only for a non-Git workspace.
 
 For non-technical users, the public Mind Vault is the visual path: select a package, use its export action to download a plain-English `LMP_INSTRUCTIONS.md`, and add that file to the AI project’s knowledge/context area. This is guidance injection, not proof that the host obeyed the guidance; a local LMP evaluation is the verification boundary.
 
@@ -20,7 +20,7 @@ The first-run experience must be:
 
 - Local.
 - Offline.
-- Advisory.
+- Enforced at an available Git boundary; explicitly advisory only when no such boundary exists.
 - Non-mutating.
 - No Docker.
 - No daemon.
@@ -75,7 +75,7 @@ Example output:
 ✓ Lending-Mind initialized
 
 Profile: baseline@1.0.0
-Mode: advisory
+Mode: enforced (Git boundary)
 Network: disabled
 Commands: disabled
 Uploads: disabled
