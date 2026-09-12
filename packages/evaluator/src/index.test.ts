@@ -1,4 +1,4 @@
-import { cp, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -132,6 +132,21 @@ describe("evaluator", () => {
       prohibited: ["evil"],
     });
     expect(analyzeAst(directory).complexity).toBe(2);
+    await rm(directory, { recursive: true, force: true });
+  });
+
+  it("finds prohibited dependencies in nested workspace manifests", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "lmp-evaluator-monorepo-"));
+    await mkdir(join(directory, "packages", "worker"), { recursive: true });
+    await writeFile(join(directory, "package.json"), JSON.stringify({ private: true }));
+    await writeFile(
+      join(directory, "packages", "worker", "package.json"),
+      JSON.stringify({ dependencies: { forbidden: "1" } }),
+    );
+    await expect(inspectDependencies(directory, ["forbidden"])).resolves.toMatchObject({
+      prohibited: ["forbidden"],
+      manifests: ["package.json", "packages/worker/package.json"],
+    });
     await rm(directory, { recursive: true, force: true });
   });
 

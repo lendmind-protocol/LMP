@@ -8,7 +8,9 @@ Audit basis: repository source, documentation, workflows, tests, generated artif
 
 ## 1. Executive Verdict
 
-Thin AI wrapper: no. The repository does not contain an AI generation product. It contains a deterministic policy, package, evaluator, registry, MCP, daemon, and evidence system intended to sit beside an AI host.
+Protocol-layer enforcement system: yes. LMP is not an AI agent, AI generation platform, or RAG system. The repository contains a deterministic policy, package, evaluator, registry, MCP, daemon, and evidence system for use beside an external agent host.
+
+Thin AI wrapper: no. There is no LLM wrapper to audit.
 
 Prompt-replicable value: 65 percent.
 
@@ -38,7 +40,7 @@ LMP is a real local developer-control system with a useful evidence model. It is
 | LMP is self-governing | Real but narrow | `.lmp/config.toml`, `crates/lmp-core/src/self_hosting.rs`, `orchestrator/self_audit.py` | Yes for declared paths and commands | Risk of overreading repository-wide coverage | Show the exact excluded paths in every self-audit summary |
 | LMP universally intercepts agent writes | Unsupported | No universal host driver. `crates/lmpd/src/main.rs` watches changes after they occur. Git hooks operate at commit boundaries | No | Yes | Remove this claim from product copy |
 | MCP provides enforcement | Real but narrow | `crates/lmp-mcp/src/main.rs`, `packages/mcp-server/src/index.ts` | Only for MCP requests and server state | Yes if described as a filesystem firewall | Call MCP an adapter and keep hooks or host extensions separate |
-| LMP is an AI coding agent | Marketing only in current repository | No OpenAI, Anthropic, model SDK, prompt runner, or generation loop in package manifests | No | Yes | Position LMP as a control plane for external agent hosts |
+| LMP is an AI coding agent | False product classification | LMP has no model SDK, prompt runner, generation loop, or agent scheduler | No | Yes | Describe LMP only as protocol-layer enforcement for external agent hosts |
 | LMP is multi-agent orchestration | Real but narrow | `crates/lmp-core/src/fleet.rs` validates role DAGs, budgets, reports, and disagreements | Yes for submitted reports | Yes if readers expect agents to be launched or coordinated | Rename to bounded role-evidence aggregation until host execution exists |
 | LMP improves code quality | Not established | `orchestrator/real_world_benchmark.py` creates fixed guided and unguided fixtures. It does not run model-generated patches | No | Yes if stated as an outcome | Run a matched model and human-review study |
 | LMP provides a secure sandbox | Present but fragile | `orchestrator/sandbox.py`, Docker qualification workflow | Only when Docker and the required image are present | Yes if absolute isolation is implied | Use “bounded Docker execution” and record runtime qualification |
@@ -333,7 +335,7 @@ The following areas are not mere prompt output:
 - MCP protocol state handling
 - registry digest and signature checks
 
-The product’s actual value sits in the control and evidence layer. The product does not currently own the AI generation layer.
+The product’s actual value sits in the protocol enforcement and evidence layer. LMP does not own, perform, or replace AI generation, retrieval, or agent execution.
 
 ## 13. Differentiation Table
 
@@ -460,4 +462,4 @@ Unify the evaluator, rewrite the broad concept claims, and prove one real agent-
 
 Honest positioning today:
 
-LMP is a local-first policy and evidence control plane for AI coding hosts. It verifies selected engineering rules, package integrity, workspace scope, and bounded execution conditions. It records what a run checked and what it did not check. It does not generate software, prevent every agent bypass, or prove production quality.
+LMP is a local-first protocol-layer enforcement and evidence system for external AI coding hosts. It verifies selected engineering rules, package integrity, workspace scope, and bounded execution conditions. It records what a run checked and what it did not check. It does not generate software, retrieve knowledge, act as an agent, or prove production quality.

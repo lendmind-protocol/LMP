@@ -146,27 +146,44 @@ fn dependency_findings(
     scope_files: &[PathBuf],
     changed_only: bool,
 ) -> Vec<Finding> {
-    let path = workspace.join("package.json");
-    if changed_only && !scope_files.iter().any(|file| file == &path) {
-        return Vec::new();
-    }
-    let Ok(text) = fs::read_to_string(path) else {
-        return Vec::new();
-    };
-    let Ok(value) = serde_json::from_str::<Value>(&text) else {
-        return Vec::new();
-    };
     let mut findings = Vec::new();
-    for section in ["dependencies", "devDependencies"] {
-        if let Some(map) = value.get(section).and_then(Value::as_object) {
-            for name in prohibited.iter().filter(|name| map.contains_key(*name)) {
-                findings.push(Finding {
-                    rule_id: "dependencies.prohibited".into(),
-                    passed: false,
-                    severity: "error".into(),
-                    message: format!("prohibited dependency: {name}"),
-                    evidence: json!({"dependency": name, "section": section}),
-                });
+    let package_files = scope_files
+        .iter()
+        .filter(|file| file.file_name().is_some_and(|name| name == "package.json"))
+        .cloned()
+        .collect::<Vec<_>>();
+    let files = if changed_only {
+        package_files
+    } else {
+        let mut all = Vec::new();
+        let mut walked = Vec::new();
+        if walk(workspace, &mut walked).is_ok() {
+            all.extend(
+                walked
+                    .into_iter()
+                    .filter(|file| file.file_name().is_some_and(|name| name == "package.json")),
+            );
+        }
+        all
+    };
+    for path in files {
+        let Ok(text) = fs::read_to_string(&path) else {
+            continue;
+        };
+        let Ok(value) = serde_json::from_str::<Value>(&text) else {
+            continue;
+        };
+        for section in ["dependencies", "devDependencies"] {
+            if let Some(map) = value.get(section).and_then(Value::as_object) {
+                for name in prohibited.iter().filter(|name| map.contains_key(*name)) {
+                    findings.push(Finding {
+                        rule_id: "dependencies.prohibited".into(),
+                        passed: false,
+                        severity: "error".into(),
+                        message: format!("prohibited dependency: {name}"),
+                        evidence: json!({"dependency": name, "section": section, "manifest": path.strip_prefix(workspace).unwrap_or(&path).display().to_string()}),
+                    });
+                }
             }
         }
     }
@@ -738,6 +755,29 @@ mod tests {
         .unwrap();
         let report = evaluate(&root, &workspace, "enforced", None).unwrap();
         assert!(!report.passed);
+        assert!(report
+            .findings
+            .iter()
+            .any(|finding| finding.rule_id == "dependencies.prohibited"));
+        fs::remove_dir_all(workspace).unwrap();
+    }
+
+    #[test]
+    fn full_scope_evaluation_checks_nested_package_manifests() {
+        let root =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../profiles/typescript-minimal");
+        let workspace = std::env::temp_dir().join(format!(
+            "lmp-rust-monorepo-dependency-test-{}",
+            std::process::id()
+        ));
+        fs::create_dir_all(workspace.join("packages/worker")).unwrap();
+        fs::write(workspace.join("package.json"), r#"{"private":true}"#).unwrap();
+        fs::write(
+            workspace.join("packages/worker/package.json"),
+            r#"{"dependencies":{"lodash":"1"}}"#,
+        )
+        .unwrap();
+        let report = evaluate(&root, &workspace, "enforced", None).unwrap();
         assert!(report
             .findings
             .iter()

@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { mkdir, readFile, realpath, stat, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, realpath, stat, writeFile } from "node:fs/promises";
 import { basename, isAbsolute, relative, resolve } from "node:path";
 import { type InstructionBundle, compileSkill } from "@lending-mind/internal-skill-compiler";
 import {
@@ -35,6 +35,7 @@ export interface DependencyReport {
   dependencies: string[];
   devDependencies: string[];
   prohibited: string[];
+  manifests: string[];
 }
 export interface FunctionMetric {
   name: string;
@@ -398,24 +399,56 @@ export async function inspectDependencies(
   prohibited: string[] = [],
   productionOnly = false,
 ): Promise<DependencyReport> {
-  let manifest: {
-    dependencies?: Record<string, string>;
-    devDependencies?: Record<string, string>;
-  } = {};
-  try {
-    manifest = JSON.parse(
-      await readFile(resolve(directory, "package.json"), "utf8"),
-    ) as typeof manifest;
-  } catch {
-    /* package.json is optional */
+  const manifests: string[] = [];
+  const pending = [resolve(directory)];
+  while (pending.length) {
+    const current = pending.pop();
+    if (!current) continue;
+    let entries: import("node:fs").Dirent[] = [];
+    try {
+      entries = await readdir(current, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const entry of entries) {
+      if (
+        entry.name === "node_modules" ||
+        entry.name === "dist" ||
+        entry.name === "build" ||
+        entry.name === ".git" ||
+        entry.name === ".next" ||
+        entry.name === "target"
+      )
+        continue;
+      const path = resolve(current, entry.name);
+      if (entry.isDirectory()) pending.push(path);
+      else if (entry.isFile() && entry.name === "package.json") manifests.push(path);
+    }
   }
-  const dependencies = Object.keys(manifest.dependencies ?? {}).sort();
-  const devDependencies = Object.keys(manifest.devDependencies ?? {}).sort();
-  const candidates = productionOnly ? dependencies : [...dependencies, ...devDependencies];
+  const dependencies = new Set<string>();
+  const devDependencies = new Set<string>();
+  const prohibitedNames = new Set(prohibited);
+  for (const path of manifests.sort()) {
+    let manifest: {
+      dependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+    };
+    try {
+      manifest = JSON.parse(await readFile(path, "utf8")) as typeof manifest;
+    } catch {
+      continue;
+    }
+    for (const name of Object.keys(manifest.dependencies ?? {})) dependencies.add(name);
+    for (const name of Object.keys(manifest.devDependencies ?? {})) devDependencies.add(name);
+  }
+  const dependencyList = [...dependencies].sort();
+  const devDependencyList = [...devDependencies].sort();
+  const candidates = productionOnly ? dependencyList : [...dependencyList, ...devDependencyList];
   return {
-    dependencies,
-    devDependencies,
-    prohibited: [...new Set(candidates.filter((name) => prohibited.includes(name)))].sort(),
+    dependencies: dependencyList,
+    devDependencies: devDependencyList,
+    prohibited: [...new Set(candidates.filter((name) => prohibitedNames.has(name)))].sort(),
+    manifests: manifests.map((path) => normalizePath(relative(directory, path))),
   };
 }
 

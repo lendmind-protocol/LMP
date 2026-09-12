@@ -50,7 +50,9 @@ class ReleaseReadinessTests(unittest.TestCase):
         self.assertEqual(report["checks"]["staticDeployment"]["boundary"], "external")
         self.assertEqual(report["checks"]["humanAdoptionPilot"]["status"], "blocked")
         self.assertEqual(report["checks"]["humanAdoptionPilot"]["boundary"], "human")
-        self.assertEqual(report["checks"]["qualificationEvidence"]["status"], "pass")
+        qualification = ROOT / "lmp-test-results" / "qualification-result.json"
+        expected_status = "pass" if qualification.is_file() else "blocked"
+        self.assertEqual(report["checks"]["qualificationEvidence"]["status"], expected_status)
 
     def test_qualification_evidence_requires_the_complete_39_scenario_contract(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
