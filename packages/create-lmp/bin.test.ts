@@ -232,6 +232,7 @@ test("downloads and verifies a matching Rust runtime release asset", async () =>
   if (!target) return;
   const suffix = process.platform === "win32" ? ".exe" : "";
   await mkdir(payload, { recursive: true });
+  await writeFile(join(payload, `lmp-${target}${suffix}`), "fake lmp");
   await writeFile(join(payload, `lmpd-${target}${suffix}`), "fake lmpd");
   await writeFile(join(payload, `lmp-mcp-${target}${suffix}`), "fake lmp-mcp");
   execFileSync("tar", ["-czf", archive, "-C", payload, "."]);
@@ -252,16 +253,18 @@ test("downloads and verifies a matching Rust runtime release asset", async () =>
   try {
     const address = server.address() as AddressInfo;
     const workspace = join(root, "workspace");
+    await mkdir(join(workspace, ".git", "hooks"), { recursive: true });
     const result = await runBootstrapper(workspace, "greenfield", {
       LMP_DISABLE_RUNTIME_DOWNLOAD: "0",
       LMP_RELEASE_BASE_URL: `http://127.0.0.1:${address.port}`,
-    });
+    }, "cursor", ["--install-hooks"]);
     assert.equal(result.code, 0, result.output);
     const runtime = JSON.parse(await readFile(join(workspace, ".lmp_telemetry/runtime.json"), "utf8"));
     const adapter = JSON.parse(await readFile(join(workspace, ".lmp_telemetry/agent-mcp.json"), "utf8"));
     const cursorConfig = JSON.parse(await readFile(join(workspace, ".cursor/mcp.json"), "utf8"));
     assert.equal(runtime.runtimeDownload.status, "verified-download");
-    assert.deepEqual(runtime.installedBinaries, ["lmpd", "lmp-mcp"]);
+    assert.deepEqual(runtime.installedBinaries, ["lmp", "lmpd", "lmp-mcp"]);
+    assert.deepEqual(runtime.requiredRuntime, ["lmp", "lmpd", "lmp-mcp"]);
     assert.equal(adapter.available, true);
     assert.match(adapter.command, /\.lmp_telemetry[\\/]bin[\\/]lmp-mcp/);
     assert.match(cursorConfig.mcpServers["lending-mind"].command, /\.lmp_telemetry[\\/]bin[\\/]lmp-mcp/);

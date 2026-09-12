@@ -479,6 +479,7 @@ for (const filename of ["AGENTS.md", "CLAUDE.md"]) {
 
 const executableSuffix = platform === "win32" ? ".exe" : "";
 const runtimeCandidates = {
+  lmp: process.env.LMP_BIN ?? join(workspace, "target", "release", `lmp${executableSuffix}`),
   lmpd: process.env.LMPD_BIN ?? join(workspace, "target", "release", `lmpd${executableSuffix}`),
   "lmp-mcp": process.env.LMP_MCP_BIN ?? join(workspace, "target", "release", `lmp-mcp${executableSuffix}`),
 };
@@ -533,7 +534,8 @@ async function downloadRuntime(target) {
     });
     const extractedFiles = await readdir(extracted, { recursive: true });
     const suffix = platform === "win32" ? ".exe" : "";
-    for (const name of ["lmpd", "lmp-mcp"]) {
+    const runtimeNames = installHooks ? ["lmp", "lmpd", "lmp-mcp"] : ["lmpd", "lmp-mcp"];
+    for (const name of runtimeNames) {
       const expectedName = `${name}-${target}${suffix}`;
       const found = extractedFiles.find((entry) => entry === expectedName);
       if (!found) throw new Error(`runtime archive is missing ${expectedName}`);
@@ -550,7 +552,8 @@ async function downloadRuntime(target) {
 }
 
 let runtimeDownload = null;
-if (installedBinaries.length < 2) {
+const requiredRuntime = installHooks ? ["lmp", "lmpd", "lmp-mcp"] : ["lmpd", "lmp-mcp"];
+if (!requiredRuntime.every((name) => installedBinaries.includes(name))) {
   const target = releaseTarget();
   if (target) {
     try {
@@ -563,7 +566,7 @@ if (installedBinaries.length < 2) {
     runtimeDownload = { status: "unsupported-platform", target: null };
   }
 }
-await writeFile(join(telemetryDirectory, "runtime.json"), `${JSON.stringify({ platform, arch, targetStack: selectedStack, strategy: selectedStrategy, discovery: detectedProject, binaryDirectory: ".lmp_telemetry/bin", installedBinaries, runtimeStatus: installedBinaries.length === 2 ? "ready" : runtimeDownload?.status ?? "requires-rust-runtime", releaseSource: process.env.LMP_RELEASE_BASE_URL ?? `https://github.com/lendmind-protocol/LMP/releases/download/v${packageManifest.version}`, runtimeDownload, installHint: "Provide a verified release asset or build lmpd and lmp-mcp locally." }, null, 2)}\n`);
+await writeFile(join(telemetryDirectory, "runtime.json"), `${JSON.stringify({ platform, arch, targetStack: selectedStack, strategy: selectedStrategy, discovery: detectedProject, binaryDirectory: ".lmp_telemetry/bin", installedBinaries, requiredRuntime, runtimeStatus: requiredRuntime.every((name) => installedBinaries.includes(name)) ? "ready" : runtimeDownload?.status ?? "requires-rust-runtime", releaseSource: process.env.LMP_RELEASE_BASE_URL ?? `https://github.com/lendmind-protocol/LMP/releases/download/v${packageManifest.version}`, runtimeDownload, installHint: "Provide a verified release asset or build the required Rust runtime locally." }, null, 2)}\n`);
 
 const installedMcpName = platform === "win32" ? "lmp-mcp.exe" : "lmp-mcp";
 const installedMcpPath = join(telemetryDirectory, "bin", installedMcpName);
@@ -667,7 +670,7 @@ console.log(`✅ ${selectedAgent} integration guidance written to AGENTS.md and 
 console.log("✅ Active profile copied to .lending-mind/mind/");
 console.log(`✅ Host detected: ${platform}/${arch}; stack selected: ${selectedStack}.`);
 console.log(`✅ Local generated files: ${gitignoreUpdated ? "added to .gitignore" : "already protected by .gitignore"}.`);
-console.log(`✅ Rust sidecar status: ${installedBinaries.length === 2 ? "ready" : "requires local release binaries"}.`);
+console.log(`✅ Rust runtime status: ${requiredRuntime.every((name) => installedBinaries.includes(name)) ? "ready" : "requires local release binaries"}.`);
 console.log(`✅ Host MCP integration: ${hostIntegrations.map((entry) => `${entry.path} (${entry.status})`).join(", ")}.`);
 console.log(`✅ Commit enforcement: ${enforcement.status}${enforcement.path ? ` (${enforcement.path})` : ""}.`);
 console.log("\nNext check: cargo run --bin lmp -- evaluate --mind .lending-mind/mind --workspace . --mode advisory --changed-only --json");

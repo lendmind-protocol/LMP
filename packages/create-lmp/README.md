@@ -35,6 +35,9 @@ Code (`.mcp.json`) or Cursor (`.cursor/mcp.json`) without replacing existing
 servers. Cline and Roo Code receive project-scoped entries in `.cline/mcp.json`
 and `.roo/mcp.json`; global host settings are never modified. The generated
 `host-integrations.json` records each project-scoped result and any conflict.
+When `--install-hooks` is used, the matching Rust `lmp` CLI is also required
+and installed from the same checksum-verified archive, so the commit gate does
+not depend on an unrelated global installation.
 
 To request the commit-boundary gate during onboarding:
 
