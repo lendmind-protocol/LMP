@@ -8,7 +8,11 @@ import {
   sha256,
   verifyMindPackage,
 } from "@lending-mind/sdk";
-import { MindPackageSchema, validateMindPackage } from "@lending-mind/skill";
+import {
+  MindPackageSchema,
+  RuleContractManifestSchema,
+  validateMindPackage,
+} from "@lending-mind/skill";
 
 export interface InstructionBundle {
   package: MindPackage;
@@ -78,7 +82,9 @@ export async function loadSkill(directory: string): Promise<LoadedSkill> {
   const policies: Record<string, Record<string, unknown>> = {};
   const contractText = await readOptional(directory, "rules/manifest.json");
   if (contractText) {
-    const contracts = JSON.parse(contractText) as { rules?: RuleContract[] };
+    const contracts = RuleContractManifestSchema.parse(JSON.parse(contractText)) as {
+      rules?: RuleContract[];
+    };
     for (const contract of contracts.rules ?? []) {
       declaredRules.push({
         id: contract.id,

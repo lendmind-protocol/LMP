@@ -11,6 +11,7 @@ import {
   PromotionProposalSchema,
   ReleaseMetadataSchema,
   RuleContractManifestSchema,
+  RuleContractSchema,
   exportJsonSchema,
   validateMindPackage,
 } from "./index.js";
@@ -311,9 +312,7 @@ describe("mind package schema", () => {
         rules: [{ ...rule, evidence: { classification: "unsupported", sourceId: "source-1" } }],
       }),
     ).toThrow(/unsupported evidence/);
-    expect(RuleContractManifestSchema.parse({ schemaVersion: "1.0", rules: [rule] })).toMatchObject(
-      { rules: [rule] },
-    );
+    expect(() => RuleContractSchema.parse(rule)).toThrow(/proposal-only/);
   });
 
   it("rejects a canonical package that impersonates verified authorship", () => {

@@ -381,6 +381,15 @@ async function validateProfileContract(source, manifest) {
         (rule.severity === "error" || ["deterministic", "verifiable"].includes(rule.classification)))
     );
   });
+  const sourceBacked = manifest.metadata?.sourceRuleContractVersion === "1";
+  if (contractsValid && sourceBacked) {
+    for (const rule of contracts.rules) {
+      for (const field of ["sourceClaim", "sourceLocator", "implementation", "fixture"]) {
+        if (!nonEmptyString(rule.evidence?.[field]))
+          throw new Error(`source-backed rule ${rule.id} is missing evidence.${field}`);
+      }
+    }
+  }
   const policyFiles = new Set(Object.values(manifest.enforcement ?? {}));
   const contractPolicyFiles = new Set((contracts.rules ?? []).map((rule) => rule.policyFile));
   if (!contractObjectKeysValid(contracts, contractManifestKeys) || contracts.schemaVersion !== "1.0" || !Array.isArray(contracts.rules) || !contracts.rules.length || !contractsValid || ![...policyFiles].every((policyFile) => contractPolicyFiles.has(policyFile)))

@@ -44,7 +44,23 @@ export const RuleContractSchema = z
       })
       .strict(),
   })
-  .strict();
+  .strict()
+  .superRefine((rule, ctx) => {
+    if (rule.evidence.classification === "unsupported") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["evidence", "classification"],
+        message: `unsupported evidence cannot define an enforcement rule: ${rule.id}`,
+      });
+    }
+    if (rule.evidence.classification === "inferred-hypothesis") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["evidence", "classification"],
+        message: `inferred hypothesis ${rule.id} is proposal-only until reviewed evidence is promoted`,
+      });
+    }
+  });
 
 export const RuleContractManifestSchema = z
   .object({
@@ -62,25 +78,6 @@ export const RuleContractManifestSchema = z
           message: `duplicate rule contract id: ${rule.id}`,
         });
       ids.add(rule.id);
-      if (rule.evidence.classification === "unsupported") {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["rules"],
-          message: `unsupported evidence cannot define an enforcement rule: ${rule.id}`,
-        });
-      }
-      if (
-        rule.evidence.classification === "inferred-hypothesis" &&
-        (rule.severity === "error" ||
-          rule.classification === "deterministic" ||
-          rule.classification === "verifiable")
-      ) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["rules"],
-          message: `inferred hypothesis ${rule.id} cannot become an enforced hard rule without reviewed evidence`,
-        });
-      }
     }
   });
 

@@ -231,10 +231,13 @@ export async function evaluate(
       if (code !== 0) {
         const detail = stderr.trim();
         reject(
-          new Error(
-            detail
-              ? `${detail} (Rust evaluator exited with code ${code})`
-              : `Rust evaluator exited with code ${code}`,
+          Object.assign(
+            new Error(
+              detail
+                ? `${detail} (Rust evaluator exited with code ${code})`
+                : `Rust evaluator exited with code ${code}`,
+            ),
+            { exitCode: code === 1 ? 1 : 3 },
           ),
         );
         return;
