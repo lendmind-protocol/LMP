@@ -138,6 +138,27 @@ fn unsupported_source_language(path: &Path) -> Option<&'static str> {
     }
 }
 
+fn supported_rule_contract(rule_id: &str) -> bool {
+    matches!(
+        rule_id,
+        "architecture.boundary"
+            | "ast.unsafe-boundary"
+            | "commands.allowlist"
+            | "complexity.cyclomatic"
+            | "database.app-layer-join"
+            | "dependencies.deny"
+            | "security.artifact-redaction"
+            | "security.hardcoded-secret"
+            | "security.insecure-default"
+            | "typescript.any"
+            | "typescript.console"
+            | "typescript.duplicate-logic"
+            | "typescript.eval"
+            | "typescript.type-error"
+            | "typescript.unused-variable"
+    )
+}
+
 #[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Finding {
@@ -777,6 +798,12 @@ fn evaluate_with_options_impl(
     let mut analysis_parsers = std::collections::BTreeSet::new();
     let mut analysis_versions = std::collections::BTreeSet::new();
     let mut unsupported_languages = std::collections::BTreeSet::new();
+    let unsupported_rules = bundle
+        .rules
+        .iter()
+        .filter_map(|rule| rule.get("id").and_then(Value::as_str))
+        .filter(|rule_id| !supported_rule_contract(rule_id))
+        .collect::<Vec<_>>();
     if signature_status == "invalid" {
         findings.push(Finding {
             rule_id: "package.signature".into(),
@@ -910,6 +937,26 @@ fn evaluate_with_options_impl(
             });
         }
     }
+    for rule_id in &unsupported_rules {
+        skipped_checks.push(json!({
+            "checkId": format!("rule.{rule_id}"),
+            "reason": format!("The Rust evaluator has no implementation for rule contract {rule_id}; no claim was made for this rule."),
+            "status": "unsupported"
+        }));
+        if mode == "enforced" {
+            findings.push(Finding {
+                rule_id: format!("rule.unsupported.{rule_id}"),
+                passed: false,
+                severity: "error".into(),
+                message: format!("Unsupported rule contract {rule_id} cannot pass enforced evaluation."),
+                evidence: json!({
+                    "ruleId": rule_id,
+                    "status": "unsupported",
+                    "remediation": "Use a profile with an evaluator for this rule or run in advisory mode and obtain independent coverage."
+                }),
+            });
+        }
+    }
     skipped_checks.push(json!({
         "checkId":"behavioral.docker",
         "reason":"Docker execution is an explicit orchestrator gate, not part of this static evaluator run."
@@ -1028,7 +1075,7 @@ fn evaluate_with_options_impl(
         "summary":{"status":if errors > 0 {"fail"} else if warnings > 0 {"warning"} else {"pass"},"hardViolationCount":errors,"warningCount":warnings,"informationalCount":0},
         "checks":checks,
         "skippedChecks":skipped_checks,
-        "analysis":{"languages":analysis_languages,"parsers":analysis_parsers,"versions":analysis_versions,"checkedFiles":checked},
+        "analysis":{"languages":analysis_languages,"parsers":analysis_parsers,"versions":analysis_versions,"checkedFiles":checked,"unsupportedRules":unsupported_rules},
         "loopTransitions":[
             {"stepId":"evaluation","state":"evaluating","event":"evaluation_started","attempt":0},
             {"stepId":"scope","state":"evaluating","event":"scope_resolved","attempt":0,"checkedFiles":checked,"source":scope.source},
@@ -1115,7 +1162,7 @@ fn blocked_signature_evaluation(
 
 #[cfg(test)]
 mod tests {
-    use super::{contains_secret_assignment, evaluate};
+    use super::{contains_secret_assignment, evaluate, supported_rule_contract};
     use std::{fs, path::PathBuf};
 
     #[test]
@@ -1132,6 +1179,14 @@ mod tests {
         assert!(!contains_secret_assignment(
             "const tokenCount = \"ordinary-value\";"
         ));
+    }
+
+    #[test]
+    fn unknown_rule_contracts_are_not_treated_as_implemented() {
+        assert!(supported_rule_contract("typescript.type-error"));
+        assert!(supported_rule_contract("security.artifact-redaction"));
+        assert!(!supported_rule_contract("postgres.tenant-boundary"));
+        assert!(!supported_rule_contract("future.rule"));
     }
 
     #[test]
