@@ -90,6 +90,26 @@ class RealWorldBenchmarkTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "confidence"):
                 MODULE.load_reviewer_annotations(path, "a" * 40)
 
+    def test_reviewer_annotations_reject_boolean_metrics(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="lmp-review-bool-") as directory:
+            path = Path(directory) / "review.json"
+            path.write_text(
+                json.dumps([{
+                    "reviewer": "independent-reviewer",
+                    "reviewedRevision": "a" * 40,
+                    "decision": "pass-with-limitations",
+                    "notes": "The bounded Docker transitions are reproducible.",
+                    "reviewTimeMinutes": True,
+                    "reworkCount": 1,
+                    "severity": "low",
+                    "confidence": 0.9,
+                    "falsePositiveCount": 0,
+                }]),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "reviewTimeMinutes"):
+                MODULE.load_reviewer_annotations(path, "a" * 40)
+
     def test_control_state_is_explicit(self) -> None:
         self.assertEqual(MODULE.control_state(0), "pass")
         self.assertEqual(MODULE.control_state(1), "needs_revision")

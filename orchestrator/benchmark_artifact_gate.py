@@ -42,15 +42,15 @@ def validate_reviewer_annotations(
         for field in ("reviewTimeMinutes", "reworkCount", "severity", "confidence", "falsePositiveCount"):
             if field not in annotation:
                 raise ValueError(f"reviewer annotation {index} requires {field}")
-        if not isinstance(annotation["reviewTimeMinutes"], (int, float)) or annotation["reviewTimeMinutes"] < 0:
+        if isinstance(annotation["reviewTimeMinutes"], bool) or not isinstance(annotation["reviewTimeMinutes"], (int, float)) or annotation["reviewTimeMinutes"] < 0:
             raise ValueError(f"reviewer annotation {index} requires non-negative reviewTimeMinutes")
-        if not isinstance(annotation["reworkCount"], int) or annotation["reworkCount"] < 0:
+        if isinstance(annotation["reworkCount"], bool) or not isinstance(annotation["reworkCount"], int) or annotation["reworkCount"] < 0:
             raise ValueError(f"reviewer annotation {index} requires non-negative reworkCount")
         if annotation["severity"] not in {"none", "low", "medium", "high", "critical"}:
             raise ValueError(f"reviewer annotation {index} has an unsupported severity")
-        if not isinstance(annotation["confidence"], (int, float)) or not 0 <= annotation["confidence"] <= 1:
+        if isinstance(annotation["confidence"], bool) or not isinstance(annotation["confidence"], (int, float)) or not 0 <= annotation["confidence"] <= 1:
             raise ValueError(f"reviewer annotation {index} requires confidence between 0 and 1")
-        if not isinstance(annotation["falsePositiveCount"], int) or annotation["falsePositiveCount"] < 0:
+        if isinstance(annotation["falsePositiveCount"], bool) or not isinstance(annotation["falsePositiveCount"], int) or annotation["falsePositiveCount"] < 0:
             raise ValueError(f"reviewer annotation {index} requires non-negative falsePositiveCount")
         if require_review and annotation["decision"] == "needs-revision":
             raise ValueError("release benchmark review must not require revision")
