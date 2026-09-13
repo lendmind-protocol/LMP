@@ -103,8 +103,8 @@ fn tools() -> Value {
         {"name":"lmp_get_context","description":"Return typed, privacy-preserving context for a Mind and workspace.","inputSchema":{"type":"object","additionalProperties":false,"required":["mind","workspace"],"properties":{"mind":{"type":"string"},"workspace":{"type":"string"}}}},
         {"name":"lmp_validate_mind","description":"Validate a local Mind Package manifest.","inputSchema":{"type":"object","additionalProperties":false,"required":["mind"],"properties":{"mind":{"type":"string"}}}},
         {"name":"lmp_explain_rule","description":"Explain a rule from a local Mind Package without changing policy.","inputSchema":{"type":"object","additionalProperties":false,"required":["mind","ruleId"],"properties":{"mind":{"type":"string"},"ruleId":{"type":"string"}}}},
-        {"name":"lmp_evaluate_workspace","description":"Evaluate a workspace without executing commands.","inputSchema":{"type":"object","additionalProperties":false,"required":["mind","workspace","mode"],"properties":{"mind":{"type":"string"},"workspace":{"type":"string"},"mode":{"type":"string","enum":["advisory","enforced","audit"]},"changedOnly":{"type":"boolean"},"base":{"type":"string"}}}},
-        {"name":"enforce_architectural_axioms","description":"Run enforced evaluation for an agent change and return the acceptance artifact.","inputSchema":{"type":"object","additionalProperties":false,"required":["mind","workspace"],"properties":{"mind":{"type":"string"},"workspace":{"type":"string"},"changedOnly":{"type":"boolean"},"base":{"type":"string"}}}},
+        {"name":"lmp_evaluate_workspace","description":"Evaluate a workspace without executing commands.","inputSchema":{"type":"object","additionalProperties":false,"required":["mind","workspace","mode"],"properties":{"mind":{"type":"string"},"workspace":{"type":"string"},"mode":{"type":"string","enum":["advisory","enforced","audit"]},"changedOnly":{"type":"boolean"},"stagedOnly":{"type":"boolean"},"base":{"type":"string"}}}},
+        {"name":"enforce_architectural_axioms","description":"Run enforced evaluation for an agent change and return the acceptance artifact.","inputSchema":{"type":"object","additionalProperties":false,"required":["mind","workspace"],"properties":{"mind":{"type":"string"},"workspace":{"type":"string"},"changedOnly":{"type":"boolean"},"stagedOnly":{"type":"boolean"},"base":{"type":"string"}}}},
         {"name":"lmp_verify_mind","description":"Validate a local Mind Package manifest and report its digest.","inputSchema":{"type":"object","additionalProperties":false,"required":["packagePath"],"properties":{"packagePath":{"type":"string"}}}},
         {"name":"lmp_get_artifact","description":"Read an evaluation artifact from the configured local artifact directory.","inputSchema":{"type":"object","additionalProperties":false,"required":["artifactPath"],"properties":{"artifactPath":{"type":"string"}}}},
         {"name":"lmp_get_loop_status","description":"Read the state and evidence summary of an evaluation artifact.","inputSchema":{"type":"object","additionalProperties":false,"required":["artifactPath"],"properties":{"artifactPath":{"type":"string"}}}}
@@ -463,6 +463,10 @@ fn call(name: &str, args: &Value) -> Result<Value, String> {
                     .get("changedOnly")
                     .and_then(Value::as_bool)
                     .unwrap_or(false),
+                staged_only: args
+                    .get("stagedOnly")
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false),
                 git_base: args.get("base").and_then(Value::as_str),
                 ..Default::default()
             };
@@ -484,6 +488,10 @@ fn call(name: &str, args: &Value) -> Result<Value, String> {
                     .get("changedOnly")
                     .and_then(Value::as_bool)
                     .unwrap_or(true),
+                staged_only: args
+                    .get("stagedOnly")
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false),
                 git_base: args.get("base").and_then(Value::as_str),
                 ..Default::default()
             };
@@ -504,11 +512,18 @@ fn validate_tool_arguments(name: &str, args: &Value) -> Result<(), String> {
         "lmp_get_context" => (&["mind", "workspace"], &["mind", "workspace"]),
         "lmp_explain_rule" => (&["mind", "ruleId"], &["mind", "ruleId"]),
         "lmp_evaluate_workspace" => (
-            &["mind", "workspace", "mode", "changedOnly", "base"],
+            &[
+                "mind",
+                "workspace",
+                "mode",
+                "changedOnly",
+                "stagedOnly",
+                "base",
+            ],
             &["mind", "workspace", "mode"],
         ),
         "enforce_architectural_axioms" => (
-            &["mind", "workspace", "changedOnly", "base"],
+            &["mind", "workspace", "changedOnly", "stagedOnly", "base"],
             &["mind", "workspace"],
         ),
         "lmp_verify_mind" => (&["packagePath"], &["packagePath"]),
@@ -534,6 +549,7 @@ fn validate_tool_arguments(name: &str, args: &Value) -> Result<(), String> {
             let valid = match *key {
                 "includeLocalWorkspace" => value.is_boolean(),
                 "changedOnly" => value.is_boolean(),
+                "stagedOnly" => value.is_boolean(),
                 "mode" => value
                     .as_str()
                     .map(|mode| ["advisory", "enforced", "audit"].contains(&mode))
@@ -1280,7 +1296,7 @@ mod tests {
 
     #[test]
     fn changed_scope_arguments_are_typed_and_unknown_arguments_are_rejected() {
-        let valid = serde_json::json!({"mind":"mind","workspace":".","mode":"enforced","changedOnly":true,"base":"HEAD~1"});
+        let valid = serde_json::json!({"mind":"mind","workspace":".","mode":"enforced","changedOnly":true,"stagedOnly":true,"base":"HEAD~1"});
         validate_tool_arguments("lmp_evaluate_workspace", &valid).unwrap();
         let invalid = serde_json::json!({"mind":"mind","workspace":".","mode":"enforced","changedOnly":"yes"});
         assert!(validate_tool_arguments("lmp_evaluate_workspace", &invalid).is_err());
