@@ -4,6 +4,7 @@ import { dirname, join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   advanceRemediation,
+  architectureFindings,
   analyzeAst,
   assertAllowedCommand,
   authorizeAction,
@@ -14,6 +15,18 @@ import {
 } from "./index.js";
 
 describe("evaluator", () => {
+  it("reports a forbidden architecture import with file and line evidence", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "lmp-architecture-"));
+    await writeFile(join(directory, "tsconfig.json"), '{"compilerOptions":{"noEmit":true},"include":["**/*.ts"]}');
+    await mkdir(join(directory, "apps/web/src"), { recursive: true });
+    await writeFile(join(directory, "apps/web/src/page.ts"), 'import { query } from "server/db";\n');
+    const findings = architectureFindings(directory, undefined, [], {
+      boundaries: [{ name: "web", pathPrefix: "apps/web/src/", forbiddenImports: ["server/db"] }],
+    });
+    expect(findings).toHaveLength(1);
+    expect(findings[0]).toMatchObject({ ruleId: "architecture.boundary", file: "apps/web/src/page.ts", line: 1 });
+    await rm(directory, { recursive: true, force: true });
+  });
   it("runs a bounded remediation loop and escalates repeated findings", () => {
     let run = createRemediationRun({ maxAttempts: 3, repeatedFindingLimit: 2 });
     run = advanceRemediation(run, { type: "start_evaluation" });

@@ -436,6 +436,7 @@ const supportedRuleIds = new Set([
   "security.sql-injection",
   "typescript.var-declaration",
   "database.app-layer-join",
+  "architecture.boundary",
   "typescript.ast",
   "typescript.strict",
   "typescript.noImplicitAny",
@@ -966,6 +967,58 @@ function sourceFindings(
   return findings;
 }
 
+export function architectureFindings(
+  directory: string,
+  tsconfig: string | undefined,
+  exclusions: string[],
+  policy: Record<string, unknown>,
+): RuleResult[] {
+  const boundaries = Array.isArray(policy.boundaries)
+    ? policy.boundaries.filter(
+        (value): value is Record<string, unknown> => Boolean(value) && typeof value === "object",
+      )
+    : [];
+  if (!boundaries.length) return [];
+  const { included } = sourceFiles(directory, tsconfig, exclusions);
+  const results: RuleResult[] = [];
+  for (const file of included) {
+    const path = normalizePath(relative(directory, file.getFilePath()));
+    for (const declaration of file.getImportDeclarations()) {
+      const specifier = declaration.getModuleSpecifierValue();
+      for (const boundary of boundaries) {
+        const prefix = typeof boundary.pathPrefix === "string" ? boundary.pathPrefix : "";
+        const forbidden = Array.isArray(boundary.forbiddenImports)
+          ? boundary.forbiddenImports.filter((value): value is string => typeof value === "string")
+          : [];
+        if (prefix && !path.startsWith(prefix)) continue;
+        const target = forbidden.find(
+          (value) => specifier === value || specifier.startsWith(`${value}/`),
+        );
+        if (!target) continue;
+        results.push({
+          ruleId: "architecture.boundary",
+          passed: false,
+          severity: "error",
+          message: `Import crosses the declared architecture boundary: ${specifier}.`,
+          remediation:
+            "Move the dependency behind the owning boundary or record an explicitly reviewed exception.",
+          file: path,
+          line: declaration.getStartLineNumber(),
+          column: declaration.getStartLinePos() + 1,
+          evidence: {
+            specifier,
+            boundary: typeof boundary.name === "string" ? boundary.name : null,
+            pathPrefix: prefix,
+            forbiddenImport: target,
+            status: "violation",
+          },
+        });
+      }
+    }
+  }
+  return results;
+}
+
 function diagnosticText(
   value: string | { getMessageText(): string; getNext?(): unknown[] | undefined },
 ): string {
@@ -1143,6 +1196,17 @@ export async function evaluate(options: EvaluationOptions): Promise<EvaluationRe
     options.exclusions ?? [],
     policies.typescript ?? policies.typescriptPolicy ?? {},
   );
+  const architecturePolicy = policies.architecture ?? policies.architecturePolicy;
+  if (architecturePolicy && typeof architecturePolicy === "object") {
+    results.push(
+      ...architectureFindings(
+        directory,
+        options.tsconfig,
+        options.exclusions ?? [],
+        architecturePolicy as Record<string, unknown>,
+      ),
+    );
+  }
   const sourceViolationCount = results.length;
   if (selectedMode === "enforced")
     for (const language of ast.unsupportedLanguages)
