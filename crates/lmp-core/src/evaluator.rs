@@ -325,6 +325,12 @@ fn source_findings(
         "warning"
     };
     let mut findings = Vec::new();
+    let word_count = |name: &str| -> usize {
+        source
+            .split(|character: char| !(character.is_ascii_alphanumeric() || character == '_'))
+            .filter(|token| *token == name)
+            .count()
+    };
     for (index, raw_line) in source.lines().enumerate() {
         let line = raw_line.split("//").next().unwrap_or(raw_line);
         let fixture_literal = line.contains("writeWorkspace(")
@@ -397,6 +403,75 @@ fn source_findings(
                 "Dynamic require detected.",
                 "Use a static import or a literal module specifier.",
             ));
+        }
+        if (flags.get("errorVarDeclaration").copied().unwrap_or(false)
+            || flags.get("warnVarDeclaration").copied().unwrap_or(false))
+            && line.split_whitespace().any(|token| token == "var")
+        {
+            findings.push(push(
+                "typescript.var-declaration",
+                "Legacy var declaration detected.",
+                "Use let or const and preserve the narrowest possible binding scope.",
+            ));
+        }
+        if (flags.get("errorEmptyCatch").copied().unwrap_or(false)
+            || flags.get("warnEmptyCatch").copied().unwrap_or(false))
+            && (line.contains("catch {}") || line.contains("catch { }"))
+        {
+            findings.push(push(
+                "typescript.empty-catch",
+                "Empty catch block detected.",
+                "Handle, rethrow, or explicitly record the ignored error.",
+            ));
+        }
+        if !fixture_literal
+            && (flags.get("errorSqlInjection").copied().unwrap_or(false)
+                || flags.get("warnSqlInjection").copied().unwrap_or(false))
+            && (line.contains("query(`")
+                || line.contains("execute(`")
+                || (line.contains("query(\"") && line.contains("+")))
+        {
+            findings.push(push(
+                "security.sql-injection",
+                "Dynamic SQL-like query construction detected.",
+                "Use parameterized queries or the approved query builder and add an injection regression test.",
+            ));
+        }
+        if (flags.get("errorInsecureDefault").copied().unwrap_or(false)
+            || flags.get("warnInsecureDefault").copied().unwrap_or(false))
+            && (line.contains("dangerouslySetInnerHTML")
+                || line.contains("innerHTML:")
+                || line.contains("origin: \"*\"")
+                || line.contains("access-control-allow-origin: \"*\""))
+        {
+            findings.push(push(
+                "security.insecure-default",
+                "Named insecure default detected.",
+                "Replace the permissive or unsafe default with an explicit allowlist, sanitizer, or trusted boundary and add a regression test.",
+            ));
+        }
+        if !fixture_literal
+            && (flags.get("errorUnusedVariable").copied().unwrap_or(false)
+                || flags.get("warnUnusedVariable").copied().unwrap_or(false))
+        {
+            let binding = line
+                .split_once('=')
+                .and_then(|(left, _)| left.split_whitespace().last())
+                .filter(|name| {
+                    (line.contains("const ") || line.contains("let ") || line.contains("var "))
+                        && !name.starts_with('_')
+                        && name.chars().all(|character| character.is_ascii_alphanumeric() || character == '_')
+                });
+            if let Some(name) = binding {
+                let declaration_is_exported = line.trim_start().starts_with("export ");
+                if !declaration_is_exported && word_count(name) == 1 {
+                    findings.push(push(
+                        "typescript.unused-variable",
+                        &format!("Unused initialized variable {name} detected."),
+                        "Remove the unused declaration or use it in the implementation and tests.",
+                    ));
+                }
+            }
         }
     }
     findings
@@ -970,6 +1045,41 @@ mod tests {
             .findings
             .iter()
             .any(|finding| finding.rule_id == "typescript.eval"));
+        fs::remove_dir_all(workspace).unwrap();
+    }
+
+    #[test]
+    fn rust_evaluator_maps_additional_typescript_profile_rules() {
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../profiles/baseline");
+        let workspace = std::env::temp_dir().join(format!(
+            "lmp-rust-typescript-rules-{}",
+            std::process::id()
+        ));
+        fs::create_dir_all(&workspace).unwrap();
+        fs::write(
+            workspace.join("src.ts"),
+            r#"
+const unused = 1;
+var legacy = 2;
+try { work(); } catch {}
+db.query(`select * from users where id = ${id}`);
+const response = { origin: "*" };
+"#,
+        )
+        .unwrap();
+        let report = evaluate(&root, &workspace, "enforced", None).unwrap();
+        for rule in [
+            "typescript.unused-variable",
+            "typescript.var-declaration",
+            "typescript.empty-catch",
+            "security.sql-injection",
+            "security.insecure-default",
+        ] {
+            assert!(
+                report.findings.iter().any(|finding| finding.rule_id == rule),
+                "expected Rust evaluator finding for {rule}"
+            );
+        }
         fs::remove_dir_all(workspace).unwrap();
     }
 
