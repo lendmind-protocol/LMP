@@ -149,7 +149,7 @@ class BenchmarkArtifactGateTests(unittest.TestCase):
         payload["summary"]["dockerGatesExpected"] = 0
         path = self.write(payload)
         try:
-            with self.assertRaisesRegex(ValueError, "Docker gate"):
+            with self.assertRaisesRegex(ValueError, "Docker gate|sandbox gate"):
                 MODULE.validate(path)
         finally:
             path.unlink()

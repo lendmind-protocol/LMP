@@ -167,10 +167,10 @@
       "version": "1.0.0",
       "manifestUrl": "https://gateway.pinata.cloud/ipfs/bafkreiedoldpcsnjzaihd6dmj7yhwh2xlco4bgpxz33bge4m2eye5y35cm",
       "sourceUrl": "https://github.com/lendmind-protocol/LMP/tree/main/packages/create-lmp/profiles/supabase-core",
-      "digest": "8372c6f149a9c81071f86c4ff07b1f57589dc099f7cef613138cd1304ee37d13",
+      "digest": "562c09474c160b78169501796e594819f6a064486473a6b4a8d95f826696dd46",
       "signatureStatus": "verified",
-      "signature": "0x00892bb519673c05c247ba8893b90b37100cc2f809c8bc6128b4f8283613060d8ee40bd020440ed01abb8c93e1989db955a101e8f82dca172c2eb40534c03802",
-      "publicKey": "0x2ca184576de16e0d4acdc367f062da18cfcd3d6cb35d5269dd19154048381c8a",
+      "signature": "0xa8b7eb94e2318ccca7daf6321f8b247798be162d744d17cc45e02201038ae816271dd15586f1c616660db7017cd46dd613db55127878cc6f26d090febac4e808",
+      "publicKey": "0x340d8c9f9a2cad025f426c8f313fb8d615564dd891e7de75d49033716222dbe2",
       "packageFiles": [
         {
           "path": "evidence.json",
@@ -220,12 +220,12 @@
         {
           "path": "signatures/manifest.sig",
           "url": "https://gateway.pinata.cloud/ipfs/bafkreicdxmvjn5mntixz4bfb27o5z5mafduy2we5mmt42yibxopzmadzwy",
-          "digest": "43bb2a96f58d9a2f9e04a1d7dddcf58028e98d589d6327cd6101bb9f960079b6"
+          "digest": "7dc90f1fc78bf441f7cdf81f5d5320416638d6cdeea6ee4c4eac00ad793d7560"
         },
         {
           "path": "signatures/public-key.hex",
           "url": "https://gateway.pinata.cloud/ipfs/bafkreiemeiyc4gryxkz2nv4xugb6ck67oytimhcrdeluiqw6r7v43jiuby",
-          "digest": "8c22302e1a38bab3a6d797a183e12bdf7626861c5119174442de8febcda5140e"
+          "digest": "bd012f34850cecb8fbf0687fda977ac964d79dad9b86222f46106b0a7537f459"
         },
         {
           "path": "SKILL.md",
