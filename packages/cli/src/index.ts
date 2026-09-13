@@ -7,6 +7,7 @@ import { PromotionProposalSchema } from "@lending-mind/skill";
 import { Command } from "commander";
 import {
   activateMind,
+  createEvaluatedMediatedWriteAdapter,
   decideProposal,
   ensureGitignore,
   evaluate,
@@ -284,14 +285,38 @@ export function createProgram() {
       if (mode === "enforced" && artifact.summary.status !== "pass")
         throw Object.assign(new Error("enforced evaluation failed"), { exitCode: EXIT.policy });
     });
-  program
-    .command("agent")
+  const agent = program.command("agent");
+  agent
     .command("instructions")
     .option("--mind <mind>")
     .option("--format <format>", "markdown")
     .action(async (options) =>
       console.log(instructions(await loadMind(options.mind), options.format)),
     );
+  agent
+    .command("write <path>")
+    .requiredOption("--content <content>", "proposed file contents")
+    .option("--mind <mind>")
+    .option("--mind-path <path>")
+    .option("--workspace <path>", ".")
+    .option("--mode <mode>", "enforced")
+    .option("--json")
+    .action(async (path, options) => {
+      if (options.mode !== "advisory" && options.mode !== "enforced")
+        throw Object.assign(new Error("agent write mode must be advisory or enforced"), {
+          exitCode: EXIT.usage,
+        });
+      const mind = await loadMind(options.mind);
+      const adapter = createEvaluatedMediatedWriteAdapter({
+        workspaceRoot: resolve(options.workspace),
+        mind,
+        mindPath: options.mindPath ?? options.mind,
+        mode: options.mode,
+      });
+      await adapter.write({ path, content: options.content });
+      const result = { status: "pass", boundary: "mediated-write", path };
+      options.json ? json(result) : console.log(`pass: ${path}`);
+    });
   program.command("doctor").action(() =>
     json({
       node: process.version,

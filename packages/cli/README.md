@@ -62,6 +62,17 @@ await writes.write({ path: "src/change.ts", content: proposedSource });
 Hosts that write directly to the filesystem remain outside this boundary and
 must use the Git hook or a later `lmp evaluate`/`lmpd` check.
 
+For integrations that prefer a process boundary, the equivalent CLI command
+requires the proposed contents explicitly and refuses the write unless the
+configured evaluator passes:
+
+```bash
+lmp agent write src/change.ts \
+  --mind ./.lending-mind/skills/baseline \
+  --workspace . \
+  --content 'export const approved = true;'
+```
+
 ## Testing before publication
 
 The package is not published yet. From the repository root, build and pack it
