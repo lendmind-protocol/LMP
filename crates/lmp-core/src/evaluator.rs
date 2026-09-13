@@ -96,9 +96,7 @@ fn contains_secret_assignment(line: &str) -> bool {
 fn obvious_typescript_type_mismatch(line: &str) -> Option<(&'static str, &'static str)> {
     let annotation = line.split_once(':')?.1.split_once('=')?.0.trim();
     let initializer = line.split_once('=')?.1.trim().trim_end_matches(';').trim();
-    let expected = annotation
-        .split([' ', '|', '&'])
-        .next()?;
+    let expected = annotation.split([' ', '|', '&']).next()?;
     let expected = match expected {
         "string" => "string",
         "number" => "number",
