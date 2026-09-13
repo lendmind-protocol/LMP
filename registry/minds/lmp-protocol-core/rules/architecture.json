@@ -5,5 +5,6 @@
     { "name": "evaluation", "owner": "lmp-core", "mayDependOn": ["policy", "workspace"] },
     { "name": "artifacts", "owner": "lmp-core", "mayDependOn": ["evaluation"], "mustRedact": true }
   ],
+  "forbiddenImports": [],
   "note": "Boundary metadata supports review; it is not a proof of dependency isolation."
 }

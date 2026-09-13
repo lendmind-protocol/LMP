@@ -5,8 +5,9 @@
     "architecture.boundary": {
       "evaluator": "rust",
       "implementation": "crates/lmp-core/src/evaluator.rs",
-      "scope": ["declared boundary metadata"],
-      "limitation": "Does not prove runtime dependency isolation."
+      "scope": ["declared static import boundaries"],
+      "evidence": ["file", "line", "specifier", "boundary"],
+      "limitation": "Checks only declared source import patterns; it does not prove runtime dependency isolation or resolve every language-specific import form."
     },
     "ast.unsafe-boundary": {
       "evaluator": "rust",

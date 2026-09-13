@@ -758,6 +758,80 @@ fn tenant_boundary_findings(
     findings
 }
 
+fn architecture_findings(
+    workspace: &Path,
+    files: &[PathBuf],
+    policy: &Value,
+) -> Vec<Finding> {
+    let Some(boundaries) = policy.get("boundaries").and_then(Value::as_array) else {
+        return Vec::new();
+    };
+    let mut findings = Vec::new();
+    for file in files {
+        if source_language(file).is_none() {
+            continue;
+        }
+        let relative = file
+            .strip_prefix(workspace)
+            .unwrap_or(file)
+            .to_string_lossy()
+            .replace('\\', "/");
+        let Ok(source) = fs::read_to_string(file) else {
+            continue;
+        };
+        for (line_index, line) in source.lines().enumerate() {
+            let Some(specifier) = line
+                .split(['\"', '\''])
+                .nth(1)
+                .filter(|_| {
+                    line.contains("import") || line.contains("require") || line.contains("from")
+                })
+            else {
+                continue;
+            };
+            for boundary in boundaries {
+                let Some(object) = boundary.as_object() else {
+                    continue;
+                };
+                let prefix = object
+                    .get("pathPrefix")
+                    .and_then(Value::as_str)
+                    .unwrap_or("");
+                if !prefix.is_empty() && !relative.starts_with(prefix) {
+                    continue;
+                }
+                let Some(forbidden) = object.get("forbiddenImports").and_then(Value::as_array)
+                else {
+                    continue;
+                };
+                for target in forbidden.iter().filter_map(Value::as_str) {
+                    if specifier == target || specifier.starts_with(&format!("{target}/")) {
+                        findings.push(Finding {
+                            rule_id: "architecture.boundary".into(),
+                            passed: false,
+                            severity: "error".into(),
+                            message: format!(
+                                "Import crosses the declared architecture boundary: {specifier}."
+                            ),
+                            evidence: json!({
+                                "file": relative,
+                                "line": line_index + 1,
+                                "specifier": specifier,
+                                "boundary": object.get("name").and_then(Value::as_str),
+                                "pathPrefix": prefix,
+                                "forbiddenImport": target,
+                                "status": "violation",
+                                "remediation": "Move the dependency behind the owning boundary or record an explicitly reviewed exception."
+                            }),
+                        });
+                    }
+                }
+            }
+        }
+    }
+    findings
+}
+
 fn unsafe_exception_matches(exception: &str, relative_file: &str, workspace: &Path) -> bool {
     if exception == relative_file {
         return true;
@@ -1070,14 +1144,13 @@ fn evaluate_with_options_impl(
         .iter()
         .any(|rule| rule.get("id").and_then(Value::as_str) == Some("architecture.boundary"))
     {
-        findings.push(Finding {
-            rule_id: "architecture.boundary".into(),
-            passed: true,
-            severity: "warning".into(),
-            message: "Declared architecture boundary metadata was loaded for this evaluation."
-                .into(),
-            evidence: json!({"status": "metadata-loaded", "runtime": "rust"}),
-        });
+        if let Some(policy_path) = bundle.mind.enforcement.get("architecturePolicy") {
+            if let Ok(policy_text) = fs::read_to_string(package_dir.join(policy_path)) {
+                if let Ok(policy) = serde_json::from_str::<Value>(&policy_text) {
+                    findings.extend(architecture_findings(workspace, &files, &policy));
+                }
+            }
+        }
     }
     if bundle
         .rules
@@ -1266,7 +1339,8 @@ fn blocked_signature_evaluation(
 
 #[cfg(test)]
 mod tests {
-    use super::{contains_secret_assignment, evaluate, supported_rule_contract};
+    use super::{architecture_findings, contains_secret_assignment, evaluate, supported_rule_contract};
+    use serde_json::json;
     use std::{fs, path::PathBuf};
 
     #[test]

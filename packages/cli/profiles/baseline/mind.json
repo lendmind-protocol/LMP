@@ -16,11 +16,11 @@
     "sources": [
       {
         "title": "Lending-Mind baseline methodology",
-        "url": "https://github.com/lendmind-protocol/LMP/blob/main/README.md",
+        "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/a16bd929d56d06d85f6b97b0203134f624f8da93/README.md",
         "licenseNote": "Summary only; no copied proprietary text.",
         "sourceType": "repository",
         "accessMethod": "public-http",
-        "contentDigest": "sha256:c7532ba887a6234d2d8a1ccd2cde3364b8f4eff0767f0daced0e12799d622306",
+        "contentDigest": "sha256:b91df3bf25aa995c1d76bd9bb43cf799f838cf121c44664e87d356eefa317f6f",
         "retentionPolicy": "metadata-only",
         "allowedUse": "summarize-public-guidance",
         "evidenceTier": "primary",
