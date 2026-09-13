@@ -94,6 +94,35 @@ fn contains_secret_assignment(line: &str) -> bool {
     })
 }
 
+/// Remove quoted TypeScript/JavaScript literals before applying the Rust
+/// evaluator's lexical policy checks. Generated fixtures often contain source
+/// code as strings; those strings are data, not executable calls or types.
+/// Secret detection intentionally continues to use the original line so that
+/// quoted credential-shaped assignments remain observable.
+fn strip_typescript_literals(line: &str) -> String {
+    let mut output = String::with_capacity(line.len());
+    let mut quote = None;
+    let mut escaped = false;
+    for character in line.chars() {
+        if let Some(delimiter) = quote {
+            if escaped {
+                escaped = false;
+            } else if character == '\\' {
+                escaped = true;
+            } else if character == delimiter {
+                quote = None;
+            }
+            output.push(' ');
+        } else if matches!(character, '\'' | '"' | '`') {
+            quote = Some(character);
+            output.push(' ');
+        } else {
+            output.push(character);
+        }
+    }
+    output
+}
+
 fn obvious_typescript_type_mismatch(line: &str) -> Option<(&'static str, &'static str)> {
     let annotation = line.split_once(':')?.1.split_once('=')?.0.trim();
     let initializer = line.split_once('=')?.1.trim().trim_end_matches(';').trim();
@@ -382,6 +411,7 @@ fn source_findings(
     };
     for (index, raw_line) in source.lines().enumerate() {
         let line = raw_line.split("//").next().unwrap_or(raw_line);
+        let code = strip_typescript_literals(line);
         let fixture_literal = line.contains("writeWorkspace(")
             || line.contains("write_text(")
             || line.contains("source =");
@@ -397,7 +427,7 @@ fn source_findings(
             && (flags.get("errorAny").copied().unwrap_or(false)
                 || flags.get("warnAny").copied().unwrap_or(false))
         {
-            let has_any = line.contains(": any") || line.contains("<any>");
+            let has_any = code.contains(": any") || code.contains("<any>");
             if has_any {
                 findings.push(push(
                     "typescript.any",
@@ -409,7 +439,7 @@ fn source_findings(
         if !fixture_literal
             && (flags.get("errorTypeErrors").copied().unwrap_or(false)
                 || flags.get("warnTypeErrors").copied().unwrap_or(false))
-            && (line.contains("const ") || line.contains("let ") || line.contains("var "))
+            && (code.contains("const ") || code.contains("let ") || code.contains("var "))
         {
             if let Some((expected, actual)) = obvious_typescript_type_mismatch(line) {
                 findings.push(push(
@@ -433,7 +463,7 @@ fn source_findings(
         if !fixture_literal
             && (flags.get("errorEval").copied().unwrap_or(false)
                 || flags.get("warnEval").copied().unwrap_or(false))
-            && (line.contains("eval(") || line.contains("globalThis.eval("))
+            && (code.contains("eval(") || code.contains("globalThis.eval("))
         {
             findings.push(push(
                 "typescript.eval",
@@ -456,9 +486,8 @@ fn source_findings(
         }
         if (flags.get("errorDynamicRequire").copied().unwrap_or(false)
             || flags.get("warnDynamicRequire").copied().unwrap_or(false))
-            && line.contains("require(")
-            && !line.contains("require(\"")
-            && !line.contains("require('")
+            && code.contains("require(")
+            && !code.contains("require( ")
         {
             findings.push(push(
                 "typescript.dynamic-require",
@@ -468,7 +497,7 @@ fn source_findings(
         }
         if (flags.get("errorVarDeclaration").copied().unwrap_or(false)
             || flags.get("warnVarDeclaration").copied().unwrap_or(false))
-            && line.split_whitespace().any(|token| token == "var")
+            && code.split_whitespace().any(|token| token == "var")
         {
             findings.push(push(
                 "typescript.var-declaration",
@@ -478,7 +507,7 @@ fn source_findings(
         }
         if (flags.get("errorEmptyCatch").copied().unwrap_or(false)
             || flags.get("warnEmptyCatch").copied().unwrap_or(false))
-            && (line.contains("catch {}") || line.contains("catch { }"))
+            && (code.contains("catch {}") || code.contains("catch { }"))
         {
             findings.push(push(
                 "typescript.empty-catch",
@@ -515,7 +544,7 @@ fn source_findings(
         if !fixture_literal
             && (flags.get("errorAppLayerJoin").copied().unwrap_or(false)
                 || flags.get("warnAppLayerJoin").copied().unwrap_or(false))
-            && line.contains("Promise.all(")
+            && code.contains("Promise.all(")
         {
             findings.push(push(
                 "database.app-layer-join",
@@ -538,7 +567,7 @@ fn source_findings(
                             .all(|character| character.is_ascii_alphanumeric() || character == '_')
                 });
             if let Some(name) = binding {
-                let declaration_is_exported = line.trim_start().starts_with("export ");
+                let declaration_is_exported = code.trim_start().starts_with("export ");
                 if !declaration_is_exported && word_count(name) == 1 {
                     findings.push(push(
                         "typescript.unused-variable",
@@ -1414,10 +1443,11 @@ fn blocked_signature_evaluation(
 #[cfg(test)]
 mod tests {
     use super::{
-        architecture_findings, contains_secret_assignment, evaluate, supported_rule_contract,
+        architecture_findings, contains_secret_assignment, evaluate, source_findings,
+        supported_rule_contract,
     };
     use serde_json::json;
-    use std::{fs, path::PathBuf};
+    use std::{collections::HashMap, fs, path::PathBuf};
 
     #[test]
     fn hardcoded_secret_match_requires_assignment_boundary() {
@@ -1433,6 +1463,27 @@ mod tests {
         assert!(!contains_secret_assignment(
             "const tokenCount = \"ordinary-value\";"
         ));
+    }
+
+    #[test]
+    fn lexical_typescript_checks_ignore_source_examples_inside_strings() {
+        let flags = HashMap::from([
+            ("errorAny".to_string(), true),
+            ("errorEval".to_string(), true),
+            ("errorDynamicRequire".to_string(), true),
+        ]);
+        let workspace = PathBuf::from("/tmp/lmp-fixture");
+        let file = workspace.join("fixture.ts");
+        let findings = source_findings(
+            &file,
+            &workspace,
+            r#"const generated = "export function run(value: any) { eval(\\"value\\"); require(name); }";"#,
+            &flags,
+        );
+        assert!(
+            findings.is_empty(),
+            "source examples are data: {findings:?}"
+        );
     }
 
     #[test]
