@@ -161,6 +161,43 @@ fi
     }
   });
 
+  it("exposes the enforced agent write command as a process boundary", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "lmp-agent-write-command-"));
+    const originalCwd = process.cwd();
+    const previous = process.env.LMP_RUST_BIN;
+    try {
+      const mindPath = join(directory, "mind.json");
+      const evaluator = join(directory, "fake-lmp");
+      await writeFile(mindPath, JSON.stringify({ id: "lmp:mind:test", version: "1", rules: [] }));
+      await writeFile(
+        evaluator,
+        '#!/bin/sh\nprintf \'%s\\n\' \'{"summary":{"status":"pass","hardViolationCount":0}}\'\n',
+      );
+      await chmod(evaluator, 0o755);
+      process.env.LMP_RUST_BIN = evaluator;
+      process.chdir(directory);
+      expect(
+        await runCli([
+          "agent",
+          "write",
+          "change.ts",
+          "--mind",
+          mindPath,
+          "--workspace",
+          directory,
+          "--content",
+          "approved\n",
+        ]),
+      ).toBe(0);
+      await expect(readFile(join(directory, "change.ts"), "utf8")).resolves.toBe("approved\n");
+    } finally {
+      process.chdir(originalCwd);
+      if (previous === undefined) process.env.LMP_RUST_BIN = undefined;
+      else process.env.LMP_RUST_BIN = previous;
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
   it("does not turn a rejected Rust evaluation into a successful runtime result", async () => {
     const directory = await mkdtemp(join(tmpdir(), "lmp-cli-runtime-exit-"));
     const evaluator = join(directory, "fake-lmp");
