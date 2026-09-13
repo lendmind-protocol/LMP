@@ -1,0 +1,41 @@
+{
+  "artifactVersion": "1.0",
+  "status": "verified",
+  "server": "crates/lmp-mcp",
+  "implementedCapabilities": [
+    "initialize",
+    "ping",
+    "tools/list",
+    "tools/call",
+    "resources/list",
+    "resources/read",
+    "prompts/list",
+    "prompts/get",
+    "completion/complete",
+    "notifications/cancelled"
+  ],
+  "verification": {
+    "command": "cargo test -p lmp-mcp",
+    "passedTests": 17,
+    "failedTests": 0,
+    "protocolSmoke": [
+      "server-initialize",
+      "ping",
+      "tools-list",
+      "completion-complete",
+      "resources-list",
+      "prompts-list"
+    ],
+    "conformanceGate": {
+      "command": "bash orchestrator/test_mcp_conformance.sh",
+      "scenarios": 6,
+      "passedScenarios": 6,
+      "failedScenarios": 0
+    }
+  },
+  "limitations": [
+    "This artifact proves the implemented local server surface only.",
+    "Host-specific acceptance and interoperability remain separate evidence requirements.",
+    "The server does not advertise capabilities it does not implement."
+  ]
+}
