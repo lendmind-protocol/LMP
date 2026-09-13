@@ -19,13 +19,20 @@ This file must contain a non-empty JSON array, or an object with an
   "reviewer": "independent-reviewer-id",
   "reviewedRevision": "40-character-git-commit",
   "decision": "pass-with-limitations",
-  "notes": "What was independently checked and what remains bounded."
+  "notes": "What was independently checked and what remains bounded.",
+  "reviewTimeMinutes": 30,
+  "reworkCount": 0,
+  "severity": "low",
+  "confidence": 0.8,
+  "falsePositiveCount": 0
 }
 ```
 
 The benchmark runner rejects annotations for any revision other than the one
-being measured. A maintainer cannot satisfy this gate by adding an empty array
-or by copying the benchmark's own output.
+being measured. Review time, rework, severity, confidence, and false-positive
+count are required so the evidence can measure review overhead and disagreement
+instead of accepting narrative-only approval. A maintainer cannot satisfy this
+gate by adding an empty array or by copying the benchmark's own output.
 
 ## `human-adoption-pilot.json`
 
