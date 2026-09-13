@@ -18,6 +18,23 @@ not for a model-quality claim. Supply `--candidate-inputs` with a manifest
 whose producer is either `explicit-injection` or `model`. Model manifests must
 identify provider, model, and a digest of the generation request.
 
+Generate a model-backed manifest with the provider-neutral adapter:
+
+```bash
+python3 orchestrator/model_candidate_generator.py \
+  --command 'your-model-host-command' \
+  --provider your-provider \
+  --model your-model-id \
+  --host your-host-id \
+  --trials 3 \
+  --output lmp-test-results/model-candidates.json
+```
+
+The host command receives one JSON request on standard input and must return
+JSON containing `implementation`, `test`, and `package`. The adapter records
+the request digest, model identity, host identity, paired condition, and
+candidate-byte digest. It rejects incomplete or invalid responses.
+
 The artifact gate requires repeated paired trials, complete measurable outcomes,
 verified source URLs and content digests, clean provenance, and the explicit
 claim status `causalClaim: not-established`. It therefore cannot be used to
