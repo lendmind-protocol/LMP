@@ -1,4 +1,5 @@
 use crate::compiler;
+use crate::loop_controller::{LoopPolicy, LoopSnapshot, LoopState};
 use anyhow::{Context, Result};
 use serde::Serialize;
 use serde_json::{json, Value};
@@ -758,10 +759,43 @@ fn tenant_boundary_findings(
     findings
 }
 
+fn import_specifiers(line: &str) -> Vec<&str> {
+    let trimmed = line.trim_start();
+    if trimmed.starts_with("//")
+        || !(trimmed.starts_with("import ")
+            || trimmed.starts_with("export ")
+            || trimmed.contains("require(")
+            || trimmed.contains("import("))
+    {
+        return Vec::new();
+    }
+    let mut result = Vec::new();
+    let mut rest = line;
+    while let Some((index, quote)) = rest
+        .char_indices()
+        .find(|(_, character)| *character == '"' || *character == '\'')
+    {
+        let after_open = &rest[index + quote.len_utf8()..];
+        let Some(end) = after_open.find(quote) else {
+            break;
+        };
+        let before = &rest[..index];
+        if before.trim_end().ends_with("from")
+            || before.trim_end().ends_with("require(")
+            || before.trim_end().ends_with("import(")
+        {
+            result.push(&after_open[..end]);
+        }
+        rest = &after_open[end + quote.len_utf8()..];
+    }
+    result
+}
+
 fn architecture_findings(
     workspace: &Path,
     files: &[PathBuf],
     policy: &Value,
+    severity: &str,
 ) -> Vec<Finding> {
     let Some(boundaries) = policy.get("boundaries").and_then(Value::as_array) else {
         return Vec::new();
@@ -780,36 +814,28 @@ fn architecture_findings(
             continue;
         };
         for (line_index, line) in source.lines().enumerate() {
-            let Some(specifier) = line
-                .split(['\"', '\''])
-                .nth(1)
-                .filter(|_| {
-                    line.contains("import") || line.contains("require") || line.contains("from")
-                })
-            else {
-                continue;
-            };
-            for boundary in boundaries {
-                let Some(object) = boundary.as_object() else {
-                    continue;
-                };
-                let prefix = object
-                    .get("pathPrefix")
-                    .and_then(Value::as_str)
-                    .unwrap_or("");
-                if !prefix.is_empty() && !relative.starts_with(prefix) {
-                    continue;
-                }
-                let Some(forbidden) = object.get("forbiddenImports").and_then(Value::as_array)
-                else {
-                    continue;
-                };
-                for target in forbidden.iter().filter_map(Value::as_str) {
-                    if specifier == target || specifier.starts_with(&format!("{target}/")) {
-                        findings.push(Finding {
+            for specifier in import_specifiers(line) {
+                for boundary in boundaries {
+                    let Some(object) = boundary.as_object() else {
+                        continue;
+                    };
+                    let prefix = object
+                        .get("pathPrefix")
+                        .and_then(Value::as_str)
+                        .unwrap_or("");
+                    if !prefix.is_empty() && !relative.starts_with(prefix) {
+                        continue;
+                    }
+                    let Some(forbidden) = object.get("forbiddenImports").and_then(Value::as_array)
+                    else {
+                        continue;
+                    };
+                    for target in forbidden.iter().filter_map(Value::as_str) {
+                        if specifier == target || specifier.starts_with(&format!("{target}/")) {
+                            findings.push(Finding {
                             rule_id: "architecture.boundary".into(),
                             passed: false,
-                            severity: "error".into(),
+                            severity: severity.into(),
                             message: format!(
                                 "Import crosses the declared architecture boundary: {specifier}."
                             ),
@@ -824,6 +850,7 @@ fn architecture_findings(
                                 "remediation": "Move the dependency behind the owning boundary or record an explicitly reviewed exception."
                             }),
                         });
+                        }
                     }
                 }
             }
@@ -1147,7 +1174,16 @@ fn evaluate_with_options_impl(
         if let Some(policy_path) = bundle.mind.enforcement.get("architecturePolicy") {
             if let Ok(policy_text) = fs::read_to_string(package_dir.join(policy_path)) {
                 if let Ok(policy) = serde_json::from_str::<Value>(&policy_text) {
-                    findings.extend(architecture_findings(workspace, &files, &policy));
+                    let severity = bundle
+                        .rules
+                        .iter()
+                        .find(|rule| {
+                            rule.get("id").and_then(Value::as_str) == Some("architecture.boundary")
+                        })
+                        .and_then(|rule| rule.get("severity"))
+                        .and_then(Value::as_str)
+                        .unwrap_or("error");
+                    findings.extend(architecture_findings(workspace, &files, &policy, severity));
                 }
             }
         }
@@ -1241,6 +1277,29 @@ fn evaluate_with_options_impl(
             Ok::<Value, serde_json::Error>(value)
         })
         .collect::<Result<Vec<_>, _>>()?;
+    let mut loop_snapshot = LoopSnapshot::new(LoopPolicy::default());
+    loop_snapshot.transition(LoopState::ResolveProfile, "profile resolved");
+    loop_snapshot.transition(LoopState::ResolveWorkspace, "workspace resolved");
+    loop_snapshot.transition(LoopState::BuildTypedContext, "typed context built");
+    loop_snapshot.transition(LoopState::Evaluate, "independent evaluation started");
+    if errors > 0 {
+        loop_snapshot.transition(LoopState::Remediate, "error findings require remediation");
+        loop_snapshot.stop("evaluation requires external remediation");
+    } else if warnings > 0 {
+        loop_snapshot.transition(
+            LoopState::Report,
+            "warning findings reported without autonomous remediation",
+        );
+    } else {
+        loop_snapshot.transition(LoopState::Attest, "evaluation passed");
+        loop_snapshot.transition(LoopState::Report, "evaluation evidence ready");
+    }
+    let loop_summary = json!({
+        "stateTransitions": loop_snapshot.events,
+        "attempts": loop_snapshot.attempts,
+        "commandRuns": loop_snapshot.command_runs,
+        "stoppedBy": loop_snapshot.stop_reason.clone().unwrap_or_else(|| "pass".into())
+    });
     let artifact = json!({
         "artifactVersion":"1.0",
         "runId":format!("rust-{created}-{}", std::process::id()),
@@ -1259,6 +1318,14 @@ fn evaluate_with_options_impl(
             {"stepId":"analysis","state":"evaluating","event":"analysis_completed","attempt":0,"languages":analysis_languages,"unsupportedLanguages":unsupported_languages},
             {"stepId":"decision","state":state,"event":"evaluation_completed","attempt":0,"hardViolationCount":errors,"warningCount":warnings}
         ],
+        "loop":{"stateTransitions":loop_summary["stateTransitions"],"attempts":loop_summary["attempts"],"commandRuns":loop_summary["commandRuns"],"stoppedBy":loop_summary["stoppedBy"]},
+        "typedContext":{"version":"1.0","run":{"mode":mode,"network":"disabled"},"profile":{"id":package_id,"version":package_version,"digest":bundle_digest},"lanes":[
+            {"lane":"hard-policy","priority":100,"lifecycle":"machine-enforced","source":"Mind Package"},
+            {"lane":"repository-facts","priority":90,"lifecycle":"immutable","source":"workspace inspection"},
+            {"lane":"findings","priority":80,"lifecycle":"machine-enforced","source":"Rust evaluator"},
+            {"lane":"guidance","priority":50,"lifecycle":"advisory","source":"compiled Mind"}
+        ]},
+        "authorization":{"capabilityMode":"local","readFile":"allow","search":"allow","writeFile":"deny","executeCommand":{"mode":"deny","reason":"commands were not explicitly approved"},"network":"deny","upload":"approval-required","deploy":"deny"},
         "commands":[],
         "limitations":["Static and configured checks provide evidence about this evaluation only; they do not prove universal code quality."],
         "environment":{"runtime":"rust","lmpVersion":"0.1.0"},
@@ -1313,6 +1380,12 @@ fn blocked_signature_evaluation(
         "summary":{"status":"fail","hardViolationCount":1,"warningCount":0,"informationalCount":0},
         "checks":[serde_json::to_value(&finding)?],
         "skippedChecks":[{"checkId":"evaluation","reason":"Evaluation stopped before package compilation because signature verification failed.","status":"blocked"}],
+        "loop":{"stateTransitions":[
+            {"from":"INIT","to":"RESOLVE_PROFILE","event":"profile-resolved"},
+            {"from":"RESOLVE_PROFILE","to":"ESCALATE","event":"signature-verification-failed"}
+        ],"attempts":0,"stoppedBy":"escalation"},
+        "typedContext":{"version":"1.0","run":{"mode":mode,"network":"disabled"},"profile":{"id":package.id,"version":package.version,"digest":"unavailable"},"lanes":[{"lane":"hard-policy","priority":100,"lifecycle":"machine-enforced","source":"Mind Package signature gate"}]},
+        "authorization":{"capabilityMode":"local","readFile":"allow","search":"allow","writeFile":"deny","executeCommand":{"mode":"deny","reason":"package signature gate blocked evaluation"},"network":"deny","upload":"approval-required","deploy":"deny"},
         "commands":[],
         "limitations":["The package was blocked before workspace analysis because its detached signature could not be verified."],
         "environment":{"runtime":"rust","lmpVersion":"0.1.0"},
@@ -1339,7 +1412,9 @@ fn blocked_signature_evaluation(
 
 #[cfg(test)]
 mod tests {
-    use super::{architecture_findings, contains_secret_assignment, evaluate, supported_rule_contract};
+    use super::{
+        architecture_findings, contains_secret_assignment, evaluate, supported_rule_contract,
+    };
     use serde_json::json;
     use std::{fs, path::PathBuf};
 
@@ -1357,6 +1432,29 @@ mod tests {
         assert!(!contains_secret_assignment(
             "const tokenCount = \"ordinary-value\";"
         ));
+    }
+
+    #[test]
+    fn architecture_boundary_reports_forbidden_import_with_location() {
+        let workspace = std::env::temp_dir().join(format!(
+            "lmp-rust-architecture-boundary-test-{}",
+            std::process::id()
+        ));
+        fs::create_dir_all(workspace.join("apps/web/src")).unwrap();
+        let file = workspace.join("apps/web/src/page.ts");
+        fs::write(&file, "import { query } from \"server/db\";\n").unwrap();
+        let policy = json!({
+            "boundaries": [{
+                "name": "web",
+                "pathPrefix": "apps/web/src/",
+                "forbiddenImports": ["server/db"]
+            }]
+        });
+        let findings = architecture_findings(&workspace, &[file], &policy, "warning");
+        assert_eq!(findings.len(), 1);
+        assert_eq!(findings[0].rule_id, "architecture.boundary");
+        assert_eq!(findings[0].evidence["line"], 1);
+        fs::remove_dir_all(workspace).unwrap();
     }
 
     #[test]

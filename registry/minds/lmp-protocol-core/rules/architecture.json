@@ -1,10 +1,9 @@
 {
   "schemaVersion": "1.0",
   "boundaries": [
-    { "name": "policy", "owner": "Mind package", "mayDependOn": ["metadata", "rules"] },
-    { "name": "evaluation", "owner": "lmp-core", "mayDependOn": ["policy", "workspace"] },
-    { "name": "artifacts", "owner": "lmp-core", "mayDependOn": ["evaluation"], "mustRedact": true }
+    { "name": "policy", "owner": "Mind package", "mayDependOn": ["metadata", "rules"], "pathPrefix": "registry/minds/lmp-protocol-core/", "forbiddenImports": ["orchestrator"] },
+    { "name": "evaluation", "owner": "lmp-core", "mayDependOn": ["policy", "workspace"], "pathPrefix": "crates/lmp-core/src/", "forbiddenImports": ["orchestrator"] },
+    { "name": "artifacts", "owner": "lmp-core", "mayDependOn": ["evaluation"], "mustRedact": true, "pathPrefix": "packages/evaluator/src/", "forbiddenImports": ["server/db"] }
   ],
-  "forbiddenImports": [],
-  "note": "Boundary metadata supports review; it is not a proof of dependency isolation."
+  "note": "The evaluator checks declared static import boundaries and reports the rule contract severity. This is not a proof of runtime dependency isolation."
 }

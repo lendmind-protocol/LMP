@@ -3,8 +3,8 @@
   "version": 1,
   "rules": {
     "architecture.boundary": {
-      "evaluator": "rust",
-      "implementation": "crates/lmp-core/src/evaluator.rs",
+      "evaluator": "rust-and-typescript",
+      "implementation": "crates/lmp-core/src/evaluator.rs; packages/evaluator/src/index.ts",
       "scope": ["declared static import boundaries"],
       "evidence": ["file", "line", "specifier", "boundary"],
       "limitation": "Checks only declared source import patterns; it does not prove runtime dependency isolation or resolve every language-specific import form."

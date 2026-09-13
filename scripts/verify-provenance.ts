@@ -69,12 +69,16 @@ for (const manifestPath of profiles) {
       checked += 1;
     }
   } catch (error) {
-    failures.push(`${manifestPath.slice(root.length)}: ${error instanceof Error ? error.message : String(error)}`);
+    failures.push(
+      `${manifestPath.slice(root.length)}: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }
 
 if (failures.length > 0) {
-  console.error(JSON.stringify({ status: "failed", checked, profiles: profiles.length, failures }, null, 2));
+  console.error(
+    JSON.stringify({ status: "failed", checked, profiles: profiles.length, failures }, null, 2),
+  );
   process.exit(1);
 }
 console.log(
