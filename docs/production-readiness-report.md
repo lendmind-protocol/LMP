@@ -63,7 +63,7 @@ unbounded “production-ready” claim.
 
 ## Quality improvement evidence
 
-> The latest hosted benchmark run [34729695684](https://github.com/lendmind-protocol/LMP/actions/runs/34729695684) completed successfully for commit `a1347056df686b9580f283026747d33343a26329`. It verified 64/64 scenarios and transitions, 128/128 Docker gates, 128/128 ordinary compiler controls, and 15/15 provenance sources. The runner uses bounded command timeouts and a 20-minute job ceiling. This is a reproducible technical control result, not a causal quality study: it uses fixed candidate patches, does not execute repository-owned lint/test/CI commands, and has no independent reviewer annotations. LMP therefore has not demonstrated that it improves AI-generated code quality beyond a strong combination of instructions, skills, testing, CI, static analysis, and human review.
+> The latest hosted benchmark run [34731256644](https://github.com/lendmind-protocol/LMP/actions/runs/34731256644) completed successfully for commit `3d8dde11c76939774a1d022a5c60bc2648e84990`. It verified 192/192 paired transitions, 384/384 Docker gates, 384/384 ordinary compiler controls, and 15/15 provenance sources across three repeated trials. The runner uses bounded command timeouts and a 20-minute job ceiling. This is a reproducible technical control result, not a causal quality study: it uses explicitly supplied candidate inputs, does not execute repository-owned lint/test/CI commands as the outcome, and has no independent reviewer annotations. LMP therefore has not demonstrated that it improves AI-generated code quality beyond a strong combination of instructions, skills, testing, CI, static analysis, and human review.
 
 ## Final truth statement
 
