@@ -55,9 +55,11 @@ Its latest machine-readable output is `lmp-test-results/lmp-on-lmp-reality.json`
 the run verifies the declared local toolchains and Docker gate, while retaining
 five partial Mind evaluations because their configured scopes expose unsupported
 or failing checks.
-`ci` adds the Rust format and workspace-test gates. `release-candidate` remains
-`BLOCKED` until immutable package retrieval and independent review evidence are
-supplied. The command never emits an unbounded “production-ready” claim.
+`ci` adds the Rust format and workspace-test gates. All four current production
+Mind packages now have gateway-verified immutable IPFS retrieval; the
+`release-candidate` remains `BLOCKED` until independent review and the separate
+OCI/publication evidence gates are supplied. The command never emits an
+unbounded “production-ready” claim.
 
 ## Quality improvement evidence
 

@@ -16,7 +16,8 @@ These files are generated from commands run in this checkout. They are evidence 
 | [`docker-qualification.json`](./docker-qualification.json) | The real Docker qualification artifact, when Docker is available. |
 
 The release-candidate profile is intentionally not marked complete while
-immutable public package retrieval and independent review are absent. The
+independent review, OCI publication, and human adoption evidence are absent.
+All four current production IPFS package CIDs are gateway-verified; the
 four-target hosted qualification is recorded separately in the workflow run
 linked from the maturity report. No placeholder CID or digest is used to make
 that gate green.
