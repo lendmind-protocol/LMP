@@ -7,6 +7,7 @@ import { createMediatedWriteAdapter, hostBoundarySupport } from "./host-boundari
 import { runCli } from "./index.js";
 import {
   activateMind,
+  createEvaluatedMediatedWriteAdapter,
   decideProposal,
   ensureGitignore,
   evaluate,
@@ -116,6 +117,48 @@ describe("CLI runtime", () => {
       supported: false,
       boundary: null,
     });
+  });
+
+  it("evaluates a candidate snapshot before committing an agent write", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "lmp-evaluated-write-"));
+    const evaluator = join(directory, "fake-lmp");
+    const previous = process.env.LMP_RUST_BIN;
+    try {
+      await writeFile(join(directory, "existing.ts"), "original\n");
+      await writeFile(
+        evaluator,
+        `#!/bin/sh
+workspace=""
+while [ "$#" -gt 0 ]; do
+  if [ "$1" = "--workspace" ]; then workspace="$2"; shift 2; else shift; fi
+done
+if grep -q approved "$workspace/change.ts"; then
+  printf '%s\\n' '{"summary":{"status":"pass","hardViolationCount":0}}'
+else
+  printf '%s\\n' '{"summary":{"status":"needs_revision","hardViolationCount":1}}'
+fi
+`,
+      );
+      await chmod(evaluator, 0o755);
+      process.env.LMP_RUST_BIN = evaluator;
+      const adapter = createEvaluatedMediatedWriteAdapter({
+        workspaceRoot: directory,
+        mind: { id: "lmp:mind:test", version: "1", rules: [] },
+        mindPath: directory,
+      });
+      await expect(
+        adapter.write({ path: "change.ts", content: "approved\n" }),
+      ).resolves.toBeUndefined();
+      await expect(readFile(join(directory, "change.ts"), "utf8")).resolves.toBe("approved\n");
+      await expect(adapter.write({ path: "change.ts", content: "rejected\n" })).rejects.toThrow(
+        /evaluator returned needs_revision/,
+      );
+      await expect(readFile(join(directory, "change.ts"), "utf8")).resolves.toBe("approved\n");
+    } finally {
+      if (previous === undefined) process.env.LMP_RUST_BIN = undefined;
+      else process.env.LMP_RUST_BIN = previous;
+      await rm(directory, { recursive: true, force: true });
+    }
   });
 
   it("does not turn a rejected Rust evaluation into a successful runtime result", async () => {

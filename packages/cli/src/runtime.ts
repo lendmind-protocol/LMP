@@ -6,12 +6,15 @@ import {
   chmod,
   cp,
   mkdir,
+  mkdtemp,
   readFile,
   readdir,
+  rm,
   stat,
   writeFile,
 } from "node:fs/promises";
-import { isAbsolute, join, relative, resolve, sep } from "node:path";
+import { tmpdir } from "node:os";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import {
   type MindPackage,
   computePackageDigest,
@@ -38,6 +41,7 @@ export type {
   WriteDecision,
   WriteRequest,
 } from "./host-boundaries.js";
+import { createMediatedWriteAdapter } from "./host-boundaries.js";
 type PromotionProposal = {
   proposalId: string;
   profileId: string;
@@ -57,6 +61,12 @@ type PromotionProposal = {
 };
 
 export type Mode = "advisory" | "enforced" | "audit";
+export type EvaluatedMediatedWriteAdapterOptions = {
+  workspaceRoot: string;
+  mind: MindPackage;
+  mindPath?: string;
+  mode?: Exclude<Mode, "audit">;
+};
 type RuntimeArtifact = {
   runId: string;
   summary: {
@@ -277,6 +287,56 @@ export async function evaluate(
     });
   });
   return JSON.parse(output) as RuntimeArtifact;
+}
+
+/**
+ * Bind the pre-persistence boundary to the compiled evaluator. The candidate
+ * is evaluated in a disposable workspace snapshot, so a denied agent write
+ * never reaches the real workspace. This is an explicit host integration;
+ * it does not turn arbitrary editor or filesystem writes into intercepted
+ * writes.
+ */
+export function createEvaluatedMediatedWriteAdapter(options: EvaluatedMediatedWriteAdapterOptions) {
+  const workspaceRoot = resolve(options.workspaceRoot);
+  const mode = options.mode ?? "enforced";
+  return createMediatedWriteAdapter({
+    workspaceRoot,
+    authorize: async (request) => {
+      const shadow = await mkdtemp(join(tmpdir(), "lmp-mediated-evaluation-"));
+      try {
+        await cp(workspaceRoot, shadow, {
+          recursive: true,
+          filter: (source) => {
+            const path = resolve(source);
+            return ![".git", "node_modules", ".lending-mind", "target", "dist"].some(
+              (excluded) =>
+                path === resolve(workspaceRoot, excluded) ||
+                path.startsWith(`${resolve(workspaceRoot, excluded)}${sep}`),
+            );
+          },
+        });
+        const relativeTarget = relative(workspaceRoot, request.path);
+        const shadowTarget = resolve(shadow, relativeTarget);
+        await mkdir(dirname(shadowTarget), { recursive: true });
+        await writeFile(shadowTarget, request.content);
+        const artifact = await evaluate(options.mind, shadow, mode, {
+          mindPath: options.mindPath,
+        });
+        if (artifact.summary.status === "pass") return { status: "pass" };
+        return {
+          status: "deny",
+          reason: `evaluator returned ${artifact.summary.status} (${artifact.summary.hardViolationCount} hard violation(s))`,
+        };
+      } catch (error) {
+        return {
+          status: "deny",
+          reason: `candidate evaluation failed closed: ${error instanceof Error ? error.message : String(error)}`,
+        };
+      } finally {
+        await rm(shadow, { recursive: true, force: true });
+      }
+    },
+  });
 }
 
 export { computePackageDigest, signMindPackage, verifyMindPackage };

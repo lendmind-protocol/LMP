@@ -37,6 +37,31 @@ The standalone Rust `lmp` release binary embeds the same signed baseline at
 build time. Its `lmp init --baseline` path therefore works from a clean
 directory without access to the LMP source checkout.
 
+## Pre-persistence agent writes
+
+An agent host that owns its write path can use the exported
+`createEvaluatedMediatedWriteAdapter` from `@lending-mind/lmp`. Each proposed
+write is copied into a disposable workspace snapshot and sent through the
+Rust evaluator. Only a `pass` result permits the adapter's atomic commit; a
+failed or unavailable evaluator denies the write. This is a real enforcement
+boundary for that explicit adapter integration, not a filesystem-wide hook.
+
+```ts
+import { createEvaluatedMediatedWriteAdapter, loadMind } from "@lending-mind/lmp";
+
+const mind = await loadMind("./.lending-mind/skills/baseline");
+const writes = createEvaluatedMediatedWriteAdapter({
+  workspaceRoot: process.cwd(),
+  mind,
+  mindPath: "./.lending-mind/skills/baseline",
+});
+
+await writes.write({ path: "src/change.ts", content: proposedSource });
+```
+
+Hosts that write directly to the filesystem remain outside this boundary and
+must use the Git hook or a later `lmp evaluate`/`lmpd` check.
+
 ## Testing before publication
 
 The package is not published yet. From the repository root, build and pack it
