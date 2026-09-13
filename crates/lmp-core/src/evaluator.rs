@@ -93,6 +93,36 @@ fn contains_secret_assignment(line: &str) -> bool {
     })
 }
 
+fn obvious_typescript_type_mismatch(line: &str) -> Option<(&'static str, &'static str)> {
+    let annotation = line.split_once(':')?.1.split_once('=')?.0.trim();
+    let initializer = line.split_once('=')?.1.trim().trim_end_matches(';').trim();
+    let expected = annotation
+        .split(|character: char| character == ' ' || character == '|' || character == '&')
+        .next()?;
+    let expected = match expected {
+        "string" => "string",
+        "number" => "number",
+        "boolean" => "boolean",
+        _ => return None,
+    };
+    let actual = if initializer.starts_with(['"', '\'', '`']) {
+        "string"
+    } else if initializer == "true" || initializer == "false" {
+        "boolean"
+    } else if initializer.parse::<f64>().is_ok() {
+        "number"
+    } else {
+        return None;
+    };
+    let mismatch = match expected {
+        "string" => actual != "string",
+        "number" => actual != "number",
+        "boolean" => actual != "boolean",
+        _ => false,
+    };
+    mismatch.then_some((expected, actual))
+}
+
 fn unsupported_source_language(path: &Path) -> Option<&'static str> {
     match path
         .extension()?
@@ -352,6 +382,19 @@ fn source_findings(
                     "typescript.any",
                     "Explicit any type detected.",
                     "Use a precise type or unknown with a narrowing boundary.",
+                ));
+            }
+        }
+        if !fixture_literal
+            && (flags.get("errorTypeErrors").copied().unwrap_or(false)
+                || flags.get("warnTypeErrors").copied().unwrap_or(false))
+            && (line.contains("const ") || line.contains("let ") || line.contains("var "))
+        {
+            if let Some((expected, actual)) = obvious_typescript_type_mismatch(line) {
+                findings.push(push(
+                    "typescript.type-error",
+                    &format!("TypeScript literal type mismatch: expected {expected}, found {actual}."),
+                    "Correct the annotation or initializer, then run the project TypeScript compiler for full semantic diagnostics.",
                 ));
             }
         }
@@ -862,48 +905,6 @@ fn evaluate_with_options_impl(
             });
         }
     }
-    let rust_supported_rules = [
-        "commands.allowlist",
-        "complexity.cyclomatic",
-        "dependencies.deny",
-        "typescript.any",
-        "typescript.console",
-        "typescript.eval",
-        "typescript.dynamic-require",
-        "typescript.empty-catch",
-        "typescript.var-declaration",
-        "security.hardcoded-secret",
-        "security.sql-injection",
-        "security.insecure-default",
-        "database.app-layer-join",
-        "typescript.unused-variable",
-        "typescript.duplicate-logic",
-    ];
-    for rule in &bundle.rules {
-        let Some(rule_id) = rule.get("id").and_then(Value::as_str) else {
-            continue;
-        };
-        if !rust_supported_rules.contains(&rule_id) && rule_id == "typescript.type-error" {
-            skipped_checks.push(json!({
-                "checkId": format!("rule.{rule_id}"),
-                "reason": format!("The Rust evaluator does not implement {rule_id}; the TypeScript evaluator is required for this contract."),
-                "status": "unsupported"
-            }));
-            if mode == "enforced" {
-                findings.push(Finding {
-                    rule_id: format!("rule.unsupported.{rule_id}"),
-                    passed: false,
-                    severity: "error".into(),
-                    message: format!("Declared rule {rule_id} is unsupported by the Rust evaluator."),
-                    evidence: json!({
-                        "ruleId": rule_id,
-                        "status": "unsupported",
-                        "remediation": "Run the TypeScript evaluator or use a profile whose declared rules are implemented by this runtime."
-                    }),
-                });
-            }
-        }
-    }
     skipped_checks.push(json!({
         "checkId":"behavioral.docker",
         "reason":"Docker execution is an explicit orchestrator gate, not part of this static evaluator run."
@@ -1256,27 +1257,29 @@ const response = { origin: "*" };
     }
 
     #[test]
-    fn rust_evaluator_fails_closed_for_declared_typescript_rules_it_cannot_run() {
+    fn rust_evaluator_reports_obvious_typescript_type_errors_without_silent_skips() {
         let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../profiles/baseline");
         let workspace = std::env::temp_dir().join(format!(
             "lmp-rust-unsupported-typescript-rules-{}",
             std::process::id()
         ));
         fs::create_dir_all(&workspace).unwrap();
-        fs::write(workspace.join("src.ts"), "export const value = 1;\n").unwrap();
+        fs::write(
+            workspace.join("src.ts"),
+            "const value: number = \"wrong\";\n",
+        )
+        .unwrap();
         let report = evaluate(&root, &workspace, "enforced", None).unwrap();
         assert!(!report.passed);
-        let rule = "typescript.type-error";
-        assert!(report.findings.iter().any(|finding| {
-            finding.rule_id == format!("rule.unsupported.{rule}")
-                && finding.evidence["status"] == "unsupported"
-        }));
-        assert!(report.artifact["skippedChecks"]
+        assert!(report
+            .findings
+            .iter()
+            .any(|finding| finding.rule_id == "typescript.type-error"));
+        assert!(!report.artifact["skippedChecks"]
             .as_array()
             .unwrap()
             .iter()
-            .any(|check| check["checkId"] == format!("rule.{rule}")
-                && check["status"] == "unsupported"));
+            .any(|check| check["checkId"] == "rule.typescript.type-error"));
         fs::remove_dir_all(workspace).unwrap();
     }
 
