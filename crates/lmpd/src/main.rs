@@ -230,6 +230,7 @@ fn validate_workspace(mind_dir: &Path, workspace: &Path, mode: &str) -> Result<(
         None,
         EvaluationOptions {
             changed_only: true,
+            staged_only: false,
             git_base: None,
             ast_cache_dir: None,
         },
