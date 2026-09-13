@@ -16,6 +16,8 @@ SPEC.loader.exec_module(MODULE)
 
 def artifact() -> dict[str, object]:
     scenario_count = MODULE.EXPECTED_SCENARIOS
+    trial_count = 2
+    paired_count = scenario_count * trial_count
     candidate = {
         "exitCode": 0,
         "state": "needs_revision",
@@ -30,17 +32,19 @@ def artifact() -> dict[str, object]:
         "timedOut": False,
     }
     return {
-        "artifactVersion": "1.2",
+        "artifactVersion": "2.0",
         "status": "complete",
         "summary": {
             "expectedScenarioCount": scenario_count,
             "scenarioCount": scenario_count,
-            "passedTransitions": scenario_count,
+            "passedTransitions": paired_count,
             "allTransitionsPassed": True,
-            "dockerGatesPassed": scenario_count * 2,
-            "dockerGatesExpected": scenario_count * 2,
-            "controlChecksPassed": scenario_count * 2,
-            "controlChecksExpected": scenario_count * 2,
+            "trialCount": trial_count,
+            "pairedTrialCount": paired_count,
+            "dockerGatesPassed": paired_count * 2,
+            "dockerGatesExpected": paired_count * 2,
+            "controlChecksPassed": paired_count * 2,
+            "controlChecksExpected": paired_count * 2,
             "verifiedSources": 1,
         },
         "evidenceMetadata": {
@@ -49,12 +53,18 @@ def artifact() -> dict[str, object]:
             "profile": {"path": "profiles/baseline", "mindSha256": "b" * 64},
             "tools": {"lmp": "lmp 0.1.0", "python": "3.11", "platform": "test", "docker": "Docker"},
             "reviewerAnnotations": [],
+            "candidateInputs": {"path": "orchestrator/fixtures/real-world-candidates.json", "manifestSha256": "e" * 64, "producer": {"kind": "explicit-injection"}},
         },
+        "study": {"design": "paired-repeated-trials", "trialCount": trial_count, "causalClaim": "not-established"},
         "timingSeconds": {"total": 1.0},
         "privacy": {"sourceCodeIncluded": False, "rawPathsIncluded": False, "privateReasoningIncluded": False},
         "scenarios": [
             {
                 "id": f"scenario-{_}",
+                "baseScenarioId": f"base-scenario-{_ // trial_count}",
+                "inputId": f"input-{_}",
+                "trial": (_ % trial_count) + 1,
+                "inputProvenance": {"source": "fixture#input", "sha256": "f" * 64},
                 "repository": "https://github.com/example/repository.git",
                 "revision": "c" * 40,
                 "taskType": "test-regression",
@@ -62,6 +72,14 @@ def artifact() -> dict[str, object]:
                 "guided": {**candidate, "state": "pass"},
                 "sandbox": {"baseline": docker, "guided": docker},
                 "ordinaryControls": {"repositoryCommandsExecuted": False},
+                "qualityCommands": {
+                    "baseline": {"repositoryCommandsExecuted": True, "results": [], "commandCount": 0},
+                    "guided": {"repositoryCommandsExecuted": True, "results": [], "commandCount": 0},
+                },
+                "outcomes": {
+                    "baseline": {"evaluatorPass": False, "hardViolationCount": 1, "qualityCommandCount": 0, "qualityCommandPassCount": 0},
+                    "guided": {"evaluatorPass": True, "hardViolationCount": 0, "qualityCommandCount": 0, "qualityCommandPassCount": 0},
+                },
                 "control": {
                     "baseline": {
                         "tool": "typescript-compiler",
@@ -85,7 +103,7 @@ def artifact() -> dict[str, object]:
                 "timingSeconds": {"scenario": 1.0},
                 "transitionPassed": True,
             }
-            for _ in range(scenario_count)
+            for _ in range(paired_count)
         ],
         "sourceVerification": [{"id": "source", "url": "https://example.test/source", "verified": True, "status": 200, "contentBytes": 10, "contentSha256": "d" * 64}],
     }
@@ -131,7 +149,7 @@ class BenchmarkArtifactGateTests(unittest.TestCase):
         payload["summary"]["dockerGatesExpected"] = 0
         path = self.write(payload)
         try:
-            with self.assertRaisesRegex(ValueError, "exactly 128"):
+            with self.assertRaisesRegex(ValueError, "Docker gate"):
                 MODULE.validate(path)
         finally:
             path.unlink()
@@ -171,6 +189,16 @@ class BenchmarkArtifactGateTests(unittest.TestCase):
         path = self.write(payload)
         try:
             with self.assertRaisesRegex(ValueError, "needs_revision-to-pass"):
+                MODULE.validate(path)
+        finally:
+            path.unlink()
+
+    def test_rejects_single_trial_study(self) -> None:
+        payload = artifact()
+        payload["study"]["trialCount"] = 1
+        path = self.write(payload)
+        try:
+            with self.assertRaisesRegex(ValueError, "at least two"):
                 MODULE.validate(path)
         finally:
             path.unlink()

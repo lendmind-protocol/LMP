@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 from pathlib import Path
 
@@ -118,6 +119,51 @@ class RealWorldBenchmarkTests(unittest.TestCase):
         with patch.object(MODULE, "COMMAND_TIMEOUT_SECONDS", 0.01):
             with self.assertRaises(subprocess.TimeoutExpired):
                 MODULE.run([sys.executable, "-c", "import time; time.sleep(1)"], check=False)
+
+    def test_candidate_manifest_requires_paired_repeated_inputs(self) -> None:
+        manifest = MODULE.load_candidate_inputs(
+            MODULE.ROOT / "orchestrator/fixtures/real-world-candidates.json", 3
+        )
+        self.assertEqual(manifest["manifest"]["producer"]["kind"], "explicit-injection")
+        self.assertEqual({item["trial"] for item in manifest["manifest"]["inputs"]}, {1, 2, 3})
+
+    def test_candidate_manifest_fails_closed_without_provenance(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="lmp-candidate-manifest-") as directory:
+            path = Path(directory) / "inputs.json"
+            path.write_text(
+                json.dumps({
+                    "manifestVersion": "1.0",
+                    "producer": {"kind": "explicit-injection", "name": "test", "version": "1"},
+                    "inputs": [{
+                        "inputId": "one", "trial": 1,
+                        "baseline": {"implementation": "x", "test": "x", "package": "{}"},
+                        "guided": {"implementation": "x", "test": "x", "package": "{}"},
+                    }],
+                }),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "provenance"):
+                MODULE.load_candidate_inputs(path, 2)
+
+    def test_repository_quality_commands_are_sandbox_bound_and_measurable(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="lmp-quality-controls-") as directory:
+            source = Path(directory)
+            (source / "package.json").write_text(
+                json.dumps({"scripts": {"test": "echo safe", "deploy": "echo ignored"}}),
+                encoding="utf-8",
+            )
+            discovered = MODULE.discover_existing_controls(source)
+            self.assertEqual([item["name"] for item in discovered["repositoryCommands"]], ["test"])
+            with patch.object(MODULE.DockerSandbox, "run") as run:
+                run.return_value = SimpleNamespace(stdout="safe", stderr="", to_dict=lambda: {
+                    "command": ["sh", "-lc", "npm run test --if-present"],
+                    "exitCode": 0, "elapsedMs": 1.0, "timedOut": False,
+                    "stdout": "safe", "stderr": "",
+                })
+                result = MODULE.run_repository_controls(source)
+            run.assert_called_once()
+            self.assertTrue(result["repositoryCommandsExecuted"])
+            self.assertEqual(result["passCount"], 1)
 
 
 if __name__ == "__main__":

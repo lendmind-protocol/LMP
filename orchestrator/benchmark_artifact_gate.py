@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 
 EXPECTED_SCENARIOS = 64
+ARTIFACT_VERSION = "2.0"
 REVIEW_DECISIONS = {"pass", "pass-with-limitations", "needs-revision"}
 
 
@@ -62,21 +63,32 @@ def validate(
     expected_revision: str | None = None,
 ) -> dict[str, object]:
     report = json.loads(path.read_text(encoding="utf-8"))
-    if report.get("artifactVersion") != "1.2":
-        raise ValueError("benchmark artifactVersion must be 1.2")
+    if report.get("artifactVersion") != ARTIFACT_VERSION:
+        raise ValueError("benchmark artifactVersion must be 2.0")
     if report.get("status") != "complete":
         raise ValueError(f"benchmark status is {report.get('status')!r}, not complete")
     summary = report.get("summary") or {}
+    study = report.get("study") or {}
+    if study.get("design") != "paired-repeated-trials" or study.get("causalClaim") != "not-established":
+        raise ValueError("study must declare paired repeated trials and no causal claim")
+    trial_count = study.get("trialCount")
+    if isinstance(trial_count, bool) or not isinstance(trial_count, int) or trial_count < 2:
+        raise ValueError("study requires at least two repeated trials")
     expected = summary.get("expectedScenarioCount")
-    if expected != EXPECTED_SCENARIOS or summary.get("scenarioCount") != EXPECTED_SCENARIOS:
+    expected_trials = EXPECTED_SCENARIOS * trial_count
+    if expected != EXPECTED_SCENARIOS or summary.get("scenarioCount") != EXPECTED_SCENARIOS or summary.get("trialCount") != trial_count or summary.get("pairedTrialCount") != expected_trials:
         raise ValueError(f"scenario count must be exactly {EXPECTED_SCENARIOS}")
-    if summary.get("passedTransitions") != expected or not summary.get("allTransitionsPassed"):
+    if summary.get("passedTransitions") != expected_trials or not summary.get("allTransitionsPassed"):
         raise ValueError("not all baseline-to-guided transitions passed")
-    if summary.get("dockerGatesExpected") != EXPECTED_SCENARIOS * 2 or summary.get("dockerGatesPassed") != EXPECTED_SCENARIOS * 2:
-        raise ValueError("Docker gate count must be exactly 128 passed of 128 expected")
-    if summary.get("controlChecksExpected") != EXPECTED_SCENARIOS * 2 or summary.get("controlChecksPassed") != EXPECTED_SCENARIOS * 2:
-        raise ValueError("ordinary control check count must be exactly 128 passed of 128 expected")
+    if summary.get("dockerGatesExpected") != expected_trials * 2 or summary.get("dockerGatesPassed") != expected_trials * 2:
+        raise ValueError("Docker gate count does not cover every paired trial")
+    if summary.get("controlChecksExpected") != expected_trials * 2 or summary.get("controlChecksPassed") != expected_trials * 2:
+        raise ValueError("ordinary control check count does not cover every paired trial")
     metadata = report.get("evidenceMetadata") or {}
+    candidate_inputs = metadata.get("candidateInputs") or {}
+    producer = candidate_inputs.get("producer")
+    if not isinstance(producer, dict) or not isinstance(candidate_inputs.get("path"), str) or not re.fullmatch(r"[0-9a-f]{64}", str(candidate_inputs.get("manifestSha256"))) or producer.get("kind") not in {"explicit-injection", "model"}:
+        raise ValueError("candidate input manifest provenance is required")
     revision = metadata.get("repositoryRevision")
     if not isinstance(revision, str) or not re.fullmatch(r"[0-9a-f]{40}", revision):
         raise ValueError("a full repository revision is required")
@@ -104,18 +116,29 @@ def validate(
         if privacy.get(field) is not False:
             raise ValueError(f"benchmark privacy evidence is invalid: {field}")
     scenarios = report.get("scenarios") or []
-    if len(scenarios) != EXPECTED_SCENARIOS:
-        raise ValueError(f"every one of the {EXPECTED_SCENARIOS} scenarios is required")
+    if len(scenarios) != expected_trials:
+        raise ValueError(f"every one of the {expected_trials} paired trials is required")
+    seen_trials: set[tuple[str, int]] = set()
     for index, scenario in enumerate(scenarios):
         if not isinstance(scenario, dict):
             raise ValueError(f"scenario {index} must be an object")
-        for field in ("id", "repository", "revision", "taskType"):
+        for field in ("id", "baseScenarioId", "inputId", "repository", "revision", "taskType"):
             if not isinstance(scenario.get(field), str) or not scenario[field]:
                 raise ValueError(f"scenario {index} is missing {field} provenance")
         if not re.fullmatch(r"[0-9a-f]{40}", scenario["revision"]):
             raise ValueError(f"scenario {index} has an invalid source revision")
         if scenario.get("transitionPassed") is not True:
             raise ValueError(f"scenario {index} did not pass its baseline-to-guided transition")
+        trial = scenario.get("trial")
+        if isinstance(trial, bool) or not isinstance(trial, int) or not 1 <= trial <= trial_count:
+            raise ValueError(f"scenario {index} has an invalid trial")
+        key = (scenario["baseScenarioId"], trial)
+        if key in seen_trials:
+            raise ValueError(f"scenario {index} duplicates a paired trial")
+        seen_trials.add(key)
+        provenance = scenario.get("inputProvenance") or {}
+        if not isinstance(provenance.get("source"), str) or not provenance["source"] or not re.fullmatch(r"[0-9a-f]{64}", str(provenance.get("sha256"))):
+            raise ValueError(f"scenario {index} is missing candidate input provenance")
         timing = scenario.get("timingSeconds") or {}
         if not isinstance(timing.get("scenario"), (int, float)) or timing["scenario"] < 0:
             raise ValueError(f"scenario {index} is missing timing evidence")
@@ -130,6 +153,13 @@ def validate(
             privacy = candidate.get("privacy") or {}
             if privacy.get("sourceCodeIncluded") is not False or privacy.get("rawPathsIncluded") is not False:
                 raise ValueError(f"scenario {index} has unsafe {candidate_name} privacy metadata")
+        outcomes = scenario.get("outcomes") or {}
+        for candidate_name in ("baseline", "guided"):
+            outcome = outcomes.get(candidate_name) or {}
+            if not isinstance(outcome.get("evaluatorPass"), bool) or not isinstance(outcome.get("hardViolationCount"), int):
+                raise ValueError(f"scenario {index} has incomplete measurable {candidate_name} outcome")
+            if not isinstance(outcome.get("qualityCommandCount"), int) or not isinstance(outcome.get("qualityCommandPassCount"), int):
+                raise ValueError(f"scenario {index} is missing {candidate_name} quality metrics")
         if scenarios[index]["baseline"]["state"] != "needs_revision" or scenarios[index]["guided"]["state"] != "pass":
             raise ValueError(f"scenario {index} does not prove a needs_revision-to-pass transition")
         sandbox = scenario.get("sandbox") or {}
@@ -146,6 +176,16 @@ def validate(
         controls = scenario.get("ordinaryControls") or {}
         if not isinstance(controls, dict) or controls.get("repositoryCommandsExecuted") is not False:
             raise ValueError(f"scenario {index} ordinary-control execution boundary is invalid")
+        quality_commands = scenario.get("qualityCommands") or {}
+        for candidate_name in ("baseline", "guided"):
+            quality = quality_commands.get(candidate_name) or {}
+            if quality.get("repositoryCommandsExecuted") is not True:
+                raise ValueError(f"scenario {index} {candidate_name} repository quality commands were not executed")
+            if not isinstance(quality.get("results"), list) or not isinstance(quality.get("commandCount"), int) or quality["commandCount"] != len(quality["results"]):
+                raise ValueError(f"scenario {index} {candidate_name} quality command evidence is missing")
+            for result in quality["results"]:
+                if result.get("outputIncluded") is not False or not isinstance(result.get("command"), list) or not isinstance(result.get("exitCode"), int) or not isinstance(result.get("timedOut"), bool) or not isinstance(result.get("elapsedMs"), (int, float)) or result["elapsedMs"] < 0:
+                    raise ValueError(f"scenario {index} has unsafe or incomplete quality command evidence")
         control = scenario.get("control") or {}
         if not isinstance(control, dict):
             raise ValueError(f"scenario {index} is missing ordinary compiler control evidence")

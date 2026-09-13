@@ -1,0 +1,55 @@
+{
+  "manifestVersion": "1.0",
+  "producer": {
+    "kind": "explicit-injection",
+    "name": "CL-008 local fixture",
+    "version": "1.0.0"
+  },
+  "inputs": [
+    {
+      "inputId": "fixture-01",
+      "trial": 1,
+      "provenance": {"source": "orchestrator/fixtures/real-world-candidates.json#fixture-01", "sha256": "1a2e1344d9e00b4f78526985cdc313406700e718c7db7c9515763a60728cc919"},
+      "baseline": {
+        "implementation": "export function handleInput(value: any): any {\n  console.log(value);\n  return eval(value);\n}\n",
+        "test": "import { handleInput } from './implementation.js';\nhandleInput('demo');\n",
+        "package": "{\"name\":\"lmp-baseline-01\",\"private\":true,\"dependencies\":{\"lodash\":\"^4.17.21\"}}"
+      },
+      "guided": {
+        "implementation": "export function handleInput(value: unknown): string | undefined {\n  if (typeof value !== 'string') return undefined;\n  const normalized = value.trim();\n  return normalized.length > 0 ? normalized : undefined;\n}\n",
+        "test": "import { handleInput } from './implementation.js';\nhandleInput('demo');\n",
+        "package": "{\"name\":\"lmp-guided-01\",\"private\":true,\"dependencies\":{}}"
+      }
+    },
+    {
+      "inputId": "fixture-02",
+      "trial": 2,
+      "provenance": {"source": "orchestrator/fixtures/real-world-candidates.json#fixture-02", "sha256": "a984edfe93be98be3927203e7d573ef2e70fd9727316ed30c7857fe270905729"},
+      "baseline": {
+        "implementation": "export function handleInput(value: any): any {\n  console.log(value);\n  return eval(value);\n}\n",
+        "test": "import { handleInput } from './implementation.js';\nhandleInput('demo');\n",
+        "package": "{\"name\":\"lmp-baseline-02\",\"private\":true,\"dependencies\":{\"lodash\":\"^4.17.21\"}}"
+      },
+      "guided": {
+        "implementation": "export function handleInput(value: unknown): string | undefined {\n  if (typeof value !== 'string') return undefined;\n  const normalized = value.trim();\n  return normalized.length > 0 ? normalized : undefined;\n}\n",
+        "test": "import { handleInput } from './implementation.js';\nhandleInput('demo');\n",
+        "package": "{\"name\":\"lmp-guided-02\",\"private\":true,\"dependencies\":{}}"
+      }
+    },
+    {
+      "inputId": "fixture-03",
+      "trial": 3,
+      "provenance": {"source": "orchestrator/fixtures/real-world-candidates.json#fixture-03", "sha256": "037b74ec226656fde25006e6972b120124b2542c46e3adb1df2f4f08aeb19131"},
+      "baseline": {
+        "implementation": "export function handleInput(value: any): any {\n  console.log(value);\n  return eval(value);\n}\n",
+        "test": "import { handleInput } from './implementation.js';\nhandleInput('demo');\n",
+        "package": "{\"name\":\"lmp-baseline-03\",\"private\":true,\"dependencies\":{\"lodash\":\"^4.17.21\"}}"
+      },
+      "guided": {
+        "implementation": "export function handleInput(value: unknown): string | undefined {\n  if (typeof value !== 'string') return undefined;\n  const normalized = value.trim();\n  return normalized.length > 0 ? normalized : undefined;\n}\n",
+        "test": "import { handleInput } from './implementation.js';\nhandleInput('demo');\n",
+        "package": "{\"name\":\"lmp-guided-03\",\"private\":true,\"dependencies\":{}}"
+      }
+    }
+  ]
+}

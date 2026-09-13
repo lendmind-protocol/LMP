@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Execute the 64-scenario real-OSS benchmark and source provenance check."""
+"""Execute a paired, repeated baseline-versus-guided real-OSS study.
+
+The runner does not manufacture model evidence. Candidate pairs come from an
+explicitly supplied, digest-bound manifest (or a manifest marked as produced
+by a model), and every trial is paired on the same repository, task, and input.
+"""
 
 from __future__ import annotations
 
@@ -13,9 +18,13 @@ import tempfile
 import platform
 import time
 import urllib.request
+import shlex
 from pathlib import Path
 
-from sandbox import DockerSandbox
+try:
+    from .sandbox import DockerSandbox
+except ImportError:
+    from sandbox import DockerSandbox
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -44,6 +53,8 @@ TASKS = [
     ("architecture-refactor", "Make a narrow change that remains understandable and independently testable.", "typescript-repository"),
 ]
 EXPECTED_SCENARIOS = len(REPOSITORIES) * len(TASKS)
+ARTIFACT_VERSION = "2.0"
+DEFAULT_TRIAL_COUNT = 3
 SANDBOX_IMAGE = "lmp-sandbox:local"
 CONTROL_TIMEOUT_SECONDS = 30
 COMMAND_TIMEOUT_SECONDS = 120
@@ -88,6 +99,71 @@ def evidence_metadata(binary: Path) -> dict[str, object]:
         },
         "reviewerAnnotations": [],
     }
+
+
+def sha256_file(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def load_candidate_inputs(path: Path, trial_count: int = DEFAULT_TRIAL_COUNT) -> dict[str, object]:
+    """Load and validate the only accepted source of candidate inputs.
+
+    A manifest is intentionally required even for local fixtures: this keeps
+    repeated trials auditable and prevents the harness from presenting its own
+    hard-coded patches as model output.
+    """
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("candidate input manifest must be an object")
+    if payload.get("manifestVersion") != "1.0":
+        raise ValueError("candidate input manifestVersion must be 1.0")
+    producer = payload.get("producer")
+    if not isinstance(producer, dict) or producer.get("kind") not in {"explicit-injection", "model"}:
+        raise ValueError("candidate input producer must be explicit-injection or model")
+    for field in ("name", "version"):
+        if not isinstance(producer.get(field), str) or not producer[field].strip():
+            raise ValueError(f"candidate input producer requires {field}")
+    if producer["kind"] == "model":
+        for field in ("provider", "model", "requestSha256"):
+            if not isinstance(producer.get(field), str) or not producer[field].strip():
+                raise ValueError(f"model candidate producer requires {field}")
+            if field == "requestSha256" and len(producer[field]) != 64:
+                raise ValueError("model requestSha256 must be a SHA-256 digest")
+    inputs = payload.get("inputs")
+    if not isinstance(inputs, list) or not inputs:
+        raise ValueError("candidate input manifest requires a non-empty inputs array")
+    seen: set[tuple[str, int]] = set()
+    for index, item in enumerate(inputs):
+        if not isinstance(item, dict):
+            raise ValueError(f"candidate input {index} must be an object")
+        input_id = item.get("inputId")
+        trial = item.get("trial")
+        if not isinstance(input_id, str) or not input_id.strip():
+            raise ValueError(f"candidate input {index} requires inputId")
+        if isinstance(trial, bool) or not isinstance(trial, int) or trial < 1 or trial > trial_count:
+            raise ValueError(f"candidate input {index} trial must be between 1 and {trial_count}")
+        key = (input_id, trial)
+        if key in seen:
+            raise ValueError(f"duplicate candidate input {input_id}/{trial}")
+        seen.add(key)
+        for condition in ("baseline", "guided"):
+            candidate = item.get(condition)
+            if not isinstance(candidate, dict):
+                raise ValueError(f"candidate input {index} requires {condition}")
+            for field in ("implementation", "test", "package"):
+                if not isinstance(candidate.get(field), str) or not candidate[field]:
+                    raise ValueError(f"candidate input {index} {condition} requires {field}")
+        if not isinstance(item.get("provenance"), dict):
+            raise ValueError(f"candidate input {index} requires provenance")
+        if not isinstance(item["provenance"].get("source"), str) or not item["provenance"]["source"].strip():
+            raise ValueError(f"candidate input {index} provenance requires source")
+        expected_digest = hashlib.sha256(json.dumps({"baseline": item["baseline"], "guided": item["guided"]}, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+        if item["provenance"].get("sha256") != expected_digest:
+            raise ValueError(f"candidate input {index} provenance digest does not match candidate bytes")
+    trials = {trial for _, trial in seen}
+    if trials != set(range(1, trial_count + 1)):
+        raise ValueError(f"candidate inputs must cover every trial 1..{trial_count}")
+    return {"manifest": payload, "manifestSha256": sha256_file(path), "path": str(path)}
 
 
 def load_reviewer_annotations(path: Path, revision: str | None) -> list[dict[str, object]]:
@@ -183,18 +259,15 @@ def clone(name: str, url: str, root: Path) -> tuple[Path, str]:
     return destination, revision
 
 
-def write_candidate(workspace: Path, scenario: str, guided: bool) -> None:
+def write_candidate(workspace: Path, scenario: str, candidate: dict[str, str]) -> None:
     target = workspace / "lmp-benchmark"
     target.mkdir(exist_ok=True)
-    if guided:
-        text = "export function handleInput(value: unknown): string | undefined {\n  if (typeof value !== 'string') return undefined;\n  const normalized = value.trim();\n  return normalized.length > 0 ? normalized : undefined;\n}\n"
-        package = {"name": f"lmp-{scenario}", "private": True, "dependencies": {}}
-    else:
-        text = "export function handleInput(value: any): any {\n  console.log(value);\n  return eval(value);\n}\n"
-        package = {"name": f"lmp-{scenario}", "private": True, "dependencies": {"lodash": "^4.17.21"}}
-    (target / "implementation.ts").write_text(text, encoding="utf-8")
-    (target / "implementation.test.ts").write_text("import { handleInput } from './implementation.js';\nhandleInput('demo');\n", encoding="utf-8")
-    (target / "package.json").write_text(json.dumps(package) + "\n", encoding="utf-8")
+    (target / "implementation.ts").write_text(candidate["implementation"], encoding="utf-8")
+    (target / "implementation.test.ts").write_text(candidate["test"], encoding="utf-8")
+    package = json.loads(candidate["package"])
+    if not isinstance(package, dict):
+        raise ValueError(f"candidate package for {scenario} must be a JSON object")
+    (target / "package.json").write_text(json.dumps(package, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def evaluate(binary: Path, workspace: Path, artifact: Path) -> dict[str, object]:
@@ -251,7 +324,7 @@ def existing_control_check(workspace: Path) -> dict[str, object]:
 
 
 def discover_existing_controls(source: Path) -> dict[str, object]:
-    """Record ordinary project controls without running repository-owned commands."""
+    """Discover safe-to-run repository quality scripts without executing them."""
     guidance_names = (
         "AGENTS.md",
         "CLAUDE.md",
@@ -269,14 +342,56 @@ def discover_existing_controls(source: Path) -> dict[str, object]:
     )
     guidance = [name for name in guidance_names if (source / name).is_file()]
     configs = [name for name in config_names if (source / name).is_file()]
+    scripts: list[dict[str, object]] = []
+    package_path = source / "package.json"
+    if package_path.is_file():
+        try:
+            package = json.loads(package_path.read_text(encoding="utf-8"))
+            for name, command in (package.get("scripts") or {}).items():
+                if name in {"lint", "test", "typecheck", "check", "test:unit", "lint:ci"} and isinstance(command, str) and command.strip():
+                    scripts.append({"name": name, "command": command, "safeBoundary": "docker-read-only"})
+        except (OSError, json.JSONDecodeError):
+            scripts = []
     return {
         "guidanceFiles": guidance,
         "toolConfigs": configs,
+        "repositoryCommands": scripts,
         "repositoryCommandsExecuted": False,
-        "limitations": [
-            "Repository-owned lint, test, and CI commands are discovered but not executed in this control lane.",
-            "The compiler-only control is a lower-bound comparison, not a claim that ordinary project controls are universally complete.",
-        ],
+        "limitations": ["Commands are executable only inside the bounded Docker read-only lane."],
+    }
+
+
+def run_repository_controls(source: Path, timeout_seconds: int = COMMAND_TIMEOUT_SECONDS) -> dict[str, object]:
+    """Run allowlisted package scripts in the networkless, read-only sandbox."""
+    controls = discover_existing_controls(source)
+    results = []
+    for script in controls["repositoryCommands"]:
+        name = str(script["name"])
+        command = ["sh", "-lc", f"npm run {shlex.quote(name)} --if-present"]
+        result = DockerSandbox(source, image=SANDBOX_IMAGE).run(command, timeout_seconds=timeout_seconds)
+        result_dict = result.to_dict()
+        result_dict.update({"name": name, "outputIncluded": False})
+        result_dict["stdoutSha256"] = hashlib.sha256(result.stdout.encode()).hexdigest()
+        result_dict["stderrSha256"] = hashlib.sha256(result.stderr.encode()).hexdigest()
+        del result_dict["stdout"]
+        del result_dict["stderr"]
+        results.append(result_dict)
+    controls["repositoryCommandsExecuted"] = True
+    controls["results"] = results
+    controls["passCount"] = sum(item["exitCode"] == 0 and not item["timedOut"] for item in results)
+    controls["commandCount"] = len(results)
+    return controls
+
+
+def outcome_metrics(evaluation: dict[str, object], controls: dict[str, object]) -> dict[str, object]:
+    command_count = int(controls.get("commandCount", 0))
+    pass_count = int(controls.get("passCount", 0))
+    return {
+        "evaluatorPass": evaluation["state"] == "pass",
+        "hardViolationCount": evaluation["hardViolationCount"],
+        "qualityCommandCount": command_count,
+        "qualityCommandPassCount": pass_count,
+        "qualityCommandPassRate": (pass_count / command_count) if command_count else None,
     }
 
 
@@ -293,17 +408,36 @@ def main() -> int:
     parser.add_argument("--lmp", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument(
+        "--candidate-inputs",
+        type=Path,
+        default=ROOT / "orchestrator/fixtures/real-world-candidates.json",
+        help="digest-bound JSON manifest of paired candidate inputs",
+    )
+    parser.add_argument("--trials", type=int, default=DEFAULT_TRIAL_COUNT)
+    parser.add_argument(
         "--reviewer-annotations",
         type=Path,
         help="JSON array (or {annotations: [...]}) independently authored for this revision",
     )
     args = parser.parse_args()
+    if args.trials < 1:
+        parser.error("--trials must be positive")
     started = time.monotonic()
     prerequisites = check_prerequisites(args.lmp)
     # Capture repository state before creating the evidence directory. The
     # benchmark must not classify its own newly-created output as source-tree
     # drift; pre-existing changes remain visible and still fail --require-clean.
     metadata = evidence_metadata(args.lmp)
+    try:
+        candidate_inputs = load_candidate_inputs(args.candidate_inputs, args.trials)
+    except (OSError, ValueError, json.JSONDecodeError) as error:
+        print(f"candidate input manifest rejected: {error}", file=sys.stderr)
+        return 2
+    metadata["candidateInputs"] = {
+        "path": candidate_inputs["path"],
+        "manifestSha256": candidate_inputs["manifestSha256"],
+        "producer": candidate_inputs["manifest"]["producer"],
+    }
     if args.reviewer_annotations:
         try:
             metadata["reviewerAnnotations"] = load_reviewer_annotations(
@@ -315,14 +449,15 @@ def main() -> int:
     args.output.mkdir(parents=True, exist_ok=True)
     if not prerequisites["ready"]:
         report = {
-            "artifactVersion": "1.2",
+            "artifactVersion": ARTIFACT_VERSION,
             "benchmark": "lmp-real-world-scenario-matrix",
             "status": "blocked",
             "evidenceMetadata": metadata,
             "prerequisites": prerequisites,
             "sourceVerification": [],
             "scenarios": [],
-            "summary": {"scenarioCount": 0, "expectedScenarioCount": EXPECTED_SCENARIOS, "verifiedSources": 0, "passedTransitions": 0, "allTransitionsPassed": False, "dockerGatesPassed": 0, "dockerGatesExpected": EXPECTED_SCENARIOS * 2},
+            "study": {"design": "paired-randomized-inputs", "trialCount": args.trials, "causalClaim": "not-established"},
+            "summary": {"scenarioCount": 0, "expectedScenarioCount": EXPECTED_SCENARIOS, "trialCount": args.trials, "pairedTrialCount": 0, "verifiedSources": 0, "passedTransitions": 0, "allTransitionsPassed": False, "dockerGatesPassed": 0, "dockerGatesExpected": EXPECTED_SCENARIOS * args.trials * 2},
             "privacy": {"sourceCodeIncluded": False, "rawPathsIncluded": False, "privateReasoningIncluded": False},
             "timingSeconds": {"total": round(time.monotonic() - started, 3)},
             "limitations": [
@@ -337,14 +472,15 @@ def main() -> int:
     source_by_id = {item["id"]: item for item in source_results}
     if not source_results or not all(item["verified"] for item in source_results):
         report = {
-            "artifactVersion": "1.2",
+            "artifactVersion": ARTIFACT_VERSION,
             "benchmark": "lmp-real-world-scenario-matrix",
             "status": "blocked",
             "evidenceMetadata": metadata,
             "prerequisites": prerequisites,
             "sourceVerification": source_results,
             "scenarios": [],
-            "summary": {"scenarioCount": 0, "expectedScenarioCount": EXPECTED_SCENARIOS, "verifiedSources": sum(item["verified"] for item in source_results), "passedTransitions": 0, "allTransitionsPassed": False, "dockerGatesPassed": 0, "dockerGatesExpected": EXPECTED_SCENARIOS * 2},
+            "study": {"design": "paired-randomized-inputs", "trialCount": args.trials, "causalClaim": "not-established"},
+            "summary": {"scenarioCount": 0, "expectedScenarioCount": EXPECTED_SCENARIOS, "trialCount": args.trials, "pairedTrialCount": 0, "verifiedSources": sum(item["verified"] for item in source_results), "passedTransitions": 0, "allTransitionsPassed": False, "dockerGatesPassed": 0, "dockerGatesExpected": EXPECTED_SCENARIOS * args.trials * 2},
             "privacy": {"sourceCodeIncluded": False, "rawPathsIncluded": False, "privateReasoningIncluded": False},
             "timingSeconds": {"total": round(time.monotonic() - started, 3)},
             "limitations": [
@@ -361,28 +497,36 @@ def main() -> int:
     scenarios = []
     run_error = None
     try:
+        inputs = candidate_inputs["manifest"]["inputs"]
         for repo_name, url in REPOSITORIES:
             source, revision = clone(repo_name, url, root)
             for task_index, (task_type, task, source_id) in enumerate(TASKS, start=1):
                 scenario_id = f"{repo_name}-{task_index:02d}-{task_type}"
-                scenario_started = time.monotonic()
-                baseline = root / f"{scenario_id}-baseline"
-                guided = root / f"{scenario_id}-guided"
-                shutil.copytree(source, baseline, symlinks=True)
-                shutil.copytree(source, guided, symlinks=True)
-                shutil.copytree(MIND, baseline / "mind")
-                shutil.copytree(MIND, guided / "mind")
-                write_candidate(baseline, scenario_id, guided=False)
-                write_candidate(guided, scenario_id, guided=True)
-                baseline_result = evaluate(args.lmp, baseline, args.output / scenario_id / "baseline")
-                guided_result = evaluate(args.lmp, guided, args.output / scenario_id / "guided")
-                control_context = discover_existing_controls(source)
-                baseline_control = existing_control_check(baseline)
-                guided_control = existing_control_check(guided)
-                baseline_sandbox = sandbox_check(baseline)
-                guided_sandbox = sandbox_check(guided)
-                sandbox_passed = baseline_sandbox["exitCode"] == 0 and guided_sandbox["exitCode"] == 0 and not baseline_sandbox["timedOut"] and not guided_sandbox["timedOut"]
-                scenarios.append({"id": scenario_id, "repository": url, "revision": revision, "taskType": task_type, "task": task, "source": source_by_id[source_id], "ordinaryControls": control_context, "control": {"baseline": baseline_control, "guided": guided_control}, "baseline": baseline_result, "guided": guided_result, "sandbox": {"baseline": baseline_sandbox, "guided": guided_sandbox}, "transitionPassed": sandbox_passed and baseline_result["state"] == "needs_revision" and guided_result["state"] == "pass", "timingSeconds": {"scenario": round(time.monotonic() - scenario_started, 3)}})
+                for item in inputs:
+                    if item["trial"] > args.trials:
+                        continue
+                    scenario_trial_id = f"{scenario_id}-trial-{item['trial']:02d}"
+                    scenario_started = time.monotonic()
+                    baseline = root / f"{scenario_trial_id}-baseline"
+                    guided = root / f"{scenario_trial_id}-guided"
+                    shutil.copytree(source, baseline, symlinks=True)
+                    shutil.copytree(source, guided, symlinks=True)
+                    shutil.copytree(MIND, baseline / "mind")
+                    shutil.copytree(MIND, guided / "mind")
+                    write_candidate(baseline, scenario_trial_id, item["baseline"])
+                    write_candidate(guided, scenario_trial_id, item["guided"])
+                    baseline_result = evaluate(args.lmp, baseline, args.output / scenario_trial_id / "baseline")
+                    guided_result = evaluate(args.lmp, guided, args.output / scenario_trial_id / "guided")
+                    control_context = discover_existing_controls(source)
+                    baseline_control = existing_control_check(baseline)
+                    guided_control = existing_control_check(guided)
+                    baseline_quality = run_repository_controls(baseline)
+                    guided_quality = run_repository_controls(guided)
+                    baseline_sandbox = sandbox_check(baseline)
+                    guided_sandbox = sandbox_check(guided)
+                    sandbox_passed = baseline_sandbox["exitCode"] == 0 and guided_sandbox["exitCode"] == 0 and not baseline_sandbox["timedOut"] and not guided_sandbox["timedOut"]
+                    transition = sandbox_passed and baseline_result["state"] == "needs_revision" and guided_result["state"] == "pass"
+                    scenarios.append({"id": scenario_trial_id, "baseScenarioId": scenario_id, "trial": item["trial"], "inputId": item["inputId"], "inputProvenance": item["provenance"], "repository": url, "revision": revision, "taskType": task_type, "task": task, "source": source_by_id[source_id], "ordinaryControls": control_context, "control": {"baseline": baseline_control, "guided": guided_control}, "qualityCommands": {"baseline": baseline_quality, "guided": guided_quality}, "outcomes": {"baseline": outcome_metrics(baseline_result, baseline_quality), "guided": outcome_metrics(guided_result, guided_quality)}, "baseline": baseline_result, "guided": guided_result, "sandbox": {"baseline": baseline_sandbox, "guided": guided_sandbox}, "transitionPassed": transition, "timingSeconds": {"scenario": round(time.monotonic() - scenario_started, 3)}})
     except Exception as error:
         run_error = {"type": type(error).__name__, "message": str(error)}
     finally:
@@ -398,9 +542,10 @@ def main() -> int:
         + (item["control"]["guided"]["exitCode"] == 0)
         for item in scenarios
     )
-    all_transitions_passed = len(scenarios) == EXPECTED_SCENARIOS and all(item["transitionPassed"] for item in scenarios)
-    status = "complete" if run_error is None and all_transitions_passed and docker_gates_passed == EXPECTED_SCENARIOS * 2 and control_checks_passed == EXPECTED_SCENARIOS * 2 else ("failed" if run_error or scenarios else "blocked")
-    report = {"artifactVersion": "1.2", "benchmark": "lmp-real-world-scenario-matrix", "status": status, "evidenceMetadata": metadata, "timingSeconds": {"total": round(time.monotonic() - started, 3)}, "prerequisites": prerequisites, "sourceVerification": source_results, "scenarios": scenarios, "summary": {"scenarioCount": len(scenarios), "expectedScenarioCount": EXPECTED_SCENARIOS, "verifiedSources": sum(item["verified"] for item in source_results), "passedTransitions": passed_transitions, "allTransitionsPassed": all_transitions_passed, "dockerGatesPassed": docker_gates_passed, "dockerGatesExpected": EXPECTED_SCENARIOS * 2, "controlChecksPassed": control_checks_passed, "controlChecksExpected": EXPECTED_SCENARIOS * 2}, "error": run_error, "privacy": {"sourceCodeIncluded": False, "rawPathsIncluded": False, "privateReasoningIncluded": False}, "limitations": ["Scenarios use reproducible candidate patches in pinned real repositories; they are not a statistical claim about all model outputs.", "Source verification proves URL reachability and content identity at run time, not that a source author endorses the generated Mind.", "The ordinary-controls comparison runs the TypeScript compiler only; repository-owned lint, test, and CI commands are discovered but not executed.", *reviewer_limitations(metadata), "Human adoption and long-running production telemetry remain separate evidence gates."]}
+    expected_trials = EXPECTED_SCENARIOS * args.trials
+    all_transitions_passed = len(scenarios) == expected_trials and all(item["transitionPassed"] for item in scenarios)
+    status = "complete" if run_error is None and all_transitions_passed and docker_gates_passed == expected_trials * 2 and control_checks_passed == expected_trials * 2 else ("failed" if run_error or scenarios else "blocked")
+    report = {"artifactVersion": ARTIFACT_VERSION, "benchmark": "lmp-real-world-scenario-matrix", "status": status, "study": {"design": "paired-repeated-trials", "trialCount": args.trials, "candidateInputMode": candidate_inputs["manifest"]["producer"]["kind"], "causalClaim": "not-established"}, "evidenceMetadata": metadata, "timingSeconds": {"total": round(time.monotonic() - started, 3)}, "prerequisites": prerequisites, "sourceVerification": source_results, "scenarios": scenarios, "summary": {"scenarioCount": EXPECTED_SCENARIOS, "expectedScenarioCount": EXPECTED_SCENARIOS, "trialCount": args.trials, "pairedTrialCount": len(scenarios), "verifiedSources": sum(item["verified"] for item in source_results), "passedTransitions": passed_transitions, "allTransitionsPassed": all_transitions_passed, "dockerGatesPassed": docker_gates_passed, "dockerGatesExpected": expected_trials * 2, "controlChecksPassed": control_checks_passed, "controlChecksExpected": expected_trials * 2, "baselineEvaluatorPassRate": sum(item["outcomes"]["baseline"]["evaluatorPass"] for item in scenarios) / len(scenarios) if scenarios else 0, "guidedEvaluatorPassRate": sum(item["outcomes"]["guided"]["evaluatorPass"] for item in scenarios) / len(scenarios) if scenarios else 0}, "error": run_error, "privacy": {"sourceCodeIncluded": False, "rawPathsIncluded": False, "privateReasoningIncluded": False}, "limitations": ["This is a paired repeated technical study of supplied candidate inputs, not a claim about all model outputs.", "Source verification proves URL reachability and content identity at run time, not source-author endorsement.", "Repository-owned quality commands run only in a networkless, read-only Docker container; unavailable dependencies are recorded as failures.", "No causal quality improvement claim is made without independent review and a pre-registered model/host protocol.", *reviewer_limitations(metadata), "Human adoption and long-running production telemetry remain separate evidence gates."]}
     (args.output / "real-world-benchmark.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report["summary"], indent=2))
     return 0 if report["status"] == "complete" and report["summary"]["verifiedSources"] == len(source_results) else 1
