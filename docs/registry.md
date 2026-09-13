@@ -20,4 +20,4 @@ cargo run --locked --bin lmp -- mind resolve --mind rust-defensive-systems --reg
 
 ## Distribution status
 
-The existing OCI and IPFS adapters verify content and signatures when pointed at a real endpoint or gateway. Three current packages have verified IPFS pins; one package remains pending because its current immutable artifact is not recorded. The release gate remains blocked until an operator supplies current immutable artifacts for every production package and the corresponding release evidence.
+The existing OCI and IPFS adapters verify content and signatures when pointed at a real endpoint or gateway. All four current production packages have gateway-verified IPFS pins. OCI publication and the remaining release evidence gates are separate requirements.
