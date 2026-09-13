@@ -242,9 +242,40 @@ fi
   });
 
   it("produces deterministic visible instructions", () => {
-    const mind = { id: "lmp:test", version: "1", rules: [] };
-    expect(instructions(mind, "json")).toContain('"mind": "lmp:test"');
-    expect(instructions(mind)).toContain("relevant checks");
+    const mind = {
+      id: "lmp:test",
+      version: "1",
+      rules: [],
+      philosophy: {
+        principles: ["Prefer explicit boundaries"],
+        tradeoffs: ["More ceremony at integration points"],
+        decisionRules: ["Reject unverifiable claims"],
+        antiPatterns: ["HIDDEN_SIDE_EFFECT"],
+      },
+      provenance: {
+        attributionRequired: true,
+        sources: [
+          {
+            title: "Public engineering guidance",
+            url: "https://example.com/guidance",
+            licenseNote: "Public reference",
+            evidenceTier: "primary" as const,
+            rights: "public-documentation" as const,
+            sourceType: "documentation" as const,
+            accessMethod: "public-http" as const,
+            contentDigest: `sha256:${"a".repeat(64)}`,
+            retentionPolicy: "metadata-only",
+            allowedUse: "summarize-public-guidance",
+          },
+        ],
+      },
+    };
+    const json = instructions(mind, "json");
+    expect(json).toContain('"mind": "lmp:test"');
+    expect(json).toContain("Prefer explicit boundaries");
+    expect(json).toContain("Public engineering guidance");
+    expect(instructions(mind)).toContain("Reject unverifiable claims");
+    expect(instructions(mind)).toContain("https://example.com/guidance");
   });
 
   it("adds local state ignores without overwriting existing project rules", async () => {

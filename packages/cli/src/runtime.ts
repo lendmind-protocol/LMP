@@ -201,6 +201,32 @@ export function instructions(mind: MindPackage, format: "markdown" | "json" = "m
   const result = {
     mind: mind.id,
     version: mind.version,
+    description: mind.description ?? null,
+    modeDefaults: mind.modeDefaults ?? { validation: "advisory", network: "offline" },
+    philosophy: mind.philosophy ?? {
+      principles: [],
+      tradeoffs: [],
+      decisionRules: [],
+      antiPatterns: [],
+    },
+    rules: (mind.rules ?? []).map((rule) => ({
+      id: rule.id,
+      description: rule.description ?? null,
+      severity: rule.severity ?? "warning",
+    })),
+    sources: (mind.provenance?.sources ?? []).map((source) => ({
+      title: source.title,
+      url: source.url,
+      sourceType: source.sourceType,
+      evidenceTier: source.evidenceTier,
+      contentDigest: source.contentDigest,
+      attributionRequired: mind.provenance?.attributionRequired ?? false,
+    })),
+    boundaries: [
+      "These instructions provide profile context; the evaluator and configured host boundary decide enforcement.",
+      "Do not claim a check passed until its LMP evidence artifact reports pass.",
+      "Do not infer authorship, endorsement, or private reasoning from a public source.",
+    ],
     checklist: [
       "Follow the mind package guidance.",
       "Run the relevant checks before reporting completion.",
@@ -209,7 +235,26 @@ export function instructions(mind: MindPackage, format: "markdown" | "json" = "m
   };
   return format === "json"
     ? JSON.stringify(result, null, 2)
-    : `# ${mind.name ?? mind.id}\n\n- ${result.checklist.join("\n- ")}`;
+    : [
+        `# ${mind.name ?? mind.id}`,
+        mind.description ? `\n${mind.description}` : "",
+        "\n## Principles",
+        ...result.philosophy.principles.map((item) => `- ${item}`),
+        "\n## Trade-offs",
+        ...result.philosophy.tradeoffs.map((item) => `- ${item}`),
+        "\n## Decision rules",
+        ...result.philosophy.decisionRules.map((item) => `- ${item}`),
+        "\n## Anti-patterns",
+        ...result.philosophy.antiPatterns.map((item) => `- ${item}`),
+        "\n## Operating boundaries",
+        ...result.boundaries.map((item) => `- ${item}`),
+        "\n## Source references",
+        ...result.sources.map(
+          (source) => `- [${source.title}](${source.url}) — ${source.evidenceTier}; ${source.contentDigest}`,
+        ),
+        "\n## Checklist",
+        ...result.checklist.map((item) => `- ${item}`),
+      ].filter(Boolean).join("\n");
 }
 
 export async function evaluate(
