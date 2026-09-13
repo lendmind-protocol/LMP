@@ -1,7 +1,7 @@
 name: Lending-Mind Registry Verification Bot
 
 on:
-  pull_request_target:
+  pull_request:
     branches: [main]
     paths:
       - "registry/definitions/**"
@@ -12,12 +12,10 @@ on:
       - "Cargo.toml"
       - "Cargo.lock"
 
-# The workflow is trusted from the base branch. PR files are treated as data
-# and are never checked out as the executable workspace of a write-token job.
+# Validation runs without repository secrets and with read-only permissions.
 permissions:
   contents: read
-  issues: write
-  pull-requests: write
+  pull-requests: read
 
 concurrency:
   group: registry-bot-${{ github.event.pull_request.number || github.run_id }}
@@ -29,18 +27,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Checkout trusted base
+      - name: Checkout pull request for unprivileged validation
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.base.sha }}
           fetch-depth: 0
-
-      - name: Fetch pull request commit as inert data
-        if: ${{ github.event_name == 'pull_request_target' }}
-        env:
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          HEAD_REPO: ${{ github.event.pull_request.head.repo.clone_url }}
-        run: git fetch --no-tags --depth=1 "$HEAD_REPO" "$HEAD_SHA"
+          persist-credentials: false
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@1.98.1
@@ -79,39 +70,3 @@ jobs:
           cargo test --workspace
           python3 -m compileall -q orchestrator
           python3 orchestrator/test_bed.py
-
-      - name: Publish validation summary
-        if: always() && github.event_name == 'pull_request_target'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          if [ -f registry-gate.json ]; then
-            summary="$(cat registry-gate.json)"
-          else
-            summary="Registry gate did not produce a result. Inspect the failed job logs."
-          fi
-          gh pr comment "$PR_NUMBER" --body "### LMP registry verification\n\n```json\n$summary\n```\n\nThe Rust validator, detached Ed25519 signature gate, regression suite, and orchestration checks must all pass before merge."
-
-      - name: Mark rejected contribution
-        if: failure() && github.event_name == 'pull_request_target'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: gh pr edit "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --add-label "lmp:invalid" || true
-
-  auto-merge:
-    name: Enable squash auto-merge
-    needs: validate
-    if: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name == github.repository }}
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-    steps:
-      - name: Enable repository-controlled auto-merge
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: gh pr merge "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --auto --squash --delete-branch=false --match-head-commit "$HEAD_SHA"
