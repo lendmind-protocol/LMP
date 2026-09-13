@@ -327,6 +327,19 @@ describe("CLI runtime", () => {
     }
   });
 
+  it("refuses to overwrite an existing non-LMP pre-commit hook", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "lmp-cli-hook-conflict-"));
+    try {
+      const hook = join(directory, ".git/hooks/pre-commit");
+      await mkdir(join(directory, ".git/hooks"), { recursive: true });
+      await writeFile(hook, "#!/bin/sh\necho existing\n");
+      await expect(installEnforcedHook(directory)).rejects.toThrow("existing non-LMP");
+      await expect(readFile(hook, "utf8")).resolves.toContain("echo existing");
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
   it("keeps a generated enforced hook aligned when the active Mind changes", async () => {
     const directory = await mkdtemp(join(tmpdir(), "lmp-cli-mind-switch-"));
     const originalCwd = process.cwd();

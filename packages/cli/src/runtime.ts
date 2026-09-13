@@ -350,6 +350,15 @@ export async function installEnforcedHook(
     throw new Error(`cannot install self-governance hook: ${gitDirectory} is missing`);
   }
   const hook = join(gitDirectory, "hooks", "pre-commit");
+  let existingHook = "";
+  try {
+    existingHook = await readFile(hook, "utf8");
+  } catch (error) {
+    if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) throw error;
+  }
+  if (existingHook && !existingHook.includes("LENDING-MIND GENERATED ENFORCEMENT HOOK")) {
+    throw new Error(`cannot replace existing non-LMP pre-commit hook: ${hook}`);
+  }
   await mkdir(join(gitDirectory, "hooks"), { recursive: true });
   await writeFile(
     hook,
