@@ -890,7 +890,7 @@ fn evaluate_with_options_impl(
         }
     }
     findings.extend(duplicate_logic_findings(&files, workspace, &flags));
-    for language in unsupported_languages {
+    for language in &unsupported_languages {
         skipped_checks.push(json!({
             "checkId": format!("language.{language}"),
             "reason": format!("The Rust evaluator has no parser or policy adapter for {language}; the file was not analyzed."),
@@ -1030,8 +1030,10 @@ fn evaluate_with_options_impl(
         "skippedChecks":skipped_checks,
         "analysis":{"languages":analysis_languages,"parsers":analysis_parsers,"versions":analysis_versions,"checkedFiles":checked},
         "loopTransitions":[
-            {"state":"evaluating","event":"evaluation_started","attempt":0},
-            {"state":state,"event":"evaluation_completed","attempt":0}
+            {"stepId":"evaluation","state":"evaluating","event":"evaluation_started","attempt":0},
+            {"stepId":"scope","state":"evaluating","event":"scope_resolved","attempt":0,"checkedFiles":checked,"source":scope.source},
+            {"stepId":"analysis","state":"evaluating","event":"analysis_completed","attempt":0,"languages":analysis_languages,"unsupportedLanguages":unsupported_languages},
+            {"stepId":"decision","state":state,"event":"evaluation_completed","attempt":0,"hardViolationCount":errors,"warningCount":warnings}
         ],
         "commands":[],
         "limitations":["Static and configured checks provide evidence about this evaluation only; they do not prove universal code quality."],
@@ -1360,6 +1362,13 @@ function second(value: string) {
             .unwrap()
             .iter()
             .any(|item| item["checkId"] == "language.python"));
+        let transitions = report.artifact["loopTransitions"].as_array().unwrap();
+        assert_eq!(transitions.len(), 4);
+        assert_eq!(transitions[0]["stepId"], "evaluation");
+        assert_eq!(transitions[1]["event"], "scope_resolved");
+        assert_eq!(transitions[1]["checkedFiles"], 1);
+        assert_eq!(transitions[2]["event"], "analysis_completed");
+        assert_eq!(transitions[3]["stepId"], "decision");
         fs::remove_dir_all(workspace).unwrap();
     }
 

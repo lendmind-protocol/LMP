@@ -1447,8 +1447,29 @@ export async function evaluate(options: EvaluationOptions): Promise<EvaluationRe
     })),
   ];
   const loopTransitions = [
-    { state: "evaluating", event: "evaluation_started", attempt: 0 },
-    { state, event: "evaluation_completed", attempt: 0 },
+    { stepId: "evaluation", state: "evaluating", event: "evaluation_started", attempt: 0 },
+    {
+      stepId: "scope",
+      state: "evaluating",
+      event: "scope_resolved",
+      attempt: 0,
+      checkedFiles: ast.files,
+    },
+    {
+      stepId: "analysis",
+      state: "evaluating",
+      event: "analysis_completed",
+      attempt: 0,
+      languages: ast.languages,
+      unsupportedLanguages: ast.unsupportedLanguages,
+    },
+    {
+      stepId: "decision",
+      state,
+      event: "evaluation_completed",
+      attempt: 0,
+      findingCount: results.length,
+    },
   ];
   const artifact = {
     artifactVersion: "1.0",
