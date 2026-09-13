@@ -4,6 +4,9 @@ This ledger classifies product claims against the implementation and retained
 evidence. `VERIFIED` means the stated, scoped claim has a passing executable
 check; it does not mean universal correctness.
 
+The latest completed hosted qualification is recorded in
+[`docs/evidence/hosted-qualification-34722781191.md`](evidence/hosted-qualification-34722781191.md).
+
 | Claim ID | Claim | Source document | Implementation path | Test path | Evidence artifact | Status | Exact limitation |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | CL-001 | LMP validates supported Rust and TypeScript structures with configured rules | `README.md`, `docs/Explain.md` | `crates/lmp-core/src/ast.rs`, evaluator | Rust tests, profile fixture gate | qualification artifacts | VERIFIED | Only implemented language/rule boundaries are covered |
