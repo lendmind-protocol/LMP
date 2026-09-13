@@ -79,7 +79,7 @@ The repository pins Rust `1.98.1` in [`rust-toolchain.toml`](./rust-toolchain.to
 
 ### Public Mind Vault
 
-The launch-day catalog is generated from the checked-in packages and validated before it is published. It contains no invented IPFS CIDs, OCI digests, signatures, or author endorsements. One package currently has a gateway-verified IPFS pin; the remaining production entries are `PENDING_IPFS_PIN` until their exact current bytes are republished. Draft entries are not resolvable by the production CLI.
+The launch-day catalog is generated from the checked-in packages and validated before it is published. It contains no invented IPFS CIDs, OCI digests, signatures, or author endorsements. All four current production entries have gateway-verified IPFS pins whose retrieved bytes match the checked-in package digests. OCI publication and independent release evidence remain separate gates. Draft entries are not resolvable by the production CLI.
 
 ```bash
 node public-web-vault/scripts/generate-registry.ts
