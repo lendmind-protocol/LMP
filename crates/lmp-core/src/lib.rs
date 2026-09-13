@@ -9,6 +9,7 @@ pub mod compiler;
 pub mod crypto;
 pub mod evaluator;
 pub mod fleet;
+pub mod loop_controller;
 pub mod registry;
 pub mod scope;
 pub mod self_hosting;
