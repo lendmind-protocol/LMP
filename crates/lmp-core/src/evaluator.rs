@@ -488,6 +488,121 @@ fn source_findings(
     findings
 }
 
+fn duplicate_logic_findings(
+    files: &[PathBuf],
+    workspace: &Path,
+    flags: &std::collections::HashMap<String, bool>,
+) -> Vec<Finding> {
+    if !(flags.get("errorDuplicateLogic").copied().unwrap_or(false)
+        || flags.get("warnDuplicateLogic").copied().unwrap_or(false))
+    {
+        return Vec::new();
+    }
+    let severity = if flags.get("errorDuplicateLogic").copied().unwrap_or(false) {
+        "error"
+    } else {
+        "warning"
+    };
+    let mut bodies: std::collections::HashMap<String, (String, String, usize)> =
+        std::collections::HashMap::new();
+    let mut findings = Vec::new();
+    for path in files {
+        if source_language(path).is_none_or(|language| {
+            !matches!(
+                language,
+                SourceLanguage::TypeScript | SourceLanguage::JavaScript
+            )
+        }) {
+            continue;
+        }
+        let Ok(source) = fs::read_to_string(path) else {
+            continue;
+        };
+        let relative = path
+            .strip_prefix(workspace)
+            .unwrap_or(path)
+            .display()
+            .to_string();
+        let lines = source.lines().collect::<Vec<_>>();
+        let mut index = 0;
+        while index < lines.len() {
+            let line = lines[index];
+            let Some(open) = line.find('{') else {
+                index += 1;
+                continue;
+            };
+            let prefix = line[..open].trim();
+            let is_function = prefix.contains("function ")
+                || prefix.contains("=>")
+                || prefix.contains("async ") && prefix.contains('(');
+            if !is_function {
+                index += 1;
+                continue;
+            }
+            let name = prefix
+                .split_whitespace()
+                .find_map(|part| {
+                    let candidate = part.trim_matches(|character: char| {
+                        !character.is_ascii_alphanumeric() && character != '_'
+                    });
+                    if candidate != "function" && !candidate.is_empty() {
+                        Some(candidate.to_string())
+                    } else {
+                        None
+                    }
+                })
+                .unwrap_or_else(|| "anonymous function".into());
+            let start_line = index + 1;
+            let mut depth = line[open..]
+                .chars()
+                .filter(|c| *c == '{')
+                .count()
+                .saturating_sub(line[open..].chars().filter(|c| *c == '}').count());
+            let mut end = index;
+            while depth > 0 && end + 1 < lines.len() {
+                end += 1;
+                depth += lines[end].chars().filter(|c| *c == '{').count();
+                depth = depth.saturating_sub(lines[end].chars().filter(|c| *c == '}').count());
+            }
+            let mut body_lines = Vec::with_capacity(end - index + 1);
+            body_lines.push(&line[open + 1..]);
+            body_lines.extend(lines.iter().take(end + 1).skip(index + 1).copied());
+            let normalized = body_lines
+                .iter()
+                .flat_map(|body_line| body_line.split("//").next())
+                .flat_map(|body_line| body_line.split_whitespace())
+                .collect::<Vec<_>>()
+                .join(" ");
+            if normalized.len() >= 40 {
+                if let Some((previous_file, previous_name, _)) = bodies.get(&normalized) {
+                    if previous_name != &name {
+                        findings.push(Finding {
+                            rule_id: "typescript.duplicate-logic".into(),
+                            passed: false,
+                            severity: severity.into(),
+                            message: format!(
+                                "Function {name} duplicates the body of {previous_name}."
+                            ),
+                            evidence: json!({
+                                "file": relative,
+                                "line": start_line,
+                                "duplicateOf": previous_name,
+                                "duplicateFile": previous_file,
+                                "bodyLength": normalized.len(),
+                                "remediation": "Extract the shared behavior into one deliberately named helper and preserve distinct domain boundaries."
+                            }),
+                        });
+                    }
+                } else {
+                    bodies.insert(normalized, (relative.clone(), name, start_line));
+                }
+            }
+            index = end.saturating_add(1);
+        }
+    }
+    findings
+}
+
 fn unsafe_exception_matches(exception: &str, relative_file: &str, workspace: &Path) -> bool {
     if exception == relative_file {
         return true;
@@ -726,6 +841,7 @@ fn evaluate_with_options_impl(
             findings.extend(source_findings(file, workspace, &source, &flags));
         }
     }
+    findings.extend(duplicate_logic_findings(&files, workspace, &flags));
     for language in unsupported_languages {
         skipped_checks.push(json!({
             "checkId": format!("language.{language}"),
@@ -761,17 +877,13 @@ fn evaluate_with_options_impl(
         "security.insecure-default",
         "database.app-layer-join",
         "typescript.unused-variable",
+        "typescript.duplicate-logic",
     ];
     for rule in &bundle.rules {
         let Some(rule_id) = rule.get("id").and_then(Value::as_str) else {
             continue;
         };
-        if !rust_supported_rules.contains(&rule_id)
-            && matches!(
-                rule_id,
-                "typescript.type-error" | "typescript.duplicate-logic"
-            )
-        {
+        if !rust_supported_rules.contains(&rule_id) && rule_id == "typescript.type-error" {
             skipped_checks.push(json!({
                 "checkId": format!("rule.{rule_id}"),
                 "reason": format!("The Rust evaluator does not implement {rule_id}; the TypeScript evaluator is required for this contract."),
@@ -1154,19 +1266,52 @@ const response = { origin: "*" };
         fs::write(workspace.join("src.ts"), "export const value = 1;\n").unwrap();
         let report = evaluate(&root, &workspace, "enforced", None).unwrap();
         assert!(!report.passed);
-        for rule in ["typescript.type-error", "typescript.duplicate-logic"] {
-            assert!(report.findings.iter().any(|finding| {
-                finding.rule_id == format!("rule.unsupported.{rule}")
-                    && finding.evidence["status"] == "unsupported"
-            }));
-            assert!(report.artifact["skippedChecks"]
-                .as_array()
-                .unwrap()
-                .iter()
-                .any(|check| {
-                    check["checkId"] == format!("rule.{rule}") && check["status"] == "unsupported"
-                }));
-        }
+        let rule = "typescript.type-error";
+        assert!(report.findings.iter().any(|finding| {
+            finding.rule_id == format!("rule.unsupported.{rule}")
+                && finding.evidence["status"] == "unsupported"
+        }));
+        assert!(report.artifact["skippedChecks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|check| check["checkId"] == format!("rule.{rule}")
+                && check["status"] == "unsupported"));
+        fs::remove_dir_all(workspace).unwrap();
+    }
+
+    #[test]
+    fn rust_evaluator_detects_duplicate_typescript_function_bodies() {
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../profiles/baseline");
+        let workspace = std::env::temp_dir().join(format!(
+            "lmp-rust-duplicate-typescript-{}",
+            std::process::id()
+        ));
+        fs::create_dir_all(&workspace).unwrap();
+        fs::write(
+            workspace.join("src.ts"),
+            r#"
+function first(value: string) {
+  const normalized = value.trim().toLowerCase();
+  return normalized.replace(/[^a-z0-9]/g, "");
+}
+
+function second(value: string) {
+  const normalized = value.trim().toLowerCase();
+  return normalized.replace(/[^a-z0-9]/g, "");
+}
+"#,
+        )
+        .unwrap();
+        let report = evaluate(&root, &workspace, "enforced", None).unwrap();
+        assert!(report
+            .findings
+            .iter()
+            .any(|finding| finding.rule_id == "typescript.duplicate-logic"));
+        assert!(!report
+            .findings
+            .iter()
+            .any(|finding| finding.rule_id == "rule.unsupported.typescript.duplicate-logic"));
         fs::remove_dir_all(workspace).unwrap();
     }
 
