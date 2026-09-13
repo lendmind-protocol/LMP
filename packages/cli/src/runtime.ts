@@ -65,7 +65,7 @@ export type EvaluatedMediatedWriteAdapterOptions = {
   workspaceRoot: string;
   mind: MindPackage;
   mindPath?: string;
-  mode?: Exclude<Mode, "audit">;
+  mode?: "enforced";
 };
 type RuntimeArtifact = {
   runId: string;

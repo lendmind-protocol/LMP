@@ -299,19 +299,13 @@ export function createProgram() {
     .option("--mind <mind>")
     .option("--mind-path <path>")
     .option("--workspace <path>", ".")
-    .option("--mode <mode>", "enforced")
     .option("--json")
     .action(async (path, options) => {
-      if (options.mode !== "advisory" && options.mode !== "enforced")
-        throw Object.assign(new Error("agent write mode must be advisory or enforced"), {
-          exitCode: EXIT.usage,
-        });
       const mind = await loadMind(options.mind);
       const adapter = createEvaluatedMediatedWriteAdapter({
         workspaceRoot: resolve(options.workspace),
         mind,
         mindPath: options.mindPath ?? options.mind,
-        mode: options.mode,
       });
       await adapter.write({ path, content: options.content });
       const result = { status: "pass", boundary: "mediated-write", path };
