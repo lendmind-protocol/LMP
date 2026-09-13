@@ -469,7 +469,9 @@ fn source_findings(
                 .filter(|name| {
                     (line.contains("const ") || line.contains("let ") || line.contains("var "))
                         && !name.starts_with('_')
-                        && name.chars().all(|character| character.is_ascii_alphanumeric() || character == '_')
+                        && name
+                            .chars()
+                            .all(|character| character.is_ascii_alphanumeric() || character == '_')
                 });
             if let Some(name) = binding {
                 let declaration_is_exported = line.trim_start().starts_with("export ");
@@ -1060,10 +1062,8 @@ mod tests {
     #[test]
     fn rust_evaluator_maps_additional_typescript_profile_rules() {
         let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../profiles/baseline");
-        let workspace = std::env::temp_dir().join(format!(
-            "lmp-rust-typescript-rules-{}",
-            std::process::id()
-        ));
+        let workspace =
+            std::env::temp_dir().join(format!("lmp-rust-typescript-rules-{}", std::process::id()));
         fs::create_dir_all(&workspace).unwrap();
         fs::write(
             workspace.join("src.ts"),
@@ -1087,7 +1087,10 @@ const response = { origin: "*" };
             "database.app-layer-join",
         ] {
             assert!(
-                report.findings.iter().any(|finding| finding.rule_id == rule),
+                report
+                    .findings
+                    .iter()
+                    .any(|finding| finding.rule_id == rule),
                 "expected Rust evaluator finding for {rule}"
             );
         }
