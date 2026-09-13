@@ -190,6 +190,11 @@ class BenchmarkArtifactGateTests(unittest.TestCase):
             "reviewedRevision": "c" * 40,
             "decision": "pass-with-limitations",
             "notes": "Checked the complete matrix.",
+            "reviewTimeMinutes": 12,
+            "reworkCount": 0,
+            "severity": "none",
+            "confidence": 0.95,
+            "falsePositiveCount": 0,
         }]
         path = self.write(payload)
         try:

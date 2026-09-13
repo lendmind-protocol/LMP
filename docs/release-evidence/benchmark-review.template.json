@@ -1,0 +1,15 @@
+{
+  "annotations": [
+    {
+      "reviewer": "independent-reviewer-name-or-handle",
+      "reviewedRevision": "40-character-commit-sha",
+      "decision": "pass-with-limitations",
+      "notes": "Record concrete findings, what was inspected, and what remains unproven.",
+      "reviewTimeMinutes": 30,
+      "reworkCount": 0,
+      "severity": "low",
+      "confidence": 0.8,
+      "falsePositiveCount": 0
+    }
+  ]
+}

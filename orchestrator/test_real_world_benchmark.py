@@ -47,6 +47,11 @@ class RealWorldBenchmarkTests(unittest.TestCase):
                             "reviewedRevision": "a" * 40,
                             "decision": "pass-with-limitations",
                             "notes": "The bounded Docker transitions are reproducible.",
+                            "reviewTimeMinutes": 18,
+                            "reworkCount": 1,
+                            "severity": "low",
+                            "confidence": 0.9,
+                            "falsePositiveCount": 0,
                         }
                     ]
                 ),
@@ -63,6 +68,26 @@ class RealWorldBenchmarkTests(unittest.TestCase):
             path = Path(directory) / "review.json"
             path.write_text("[]", encoding="utf-8")
             with self.assertRaises(ValueError):
+                MODULE.load_reviewer_annotations(path, "a" * 40)
+
+    def test_reviewer_annotations_reject_invalid_confidence(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="lmp-review-confidence-") as directory:
+            path = Path(directory) / "review.json"
+            path.write_text(
+                json.dumps([{
+                    "reviewer": "independent-reviewer",
+                    "reviewedRevision": "a" * 40,
+                    "decision": "pass-with-limitations",
+                    "notes": "The bounded Docker transitions are reproducible.",
+                    "reviewTimeMinutes": 18,
+                    "reworkCount": 1,
+                    "severity": "low",
+                    "confidence": 2,
+                    "falsePositiveCount": 0,
+                }]),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "confidence"):
                 MODULE.load_reviewer_annotations(path, "a" * 40)
 
     def test_control_state_is_explicit(self) -> None:
