@@ -41,7 +41,7 @@ remain partial even when the local implementation path is ready.
 | 1 — Local-first product experience | Productized locally | Init, advisory evaluation, offline defaults, redacted artifacts, and additive onboarding are tested. |
 | 2 — Profile contracts and policy compilation | Productized locally | Canonical schema, provenance, rule contracts, typed context, and compiler tests pass. |
 | 3 — Deterministic evaluation and tool adapters | Productized locally, bounded | Evaluator and adapters are tested; optional external tools remain capability-detected and are not silently installed. |
-| 4 — Baseline and TypeScript Minimal profiles | Productized locally | 19 shipped Mind packages validate; six profiles have executable positive/negative/exception fixture runs. |
+| 4 — Baseline and TypeScript Minimal profiles | Productized locally | 20 shipped Mind packages validate; six profiles have executable positive/negative/exception fixture runs. |
 | 5 — Bounded agent remediation loops | Productized locally | Retry, repetition, authorization, regression, remediation, escalation, and artifact transitions are tested. |
 | 6 — Autonomy and tool authorization | Productized locally | A0–A6 policy boundaries and denied/allowed integration evidence pass locally. |
 | 7 — Evidence artifacts and PR workflow | Productized locally | Canonical JSON, redaction, limitations, Markdown summary, and fail-closed artifact gates pass. |
@@ -90,7 +90,7 @@ This inventory must be kept synchronized with the actual repository. Existing im
 | Generated documentation | `apps/docs/`, `orchestrator/docs_quality_gate.py` | Productized locally | Documentation structure, routes, static search, claim boundaries, and generated registry assets are checked | Keep canonical single-page context and rerun docs gates on content changes |
 | GitHub Actions CI | `.github/workflows/` | Productized locally / hosted verification | CI runs lint, typecheck, Rust, Python, artifact, onboarding, and self-hosting gates; hosted results remain revision-specific | Preserve fail-closed gates and retain workflow run IDs with release evidence |
 | Release workflow | `.github/workflows/release.yml` | Productized locally / external pending | Cross-platform builds, checksums, archive safety, and publication gates are implemented; the release gate correctly blocks stale or missing public pins | Complete public immutable distribution and independent review gates before publishing |
-| Profile definitions | `registry/minds/`, `profiles/` | Productized locally / curation-bound | 19 checked-in Mind packages validate with signed manifests, provenance metadata, rule contracts, fixtures, and limitations; the provenance gate currently verifies 18 source-bearing packages because one package intentionally has no external source payload | Add independently sourced profiles through the proposal/review path; do not inflate the catalog with generated placeholders |
+| Profile definitions | `registry/minds/`, `profiles/` | Productized locally / curation-bound | 20 checked-in Mind packages validate with signed manifests, provenance metadata, rule contracts, fixtures, and limitations; the provenance gate currently verifies 18 source-bearing packages because two packages intentionally have no external source payload | Add independently sourced profiles through the proposal/review path; do not inflate the catalog with generated placeholders |
 
 ## Milestone 0 — Core Inventory and Stability Baseline
 
