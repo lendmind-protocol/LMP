@@ -11,5 +11,5 @@
   "warnInsecureDefault": true,
   "warnSqlInjection": true,
   "warnVarDeclaration": true,
-  "errorAppLayerJoin": true
+  "warnAppLayerJoin": true
 }
