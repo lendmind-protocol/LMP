@@ -25,6 +25,7 @@ import {
 } from "./runtime.js";
 
 export * from "./host-boundaries.js";
+export { createEvaluatedMediatedWriteAdapter, loadMind } from "./runtime.js";
 
 export const EXIT = { ok: 0, policy: 1, usage: 2, runtime: 3 } as const;
 
