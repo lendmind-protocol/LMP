@@ -2,6 +2,7 @@ use lmp_core::{compiler, crypto::package_signature_status, evaluator};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::{
+    collections::HashSet,
     io::{self, BufRead, BufWriter, Read, Write},
     net::{TcpListener, TcpStream},
     path::PathBuf,
@@ -30,6 +31,16 @@ struct Response {
 }
 struct ServerState {
     initialized: bool,
+    cancelled_requests: Arc<Mutex<HashSet<String>>>,
+}
+
+impl ServerState {
+    fn new(initialized: bool) -> Self {
+        Self {
+            initialized,
+            cancelled_requests: Arc::new(Mutex::new(HashSet::new())),
+        }
+    }
 }
 fn ok(id: Value, result: Value) -> Response {
     Response {
@@ -114,6 +125,127 @@ fn tools() -> Value {
         }
     }
     manifest
+}
+
+fn resource_uri(path: &str) -> String {
+    format!("lmp://mind/{path}")
+}
+
+fn resources() -> Value {
+    let resources = discover_minds(&configured_root())
+        .into_iter()
+        .map(|path| {
+            json!({
+                "uri": resource_uri(&path),
+                "name": path,
+                "description": "A locally available LMP Mind Package manifest.",
+                "mimeType": "application/json"
+            })
+        })
+        .collect::<Vec<_>>();
+    json!({"resources": resources})
+}
+
+fn read_resource(uri: &str) -> Result<Value, String> {
+    let relative = uri
+        .strip_prefix("lmp://mind/")
+        .filter(|path| !path.is_empty())
+        .ok_or_else(|| "unsupported resource URI".to_string())?;
+    let path = safe_local_path(relative)?;
+    if path.file_name().and_then(|name| name.to_str()) != Some("mind.json") {
+        return Err("resource is not a Mind Package manifest".into());
+    }
+    let text = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    Ok(json!({
+        "contents": [{"uri": uri, "mimeType": "application/json", "text": text}]
+    }))
+}
+
+fn prompts() -> Value {
+    json!({"prompts": [
+        {
+            "name": "lmp_review_workspace",
+            "description": "Review a workspace against a local Mind Package using the LMP evaluation tool.",
+            "arguments": [
+                {"name": "mind", "description": "Relative path to a Mind Package manifest.", "required": true},
+                {"name": "workspace", "description": "Relative path to the workspace to review.", "required": true},
+                {"name": "mode", "description": "Evaluation mode: advisory, enforced, or audit.", "required": false}
+            ]
+        },
+        {
+            "name": "lmp_explain_rule",
+            "description": "Explain one rule from a local Mind Package.",
+            "arguments": [
+                {"name": "mind", "description": "Relative path to a Mind Package manifest.", "required": true},
+                {"name": "ruleId", "description": "Rule identifier to explain.", "required": true}
+            ]
+        }
+    ]})
+}
+
+fn prompt_argument(args: &Value, name: &str, required: bool) -> Result<Option<String>, String> {
+    let value = args.get(name).and_then(Value::as_str).map(str::to_owned);
+    if required && value.is_none() {
+        return Err(format!("{name} is required"));
+    }
+    Ok(value)
+}
+
+fn get_prompt(name: &str, args: &Value) -> Result<Value, String> {
+    let text = match name {
+        "lmp_review_workspace" => {
+            let mind = prompt_argument(args, "mind", true)?.unwrap();
+            let workspace = prompt_argument(args, "workspace", true)?.unwrap();
+            let mode = prompt_argument(args, "mode", false)?.unwrap_or_else(|| "advisory".into());
+            if !["advisory", "enforced", "audit"].contains(&mode.as_str()) {
+                return Err("mode must be advisory, enforced, or audit".into());
+            }
+            format!(
+                "Use lmp_evaluate_workspace with mind={mind}, workspace={workspace}, mode={mode}. Report the returned artifact and do not execute commands."
+            )
+        }
+        "lmp_explain_rule" => {
+            let mind = prompt_argument(args, "mind", true)?.unwrap();
+            let rule_id = prompt_argument(args, "ruleId", true)?.unwrap();
+            format!("Use lmp_explain_rule with mind={mind} and ruleId={rule_id}; summarize the matched rule without changing policy.")
+        }
+        _ => return Err("unknown prompt".into()),
+    };
+    Ok(
+        json!({"description": name.replace('_', " "), "messages": [{"role": "user", "content": {"type": "text", "text": text}}]}),
+    )
+}
+
+fn complete(params: &Value) -> Result<Value, String> {
+    let reference = params
+        .get("ref")
+        .and_then(Value::as_object)
+        .ok_or_else(|| "completion ref is required".to_string())?;
+    let reference_type = reference
+        .get("type")
+        .and_then(Value::as_str)
+        .ok_or_else(|| "completion ref type is required".to_string())?;
+    if reference_type != "ref/prompt" && reference_type != "ref/resource" {
+        return Err("completion ref type must be ref/prompt or ref/resource".into());
+    }
+    let argument = params
+        .get("argument")
+        .and_then(Value::as_object)
+        .ok_or_else(|| "completion argument is required".to_string())?;
+    if argument.get("name").and_then(Value::as_str) != Some("mind") {
+        return Ok(json!({"completion": {"values": [], "hasMore": false, "total": 0}}));
+    }
+    let prefix = argument
+        .get("value")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    let values = discover_minds(&configured_root())
+        .into_iter()
+        .filter(|path| path.starts_with(prefix))
+        .take(100)
+        .collect::<Vec<_>>();
+    let total = values.len();
+    Ok(json!({"completion": {"values": values, "hasMore": false, "total": total}}))
 }
 fn configured_root() -> PathBuf {
     std::env::var_os("LMP_WORKSPACE_ROOT")
@@ -437,7 +569,7 @@ fn handle(request: Request, state: &mut ServerState) -> Option<Response> {
             state.initialized = true;
             request.id.map(|_| ok(
                 id,
-                json!({"protocolVersion":version,"capabilities":{"tools":{}},"serverInfo":{"name":"lending-mind-mcp","version":env!("CARGO_PKG_VERSION")}}),
+                json!({"protocolVersion":version,"capabilities":{"tools":{},"resources":{},"prompts":{},"completions":{}},"serverInfo":{"name":"lending-mind-mcp","version":env!("CARGO_PKG_VERSION")}}),
             ))
         }
         "notifications/initialized" => {
@@ -445,6 +577,101 @@ fn handle(request: Request, state: &mut ServerState) -> Option<Response> {
             None
         }
         "ping" => request.id.map(|_| ok(id, json!({}))),
+        "resources/list" => {
+            if !state.initialized {
+                return request
+                    .id
+                    .map(|_| err(id, -32002, "Server is not initialized"));
+            }
+            request.id.map(|_| ok(id, resources()))
+        }
+        "resources/read" => {
+            if !state.initialized {
+                return request
+                    .id
+                    .map(|_| err(id, -32002, "Server is not initialized"));
+            }
+            let Some(params) = request.params.filter(Value::is_object) else {
+                return request
+                    .id
+                    .map(|_| err(id, -32602, "Invalid resource read parameters"));
+            };
+            let Some(uri) = params.get("uri").and_then(Value::as_str) else {
+                return request
+                    .id
+                    .map(|_| err(id, -32602, "resource URI is required"));
+            };
+            match read_resource(uri) {
+                Ok(value) => request.id.map(|_| ok(id, value)),
+                Err(message) => request.id.map(|_| err(id, -32602, &message)),
+            }
+        }
+        "prompts/list" => {
+            if !state.initialized {
+                return request
+                    .id
+                    .map(|_| err(id, -32002, "Server is not initialized"));
+            }
+            request.id.map(|_| ok(id, prompts()))
+        }
+        "prompts/get" => {
+            if !state.initialized {
+                return request
+                    .id
+                    .map(|_| err(id, -32002, "Server is not initialized"));
+            }
+            let Some(params) = request.params.filter(Value::is_object) else {
+                return request
+                    .id
+                    .map(|_| err(id, -32602, "Invalid prompt parameters"));
+            };
+            let Some(name) = params.get("name").and_then(Value::as_str) else {
+                return request
+                    .id
+                    .map(|_| err(id, -32602, "prompt name is required"));
+            };
+            let args = params
+                .get("arguments")
+                .cloned()
+                .unwrap_or_else(|| json!({}));
+            if !args.is_object() {
+                return request
+                    .id
+                    .map(|_| err(id, -32602, "prompt arguments must be an object"));
+            }
+            match get_prompt(name, &args) {
+                Ok(value) => request.id.map(|_| ok(id, value)),
+                Err(message) => request.id.map(|_| err(id, -32602, &message)),
+            }
+        }
+        "completion/complete" => {
+            if !state.initialized {
+                return request
+                    .id
+                    .map(|_| err(id, -32002, "Server is not initialized"));
+            }
+            let Some(params) = request.params.filter(Value::is_object) else {
+                return request
+                    .id
+                    .map(|_| err(id, -32602, "Invalid completion parameters"));
+            };
+            match complete(&params) {
+                Ok(value) => request.id.map(|_| ok(id, value)),
+                Err(message) => request.id.map(|_| err(id, -32602, &message)),
+            }
+        }
+        "notifications/cancelled" => {
+            let params = request
+                .params
+                .as_ref()
+                .filter(|params| params.is_object())?;
+            if let Some(request_id) = params.get("requestId") {
+                if let Ok(mut cancelled) = state.cancelled_requests.lock() {
+                    cancelled.insert(request_id.to_string());
+                }
+            }
+            None
+        }
         "tools/list" => {
             if !state.initialized {
                 return request
@@ -467,6 +694,11 @@ fn handle(request: Request, state: &mut ServerState) -> Option<Response> {
             let Some(name) = params.get("name").and_then(Value::as_str) else {
                 return request.id.map(|_| err(id, -32602, "tool name is required"));
             };
+            if let Ok(mut cancelled) = state.cancelled_requests.lock() {
+                if cancelled.remove(&id.to_string()) {
+                    return None;
+                }
+            }
             let arguments = params
                 .get("arguments")
                 .cloned()
@@ -490,7 +722,7 @@ fn handle(request: Request, state: &mut ServerState) -> Option<Response> {
 
 #[cfg(test)]
 fn response_for_line(line: &str) -> Response {
-    let mut state = ServerState { initialized: true };
+    let mut state = ServerState::new(true);
     match serde_json::from_str::<Request>(line) {
         Ok(request) => handle(request, &mut state)
             .unwrap_or_else(|| err(Value::Null, -32600, "Notification has no response")),
@@ -734,7 +966,7 @@ fn serve_http(config: HttpConfig) -> anyhow::Result<()> {
         "lmp-mcp Streamable HTTP listening on http://{}:{}/mcp",
         config.bind, config.port
     );
-    let state = Arc::new(Mutex::new(ServerState { initialized: false }));
+    let state = Arc::new(Mutex::new(ServerState::new(false)));
     for stream in listener.incoming() {
         let stream = stream?;
         let state = Arc::clone(&state);
@@ -780,7 +1012,7 @@ fn main() -> anyhow::Result<()> {
         if is_accepted_initialize(&line) {
             initialized = true;
         }
-        let state = ServerState { initialized };
+        let state = ServerState::new(initialized);
         let output = Arc::clone(&output);
         workers.push(thread::spawn(move || -> anyhow::Result<()> {
             let mut state = state;
@@ -828,6 +1060,7 @@ mod tests {
         "lmp_get_artifact",
         "lmp_get_loop_status",
     ];
+    static WORKSPACE_ROOT_LOCK: Mutex<()> = Mutex::new(());
 
     fn error_code(response: &Response) -> i64 {
         response
@@ -945,7 +1178,7 @@ mod tests {
 
     #[test]
     fn lifecycle_notifications_and_tool_results_follow_mcp_shape() {
-        let mut state = ServerState { initialized: false };
+        let mut state = ServerState::new(false);
         assert!(process_line(
             r#"{"jsonrpc":"2.0","method":"notifications/initialized"}"#,
             &mut state
@@ -987,7 +1220,7 @@ mod tests {
     #[test]
     fn rejected_initialization_cannot_unlock_the_tool_surface() {
         let unsupported = r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"older"}}"#;
-        let mut state = ServerState { initialized: false };
+        let mut state = ServerState::new(false);
         let response = process_line(unsupported, &mut state).expect("initialize response");
         assert_eq!(error_code(&response), -32602);
         assert!(!state.initialized);
@@ -1009,7 +1242,7 @@ mod tests {
 
     #[test]
     fn initialization_echoes_the_negotiated_protocol_version() {
-        let mut state = ServerState { initialized: false };
+        let mut state = ServerState::new(false);
         let response = process_line(
             r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25"}}"#,
             &mut state,
@@ -1026,7 +1259,7 @@ mod tests {
     fn ping_returns_an_empty_result_before_initialization() {
         let response = process_line(
             r#"{"jsonrpc":"2.0","id":"ping","method":"ping"}"#,
-            &mut ServerState { initialized: false },
+            &mut ServerState::new(false),
         )
         .expect("ping response");
         assert_eq!(response.result.expect("result"), json!({}));
@@ -1035,7 +1268,7 @@ mod tests {
 
     #[test]
     fn malformed_initialize_params_are_rejected_without_state_mutation() {
-        let mut state = ServerState { initialized: false };
+        let mut state = ServerState::new(false);
         let response = process_line(
             r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":[]}"#,
             &mut state,
@@ -1051,5 +1284,134 @@ mod tests {
         validate_tool_arguments("lmp_evaluate_workspace", &valid).unwrap();
         let invalid = serde_json::json!({"mind":"mind","workspace":".","mode":"enforced","changedOnly":"yes"});
         assert!(validate_tool_arguments("lmp_evaluate_workspace", &invalid).is_err());
+    }
+
+    #[test]
+    fn initialization_advertises_only_implemented_capabilities() {
+        let response =
+            response_for_line(r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}"#);
+        let capabilities = &response.result.expect("initialize result")["capabilities"];
+        assert_eq!(capabilities["tools"], json!({}));
+        assert_eq!(capabilities["resources"], json!({}));
+        assert_eq!(capabilities["prompts"], json!({}));
+        assert_eq!(capabilities["completions"], json!({}));
+        assert!(capabilities.get("logging").is_none());
+    }
+
+    #[test]
+    fn resources_list_and_read_are_bounded_to_discovered_mind_manifests() {
+        let _root_lock = WORKSPACE_ROOT_LOCK.lock().unwrap();
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../..")
+            .canonicalize()
+            .expect("workspace root should exist");
+        let previous_root = std::env::var_os("LMP_WORKSPACE_ROOT");
+        std::env::set_var("LMP_WORKSPACE_ROOT", &root);
+        let listed =
+            response_for_line(r#"{"jsonrpc":"2.0","id":1,"method":"resources/list","params":{}}"#);
+        let list_result = listed.result.expect("resource list result");
+        let resource = list_result["resources"]
+            .as_array()
+            .expect("resources array")
+            .iter()
+            .find(|resource| {
+                resource["uri"]
+                    .as_str()
+                    .unwrap_or_default()
+                    .ends_with("/mind.json")
+            })
+            .expect("a mind resource");
+        assert_eq!(resource["mimeType"], "application/json");
+        let uri = resource["uri"].as_str().unwrap();
+
+        let read_request =
+            json!({"jsonrpc":"2.0","id":2,"method":"resources/read","params":{"uri":uri}});
+        let read = response_for_line(&read_request.to_string());
+        let contents = &read.result.expect("resource read result")["contents"];
+        assert_eq!(contents[0]["mimeType"], "application/json");
+        assert!(contents[0]["text"]
+            .as_str()
+            .unwrap()
+            .contains("specVersion"));
+
+        let outside = response_for_line(
+            r#"{"jsonrpc":"2.0","id":3,"method":"resources/read","params":{"uri":"lmp://mind/../../etc/passwd"}}"#,
+        );
+        assert_eq!(error_code(&outside), -32602);
+        if let Some(previous_root) = previous_root {
+            std::env::set_var("LMP_WORKSPACE_ROOT", previous_root);
+        } else {
+            std::env::remove_var("LMP_WORKSPACE_ROOT");
+        }
+    }
+
+    #[test]
+    fn prompts_and_completion_return_protocol_shaped_results() {
+        let _root_lock = WORKSPACE_ROOT_LOCK.lock().unwrap();
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../..")
+            .canonicalize()
+            .expect("workspace root should exist");
+        let previous_root = std::env::var_os("LMP_WORKSPACE_ROOT");
+        std::env::set_var("LMP_WORKSPACE_ROOT", &root);
+        let listed =
+            response_for_line(r#"{"jsonrpc":"2.0","id":1,"method":"prompts/list","params":{}}"#);
+        assert_eq!(
+            listed.result.expect("prompt list result")["prompts"]
+                .as_array()
+                .unwrap()
+                .len(),
+            2
+        );
+
+        let prompt = response_for_line(
+            r#"{"jsonrpc":"2.0","id":2,"method":"prompts/get","params":{"name":"lmp_review_workspace","arguments":{"mind":"profiles/typescript-minimal/mind.json","workspace":".","mode":"audit"}}}"#,
+        );
+        assert!(
+            prompt.result.expect("prompt result")["messages"][0]["content"]["text"]
+                .as_str()
+                .unwrap()
+                .contains("mode=audit")
+        );
+
+        let completion = response_for_line(
+            r#"{"jsonrpc":"2.0","id":3,"method":"completion/complete","params":{"ref":{"type":"ref/prompt","name":"lmp_review_workspace"},"argument":{"name":"mind","value":"profiles/"}}}"#,
+        );
+        let values = &completion.result.expect("completion result")["completion"]["values"];
+        assert!(values
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|value| value.as_str().unwrap_or_default().starts_with("profiles/")));
+
+        let generic_completion = response_for_line(
+            r#"{"jsonrpc":"2.0","id":4,"method":"completion/complete","params":{"ref":{"type":"ref/prompt","name":"host-defined-prompt"},"argument":{"name":"language","value":"ru"}}}"#,
+        );
+        assert_eq!(
+            generic_completion
+                .result
+                .expect("generic completion result")["completion"],
+            json!({"values": [], "hasMore": false, "total": 0})
+        );
+        if let Some(previous_root) = previous_root {
+            std::env::set_var("LMP_WORKSPACE_ROOT", previous_root);
+        } else {
+            std::env::remove_var("LMP_WORKSPACE_ROOT");
+        }
+    }
+
+    #[test]
+    fn cancelled_requests_are_suppressed_without_answering_the_notifications() {
+        let mut state = ServerState::new(true);
+        assert!(process_line(
+            r#"{"jsonrpc":"2.0","method":"notifications/cancelled","params":{"requestId":7,"reason":"client stopped waiting"}}"#,
+            &mut state,
+        )
+        .is_none());
+        let response = process_line(
+            r#"{"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"lmp_list_minds","arguments":{}}}"#,
+            &mut state,
+        );
+        assert!(response.is_none());
     }
 }

@@ -44,7 +44,7 @@ if [[ "$ready" != true ]]; then
   exit 1
 fi
 
-for scenario in server-initialize ping tools-list; do
+for scenario in server-initialize ping tools-list completion-complete resources-list prompts-list; do
   npx --yes @modelcontextprotocol/conformance@0.1.11 \
     server --url "http://127.0.0.1:$PORT/mcp" \
     --scenario "$scenario"
