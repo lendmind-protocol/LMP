@@ -1,10 +1,7 @@
 {
   "artifactVersion": "1.0",
   "status": "verified",
-  "implementation": [
-    "packages/cli/src/host-boundaries.ts",
-    "packages/cli/src/runtime.ts"
-  ],
+  "implementation": ["packages/cli/src/host-boundaries.ts", "packages/cli/src/runtime.ts"],
   "supportedBoundaries": ["git-pre-commit", "explicit-mediated-write"],
   "verification": {
     "command": "pnpm --filter @lending-mind/lmp test",
