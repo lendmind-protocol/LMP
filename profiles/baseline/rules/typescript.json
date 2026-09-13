@@ -10,5 +10,6 @@
   "warnDuplicateLogic": true,
   "warnInsecureDefault": true,
   "warnSqlInjection": true,
-  "warnVarDeclaration": true
+  "warnVarDeclaration": true,
+  "errorAppLayerJoin": true
 }

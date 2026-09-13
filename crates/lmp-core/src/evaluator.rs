@@ -314,11 +314,9 @@ fn source_findings(
         || relative.ends_with("cli/src/index.ts")
         || path.file_name().and_then(|value| value.to_str()) == Some("bin.ts")
         || path.extension().and_then(|value| value.to_str()) == Some("mjs");
-    let severity = if flags.get("errorAny").copied().unwrap_or(false)
-        || flags.get("errorEval").copied().unwrap_or(false)
-        || flags.get("errorConsoleLog").copied().unwrap_or(false)
-        || flags.get("errorDynamicRequire").copied().unwrap_or(false)
-        || flags.get("errorHardcodedSecret").copied().unwrap_or(false)
+    let severity = if flags
+        .iter()
+        .any(|(key, enabled)| key.starts_with("error") && *enabled)
     {
         "error"
     } else {
@@ -448,6 +446,17 @@ fn source_findings(
                 "security.insecure-default",
                 "Named insecure default detected.",
                 "Replace the permissive or unsafe default with an explicit allowlist, sanitizer, or trusted boundary and add a regression test.",
+            ));
+        }
+        if !fixture_literal
+            && (flags.get("errorAppLayerJoin").copied().unwrap_or(false)
+                || flags.get("warnAppLayerJoin").copied().unwrap_or(false))
+            && line.contains("Promise.all(")
+        {
+            findings.push(push(
+                "database.app-layer-join",
+                "Application-layer fan-out join detected.",
+                "Move the isolation and join policy to the database boundary.",
             ));
         }
         if !fixture_literal
@@ -1063,6 +1072,7 @@ const unused = 1;
 var legacy = 2;
 try { work(); } catch {}
 db.query(`select * from users where id = ${id}`);
+const joined = Promise.all([loadUser(), loadOrders()]);
 const response = { origin: "*" };
 "#,
         )
@@ -1074,6 +1084,7 @@ const response = { origin: "*" };
             "typescript.empty-catch",
             "security.sql-injection",
             "security.insecure-default",
+            "database.app-layer-join",
         ] {
             assert!(
                 report.findings.iter().any(|finding| finding.rule_id == rule),
