@@ -22,8 +22,16 @@ fn git(workspace: &Path, args: &[&str]) -> Result<std::process::Output> {
         .with_context(|| format!("failed to invoke git in {}", workspace.display()))
 }
 
-fn git_paths(workspace: &Path, base: Option<&str>) -> Result<Vec<PathBuf>> {
-    let diff_args = if let Some(base) = base {
+fn git_paths(workspace: &Path, base: Option<&str>, staged_only: bool) -> Result<Vec<PathBuf>> {
+    let diff_args = if staged_only {
+        vec![
+            "diff",
+            "--cached",
+            "--name-only",
+            "--diff-filter=ACMRTUXB",
+            "--",
+        ]
+    } else if let Some(base) = base {
         vec!["diff", "--name-only", "--diff-filter=ACMRTUXB", base, "--"]
     } else {
         vec![
@@ -40,6 +48,15 @@ fn git_paths(workspace: &Path, base: Option<&str>) -> Result<Vec<PathBuf>> {
             "git diff failed: {}",
             String::from_utf8_lossy(&diff.stderr).trim()
         );
+    }
+    if staged_only {
+        return Ok(diff
+            .stdout
+            .split(|byte| *byte == b'\n')
+            .filter(|bytes| !bytes.is_empty())
+            .map(|bytes| workspace.join(String::from_utf8_lossy(bytes).as_ref()))
+            .filter(|candidate| candidate.is_file())
+            .collect());
     }
     let untracked = git(workspace, &["ls-files", "--others", "--exclude-standard"])?;
     if !untracked.status.success() {
@@ -69,6 +86,16 @@ pub fn select(
     base: Option<&str>,
     all_files: Vec<PathBuf>,
 ) -> ScopeSelection {
+    select_with_staged(workspace, changed_only, false, base, all_files)
+}
+
+pub fn select_with_staged(
+    workspace: &Path,
+    changed_only: bool,
+    staged_only: bool,
+    base: Option<&str>,
+    all_files: Vec<PathBuf>,
+) -> ScopeSelection {
     if !changed_only {
         return ScopeSelection {
             files: all_files,
@@ -77,11 +104,15 @@ pub fn select(
             fallback_reason: None,
         };
     }
-    match git_paths(workspace, base) {
+    match git_paths(workspace, base, staged_only) {
         Ok(files) => ScopeSelection {
             files,
             changed_only: true,
-            source: "git-diff",
+            source: if staged_only {
+                "git-staged"
+            } else {
+                "git-diff"
+            },
             fallback_reason: None,
         },
         Err(error) => ScopeSelection {
@@ -95,7 +126,7 @@ pub fn select(
 
 #[cfg(test)]
 mod tests {
-    use super::select;
+    use super::{select, select_with_staged};
     use std::{fs, path::PathBuf, process::Command};
 
     fn temp_repo(name: &str) -> PathBuf {
@@ -155,5 +186,29 @@ mod tests {
         assert_eq!(selection.source, "workspace-fallback");
         assert_eq!(selection.files, vec![file]);
         let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn staged_selection_excludes_unstaged_and_untracked_files() {
+        let repo = temp_repo("staged");
+        let staged = repo.join("staged.rs");
+        let unstaged = repo.join("unstaged.rs");
+        fs::write(&staged, "fn staged() {}\n").unwrap();
+        fs::write(&unstaged, "fn unstaged() {}\n").unwrap();
+        Command::new("git")
+            .args(["add", "staged.rs"])
+            .current_dir(&repo)
+            .status()
+            .unwrap();
+        let selection = select_with_staged(
+            &repo,
+            true,
+            true,
+            None,
+            vec![staged.clone(), unstaged.clone()],
+        );
+        assert_eq!(selection.source, "git-staged");
+        assert_eq!(selection.files, vec![staged]);
+        let _ = fs::remove_dir_all(repo);
     }
 }

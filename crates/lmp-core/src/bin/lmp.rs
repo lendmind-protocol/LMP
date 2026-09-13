@@ -49,6 +49,11 @@ enum Command {
         json: bool,
         #[arg(long, help = "Evaluate only files changed from Git HEAD or --base")]
         changed_only: bool,
+        #[arg(
+            long,
+            help = "When evaluating a Git delta, include only the staged index"
+        )]
+        staged_only: bool,
         #[arg(long, help = "Git revision used as the delta comparison base")]
         base: Option<String>,
         #[arg(
@@ -679,6 +684,7 @@ fn main() -> Result<()> {
             artifact_dir,
             json,
             changed_only,
+            staged_only,
             base,
             scope,
             artifact_out,
@@ -703,6 +709,7 @@ fn main() -> Result<()> {
                     artifact_dir.as_deref(),
                     EvaluationOptions {
                         changed_only,
+                        staged_only,
                         git_base: base.as_deref(),
                         ast_cache_dir: None,
                     },

@@ -211,6 +211,7 @@ export async function evaluate(
     runCommands?: boolean;
     mindPath?: string;
     changedOnly?: boolean;
+    stagedOnly?: boolean;
     base?: string;
   } = {},
 ): Promise<RuntimeArtifact> {
@@ -244,6 +245,7 @@ export async function evaluate(
   ];
   if (options.artifactDir) args.push("--artifact-dir", resolve(options.artifactDir));
   if (options.changedOnly) args.push("--changed-only");
+  if (options.stagedOnly) args.push("--staged-only");
   if (options.base) args.push("--base", options.base);
   const output = await new Promise<string>((resolveOutput, reject) => {
     const child = spawn(binary, args, { cwd: process.cwd(), shell: false });
@@ -356,9 +358,9 @@ export async function installEnforcedHook(
 set -eu
 root="$(git rev-parse --show-toplevel)"
 if [ -f "$root/packages/lmp/bin.ts" ]; then
-exec node "$root/packages/lmp/bin.ts" self-govern --mind ${mind} --workspace . --artifact-dir .lending-mind/artifacts
+exec node "$root/packages/lmp/bin.ts" self-govern --mind ${mind} --workspace . --artifact-dir .lending-mind/artifacts --changed-only --staged-only
 fi
-exec npx --no-install lmp self-govern --mind ${mind} --workspace . --artifact-dir .lending-mind/artifacts
+exec npx --no-install lmp self-govern --mind ${mind} --workspace . --artifact-dir .lending-mind/artifacts --changed-only --staged-only
 `,
   );
   await chmod(hook, 0o755);

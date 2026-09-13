@@ -186,6 +186,7 @@ export function createProgram() {
     .option("--workspace <path>", ".")
     .option("--artifact-dir <path>", ".lending-mind/artifacts")
     .option("--changed-only", "evaluate only files changed from the selected Git base")
+    .option("--staged-only", "when using a Git delta, evaluate only files staged for commit")
     .option("--base <ref>", "Git revision used with --changed-only")
     .option("--install-hook")
     .option("--json")
@@ -201,6 +202,7 @@ export function createProgram() {
           artifactDir: options.artifactDir,
           mindPath: activated.path,
           changedOnly: options.changedOnly === true,
+          stagedOnly: options.stagedOnly === true,
           base: options.base,
         },
       );
@@ -253,6 +255,7 @@ export function createProgram() {
     .option("--offline")
     .option("--run-commands")
     .option("--changed-only", "evaluate only files changed from the selected Git base")
+    .option("--staged-only", "when using a Git delta, evaluate only files staged for commit")
     .option("--base <ref>", "Git revision used with --changed-only")
     .action(async (options) => {
       const mindPath = options.mind ? await resolveMindPath(options.mind) : undefined;
@@ -268,6 +271,7 @@ export function createProgram() {
           runCommands: options.runCommands === true,
           mindPath,
           changedOnly: options.changedOnly === true,
+          stagedOnly: options.stagedOnly === true,
           base: options.base,
         },
       );

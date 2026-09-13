@@ -97,7 +97,7 @@ fn obvious_typescript_type_mismatch(line: &str) -> Option<(&'static str, &'stati
     let annotation = line.split_once(':')?.1.split_once('=')?.0.trim();
     let initializer = line.split_once('=')?.1.trim().trim_end_matches(';').trim();
     let expected = annotation
-        .split(|character: char| character == ' ' || character == '|' || character == '&')
+        .split([' ', '|', '&'])
         .next()?;
     let expected = match expected {
         "string" => "string",
@@ -164,6 +164,7 @@ pub struct Evaluation {
 #[derive(Debug, Clone, Default)]
 pub struct EvaluationOptions<'a> {
     pub changed_only: bool,
+    pub staged_only: bool,
     pub git_base: Option<&'a str>,
     pub ast_cache_dir: Option<&'a Path>,
 }
@@ -764,7 +765,13 @@ fn evaluate_with_options_impl(
         policy_values(package_dir, &bundle.mind);
     let mut all_files = Vec::new();
     walk(workspace, &mut all_files).context("failed to scan workspace")?;
-    let scope = crate::scope::select(workspace, options.changed_only, options.git_base, all_files);
+    let scope = crate::scope::select_with_staged(
+        workspace,
+        options.changed_only,
+        options.staged_only,
+        options.git_base,
+        all_files,
+    );
     let files = scope.files;
     let mut findings = dependency_findings(workspace, &prohibited, &files, options.changed_only);
     let mut skipped_checks = Vec::new();
