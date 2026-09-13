@@ -1,0 +1,13 @@
+{
+  "status": "complete",
+  "participants": 0,
+  "repositoryCategories": [],
+  "operatingSystems": [],
+  "completedOnboardingWithoutHelp": 0,
+  "remediatedFindingParticipants": 0,
+  "understoodPassBoundaryParticipants": 0,
+  "privacy": {
+    "sourceCodeIncluded": false,
+    "secretsIncluded": false
+  }
+}

@@ -43,3 +43,8 @@ repository categories, operating systems, onboarding completion, remediation,
 understanding of the pass boundary, and the absence of source code and secrets.
 
 Do not create synthetic evidence to make the release gate pass.
+
+Use [`human-adoption-pilot.template.json`](human-adoption-pilot.template.json)
+as the schema-shaped collection starting point. It is not evidence and is
+intentionally below the release thresholds until an independent pilot replaces
+its values with observed, redacted results.
