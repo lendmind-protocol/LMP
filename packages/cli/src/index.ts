@@ -24,6 +24,8 @@ import {
   writeJson,
 } from "./runtime.js";
 
+export * from "./host-boundaries.js";
+
 export const EXIT = { ok: 0, policy: 1, usage: 2, runtime: 3 } as const;
 
 function json(value: unknown) {

@@ -27,6 +27,17 @@ import {
   PromotionRecordSchema,
   validateMindPackage,
 } from "@lending-mind/skill";
+export {
+  createMediatedWriteAdapter,
+  hostBoundarySupport,
+  WriteBoundaryError,
+} from "./host-boundaries.js";
+export type {
+  HostBoundary,
+  MediatedWriteAdapterOptions,
+  WriteDecision,
+  WriteRequest,
+} from "./host-boundaries.js";
 type PromotionProposal = {
   proposalId: string;
   profileId: string;

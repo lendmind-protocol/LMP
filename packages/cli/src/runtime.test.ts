@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createKeyPair } from "@lending-mind/sdk";
 import { describe, expect, it } from "vitest";
+import { createMediatedWriteAdapter, hostBoundarySupport } from "./host-boundaries.js";
 import { runCli } from "./index.js";
 import {
   activateMind,
@@ -21,6 +22,102 @@ import {
 } from "./runtime.js";
 
 describe("CLI runtime", () => {
+  it("blocks mediated writes unless authorization passes before persistence", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "lmp-mediated-write-"));
+    const target = join(directory, "change.ts");
+    try {
+      await writeFile(target, "const original = true;\n");
+      let observed = "";
+      const adapter = createMediatedWriteAdapter({
+        workspaceRoot: directory,
+        authorize: async (request) => {
+          observed = await readFile(request.path, "utf8");
+          return { status: "deny", reason: "policy finding" };
+        },
+      });
+      await expect(
+        adapter.write({ path: "change.ts", content: "const unsafe = true;\n" }),
+      ).rejects.toThrow(/policy finding/);
+      expect(observed).toBe("const original = true;\n");
+      await expect(readFile(target, "utf8")).resolves.toBe("const original = true;\n");
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("fails closed on authorization errors, path escapes, and symlinks", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "lmp-mediated-write-fail-closed-"));
+    const outside = await mkdtemp(join(tmpdir(), "lmp-mediated-write-outside-"));
+    try {
+      const target = join(directory, "change.ts");
+      await writeFile(target, "original\n");
+      const failing = createMediatedWriteAdapter({
+        workspaceRoot: directory,
+        authorize: () => {
+          throw new Error("evaluator unavailable");
+        },
+      });
+      await expect(failing.write({ path: "change.ts", content: "new\n" })).rejects.toThrow(
+        /failed closed/,
+      );
+      await expect(readFile(target, "utf8")).resolves.toBe("original\n");
+
+      const outsideAdapter = createMediatedWriteAdapter({
+        workspaceRoot: directory,
+        authorize: () => ({ status: "pass" }),
+      });
+      await expect(
+        outsideAdapter.write({ path: "../outside-write/x", content: "x" }),
+      ).rejects.toThrow(/outside/);
+
+      const link = join(directory, "link.ts");
+      await import("node:fs/promises").then(({ symlink }) => symlink(target, link));
+      await expect(failing.write({ path: "link.ts", content: "changed\n" })).rejects.toThrow(
+        /symbolic-link/,
+      );
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+      await rm(outside, { recursive: true, force: true });
+    }
+  });
+
+  it("commits a mediated write atomically only after an exact pass", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "lmp-mediated-write-pass-"));
+    try {
+      const adapter = createMediatedWriteAdapter({
+        workspaceRoot: directory,
+        authorize: (request) => ({
+          status: request.content.toString().includes("approved") ? "pass" : "deny",
+        }),
+      });
+      await expect(
+        adapter.write({ path: "new.ts", content: "approved\n" }),
+      ).resolves.toBeUndefined();
+      await expect(readFile(join(directory, "new.ts"), "utf8")).resolves.toBe("approved\n");
+      await expect(adapter.write({ path: "new.ts", content: "rejected\n" })).rejects.toThrow(
+        /authorization did not pass/,
+      );
+      await expect(readFile(join(directory, "new.ts"), "utf8")).resolves.toBe("approved\n");
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("reports supported boundaries without claiming unsupported host interception", () => {
+    expect(hostBoundarySupport("git")).toMatchObject({
+      supported: true,
+      boundary: "git-pre-commit",
+    });
+    expect(hostBoundarySupport("mediated-write")).toMatchObject({
+      supported: true,
+      boundary: "mediated-write",
+    });
+    expect(hostBoundarySupport("editor-filesystem")).toMatchObject({
+      supported: false,
+      boundary: null,
+    });
+  });
+
   it("does not turn a rejected Rust evaluation into a successful runtime result", async () => {
     const directory = await mkdtemp(join(tmpdir(), "lmp-cli-runtime-exit-"));
     const evaluator = join(directory, "fake-lmp");
