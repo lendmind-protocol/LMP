@@ -311,6 +311,7 @@ export const EvaluationArtifactSchema = z
         scope: z
           .object({
             changedOnly: z.boolean(),
+            stagedOnly: z.boolean().optional(),
             source: z.string(),
             checkedFiles: z.number().int().nonnegative(),
             fallbackReason: z.string().nullable().optional(),

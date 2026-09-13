@@ -1021,7 +1021,7 @@ fn evaluate_with_options_impl(
         "artifactVersion":"1.0",
         "runId":format!("rust-{created}-{}", std::process::id()),
         "createdAt":rfc3339_now(),
-        "workspace":{"pathHash":format!("sha256:{workspace_hash}"),"gitHead":git_head,"dirty":dirty,"scope":{"changedOnly":scope.changed_only,"source":scope.source,"checkedFiles":checked,"fallbackReason":scope.fallback_reason}},
+        "workspace":{"pathHash":format!("sha256:{workspace_hash}"),"gitHead":git_head,"dirty":dirty,"scope":{"changedOnly":scope.changed_only,"stagedOnly":options.staged_only,"source":scope.source,"checkedFiles":checked,"fallbackReason":scope.fallback_reason}},
         "mind":{"id":package_id,"version":package_version,"contentDigest":bundle_digest,"signatureStatus":signature_status,"layers":bundle.layers},
         "mode":mode,
         "state":state,
@@ -1347,6 +1347,7 @@ function second(value: string) {
             .iter()
             .any(|finding| finding.rule_id == "language.unsupported.python"));
         assert_eq!(report.artifact["analysis"]["checkedFiles"], 1);
+        assert_eq!(report.artifact["workspace"]["scope"]["stagedOnly"], false);
         assert!(report.artifact["analysis"]["languages"]
             .as_array()
             .unwrap()
