@@ -38,6 +38,12 @@
       "scope": ["package manifests"],
       "limitation": "Does not replace vulnerability scanning or lockfile review."
     },
+    "postgres.tenant-boundary": {
+      "evaluator": "rust",
+      "implementation": "crates/lmp-core/src/evaluator.rs",
+      "scope": ["tenant documentation", "SQL, TypeScript, and JavaScript database-facing source"],
+      "limitation": "Markers and documentation do not prove runtime isolation, RLS behavior, or query correctness."
+    },
     "security.artifact-redaction": {
       "evaluator": "rust",
       "implementation": "crates/lmp-artifacts/src/lib.rs",

@@ -666,6 +666,98 @@ fn duplicate_logic_findings(
     findings
 }
 
+fn tenant_boundary_findings(
+    package_dir: &Path,
+    workspace: &Path,
+    files: &[PathBuf],
+    package: &crate::MindPackage,
+) -> Vec<Finding> {
+    let Some(policy_path) = package.enforcement.get("tenantPolicy") else {
+        return Vec::new();
+    };
+    let Ok(policy_text) = fs::read_to_string(package_dir.join(policy_path)) else {
+        return Vec::new();
+    };
+    let Ok(policy) = serde_json::from_str::<Value>(&policy_text) else {
+        return Vec::new();
+    };
+    let marker = policy.get("tenantMarker").and_then(Value::as_str);
+    let rls_marker = policy.get("rlsMarker").and_then(Value::as_str);
+    let documentation = policy.get("requiredDocumentation").and_then(Value::as_str);
+    let severity = policy
+        .get("severity")
+        .and_then(Value::as_str)
+        .unwrap_or("warning");
+    let mut findings = Vec::new();
+    let push = |findings: &mut Vec<Finding>, message: String, evidence: Value| {
+        findings.push(Finding {
+            rule_id: "postgres.tenant-boundary".into(),
+            passed: false,
+            severity: severity.into(),
+            message,
+            evidence,
+        });
+    };
+    if let Some(documentation) = documentation {
+        if !workspace.join(documentation).is_file() {
+            push(
+                &mut findings,
+                format!("Required tenant-boundary documentation is missing: {documentation}."),
+                json!({
+                    "requirement": "documentation",
+                    "path": documentation,
+                    "status": "missing",
+                    "remediation": format!("Add {documentation} and record the tenant isolation boundary for review.")
+                }),
+            );
+        }
+    }
+    let mut source = String::new();
+    for file in files {
+        let relevant = matches!(
+            file.extension().and_then(|value| value.to_str()),
+            Some("sql" | "ts" | "tsx" | "js" | "jsx" | "mjs" | "cjs")
+        );
+        if relevant {
+            if let Ok(contents) = fs::read_to_string(file) {
+                source.push_str(&contents);
+                source.push('\n');
+            }
+        }
+    }
+    if let Some(marker) = marker {
+        if !source.contains(marker) {
+            push(
+                &mut findings,
+                format!(
+                    "Tenant-boundary marker `{marker}` was not found in database-facing source."
+                ),
+                json!({
+                    "requirement": "tenant-marker",
+                    "marker": marker,
+                    "status": "missing",
+                    "remediation": "Mark the tenant-scoped declaration and request database-aware review."
+                }),
+            );
+        }
+    }
+    if let Some(rls_marker) = rls_marker {
+        if !source.contains(rls_marker) {
+            push(
+                &mut findings,
+                format!("RLS marker `{rls_marker}` was not found in database-facing source."),
+                json!({
+                    "requirement": "rls-marker",
+                    "marker": rls_marker,
+                    "status": "missing",
+                    "remediation": "Record the required row-level-security policy or obtain an explicit reviewed exception."
+                }),
+            );
+        }
+    }
+    findings
+}
+
 fn unsafe_exception_matches(exception: &str, relative_file: &str, workspace: &Path) -> bool {
     if exception == relative_file {
         return true;
@@ -917,6 +1009,18 @@ fn evaluate_with_options_impl(
         }
     }
     findings.extend(duplicate_logic_findings(&files, workspace, &flags));
+    if bundle
+        .rules
+        .iter()
+        .any(|rule| rule.get("id").and_then(Value::as_str) == Some("postgres.tenant-boundary"))
+    {
+        findings.extend(tenant_boundary_findings(
+            package_dir,
+            workspace,
+            &files,
+            &bundle.mind,
+        ));
+    }
     for language in &unsupported_languages {
         skipped_checks.push(json!({
             "checkId": format!("language.{language}"),
@@ -1187,6 +1291,31 @@ mod tests {
         assert!(supported_rule_contract("security.artifact-redaction"));
         assert!(!supported_rule_contract("postgres.tenant-boundary"));
         assert!(!supported_rule_contract("future.rule"));
+    }
+
+    #[test]
+    fn postgres_tenant_boundary_reports_missing_static_signals() {
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../profiles/postgres-tenant-boundary");
+        let workspace =
+            std::env::temp_dir().join(format!("lmp-rust-postgres-boundary-{}", std::process::id()));
+        fs::create_dir_all(&workspace).unwrap();
+        fs::write(
+            workspace.join("migration.sql"),
+            "create table invoices (id int);\n",
+        )
+        .unwrap();
+        let report = evaluate(&root, &workspace, "enforced", None).unwrap();
+        assert!(!report.passed);
+        assert_eq!(
+            report
+                .findings
+                .iter()
+                .filter(|finding| finding.rule_id == "postgres.tenant-boundary")
+                .count(),
+            3
+        );
+        fs::remove_dir_all(workspace).unwrap();
     }
 
     #[test]

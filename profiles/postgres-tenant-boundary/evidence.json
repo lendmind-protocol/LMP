@@ -1,0 +1,24 @@
+{
+  "status": "verified-fixtures",
+  "tests": [
+    {
+      "id": "tenant-compliant",
+      "kind": "positive",
+      "description": "Tenant scope and RLS markers are documented.",
+      "expected": "pass"
+    },
+    {
+      "id": "tenant-missing-rls",
+      "kind": "negative",
+      "description": "Tenant scope lacks the required RLS marker.",
+      "expected": "needs_revision"
+    },
+    {
+      "id": "single-tenant-reviewed",
+      "kind": "exception",
+      "description": "A bounded single-tenant exception has reason and expiry.",
+      "expected": "blocked"
+    }
+  ],
+  "notes": "These fixtures demonstrate a static signal and explicitly do not prove runtime isolation."
+}

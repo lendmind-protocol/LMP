@@ -1,0 +1,45 @@
+{
+  "$schema": "https://lendingmind.org/schema/mind-v1.json",
+  "specVersion": "1.0",
+  "id": "lmp:mind:postgres-tenant-boundary",
+  "version": "0.1.0",
+  "name": "Postgres Tenant Boundary",
+  "description": "A partially verifiable static policy for documenting tenant isolation boundaries.",
+  "modeDefaults": { "validation": "advisory", "network": "offline" },
+  "author": {
+    "kind": "community-archetype",
+    "displayName": "Lending-Mind Community",
+    "verified": false,
+    "website": null
+  },
+  "provenance": {
+    "sources": [
+      {
+        "title": "LMP tenant boundary methodology",
+        "url": "https://github.com/lendmind-protocol/LMP",
+        "licenseNote": "Summary only; no copied proprietary text.",
+        "sourceType": "repository",
+        "accessMethod": "public-http",
+        "contentDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "retentionPolicy": "metadata-only",
+        "allowedUse": "summarize-public-guidance",
+        "evidenceTier": "primary",
+        "rights": "public-documentation"
+      }
+    ],
+    "attributionRequired": true
+  },
+  "philosophy": {
+    "principles": ["Make tenant boundaries explicit at the database boundary."],
+    "tradeoffs": ["Static signals are useful but cannot prove runtime isolation."],
+    "decisionRules": [
+      "Require a documented boundary before treating a tenant-scoped table as reviewed."
+    ],
+    "antiPatterns": ["Do not treat an application filter as proof of database isolation."]
+  },
+  "capabilities": {
+    "languages": ["sql", "typescript", "javascript"],
+    "requiredAgentTools": ["read_file", "search", "execute_command"]
+  },
+  "enforcement": { "tenantPolicy": "rules/tenant.json" }
+}

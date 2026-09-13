@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0",
+  "requiredDocumentation": "docs/security/tenant-isolation.md",
+  "tenantMarker": "lmp:tenant-scoped",
+  "rlsMarker": "lmp:rls-required",
+  "severity": "warning",
+  "singleTenantException": { "allowed": true, "requiresReason": true, "requiresExpiry": true },
+  "limitations": [
+    "Static markers do not prove runtime isolation, policy coverage, or query correctness."
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "packageId": "lmp:mind:postgres-tenant-boundary",
+  "version": "0.1.0",
+  "changelog": ["Initial advisory tenant-boundary profile."],
+  "limitations": ["Static markers do not prove runtime isolation."],
+  "review": {
+    "status": "community-reviewed",
+    "reviewers": [
+      {
+        "name": "Lending-Mind Community",
+        "role": "maintainer",
+        "evidence": "positive, negative, and exception fixtures"
+      }
+    ],
+    "notes": "Advisory by default; no runtime security guarantee."
+  }
+}

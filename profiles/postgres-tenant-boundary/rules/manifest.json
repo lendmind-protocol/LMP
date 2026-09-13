@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "rules": [
+    {
+      "id": "postgres.tenant-boundary",
+      "policyFile": "rules/tenant.json",
+      "severity": "warning",
+      "classification": "judgment-guided",
+      "rationale": "Tenant boundaries need an explicit, reviewable database policy.",
+      "assertion": "Tenant-scoped declarations have the required documentation and RLS markers.",
+      "scope": ["SQL migrations", "database-facing source", "security documentation"],
+      "remediation": "Add the boundary documentation and migration marker, then request database review.",
+      "limitations": ["Static signals do not prove runtime isolation."],
+      "evidence": { "classification": "verified-fixture", "sourceId": "evidence.json" }
+    }
+  ]
+}
