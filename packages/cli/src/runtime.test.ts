@@ -16,6 +16,7 @@ import {
   instructions,
   listPackages,
   loadMind,
+  loadVerifiedMind,
   promoteProposal,
   resolveDefaultMode,
   shareMind,
@@ -365,6 +366,19 @@ fi
       });
     } finally {
       process.chdir(originalCwd);
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("refuses agent guidance from an unsigned Mind package", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "lmp-cli-unverified-mind-"));
+    try {
+      await writeFile(
+        join(directory, "mind.json"),
+        JSON.stringify({ id: "lmp:mind:unsigned", version: "1.0.0", rules: [] }),
+      );
+      await expect(loadVerifiedMind(directory)).rejects.toThrow(/not integrity-verified/);
+    } finally {
       await rm(directory, { recursive: true, force: true });
     }
   });

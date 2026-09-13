@@ -16,6 +16,7 @@ import {
   instructions,
   listPackages,
   loadMind,
+  loadVerifiedMind,
   promoteProposal,
   resolveDefaultMode,
   resolveMindPath,
@@ -26,7 +27,7 @@ import {
 } from "./runtime.js";
 
 export * from "./host-boundaries.js";
-export { createEvaluatedMediatedWriteAdapter, loadMind } from "./runtime.js";
+export { createEvaluatedMediatedWriteAdapter, loadMind, loadVerifiedMind } from "./runtime.js";
 
 export const EXIT = { ok: 0, policy: 1, usage: 2, runtime: 3 } as const;
 
@@ -291,7 +292,7 @@ export function createProgram() {
     .option("--mind <mind>")
     .option("--format <format>", "markdown")
     .action(async (options) =>
-      console.log(instructions(await loadMind(options.mind), options.format)),
+      console.log(instructions(await loadVerifiedMind(options.mind), options.format)),
     );
   agent
     .command("write <path>")

@@ -136,6 +136,23 @@ export async function loadMind(
   return MindPackageSchema.parse(value) as MindPackage;
 }
 
+/** Load only a signed, integrity-verified Mind for agent-facing guidance. */
+export async function loadVerifiedMind(
+  input: string | undefined,
+  cwd = process.cwd(),
+): Promise<MindPackage> {
+  const candidate = await resolveMindInputPath(input, cwd);
+  const mind = MindPackageSchema.parse(
+    JSON.parse(await readFile(candidate, "utf8")),
+  ) as MindPackage;
+  const verification = await verifyMindPackage(dirname(candidate));
+  if (verification.signatureStatus !== "verified")
+    throw new Error(
+      `Mind ${mind.id}@${mind.version} is not integrity-verified; refusing agent instructions (${verification.signatureStatus})`,
+    );
+  return mind;
+}
+
 async function resolveMindInputPath(input: string | undefined, cwd: string): Promise<string> {
   let selected = input;
   if (!selected) {
