@@ -250,11 +250,14 @@ export function instructions(mind: MindPackage, format: "markdown" | "json" = "m
         ...result.boundaries.map((item) => `- ${item}`),
         "\n## Source references",
         ...result.sources.map(
-          (source) => `- [${source.title}](${source.url}) — ${source.evidenceTier}; ${source.contentDigest}`,
+          (source) =>
+            `- [${source.title}](${source.url}) — ${source.evidenceTier}; ${source.contentDigest}`,
         ),
         "\n## Checklist",
         ...result.checklist.map((item) => `- ${item}`),
-      ].filter(Boolean).join("\n");
+      ]
+        .filter(Boolean)
+        .join("\n");
 }
 
 export async function evaluate(
