@@ -1,5 +1,6 @@
 {
   "schemaVersion": "1.0",
+  "severity": "warning",
   "boundaries": [
     { "name": "policy", "owner": "Mind package", "mayDependOn": ["metadata", "rules"], "pathPrefix": "registry/minds/lmp-protocol-core/", "forbiddenImports": ["orchestrator"] },
     { "name": "evaluation", "owner": "lmp-core", "mayDependOn": ["policy", "workspace"], "pathPrefix": "crates/lmp-core/src/", "forbiddenImports": ["orchestrator"] },

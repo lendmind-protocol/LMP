@@ -34,6 +34,7 @@ describe("evaluator", () => {
       ruleId: "architecture.boundary",
       file: "apps/web/src/page.ts",
       line: 1,
+      severity: "error",
     });
     await rm(directory, { recursive: true, force: true });
   });

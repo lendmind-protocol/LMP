@@ -783,6 +783,7 @@ fn import_specifiers(line: &str) -> Vec<&str> {
         if before.trim_end().ends_with("from")
             || before.trim_end().ends_with("require(")
             || before.trim_end().ends_with("import(")
+            || (trimmed.starts_with("import ") && before.trim() == "import")
         {
             result.push(&after_open[..end]);
         }
@@ -835,7 +836,7 @@ fn architecture_findings(
                             findings.push(Finding {
                             rule_id: "architecture.boundary".into(),
                             passed: false,
-                            severity: severity.into(),
+                    severity: severity.into(),
                             message: format!(
                                 "Import crosses the declared architecture boundary: {specifier}."
                             ),

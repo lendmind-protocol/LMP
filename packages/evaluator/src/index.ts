@@ -979,6 +979,7 @@ export function architectureFindings(
       )
     : [];
   if (!boundaries.length) return [];
+  const severity = policy.severity === "warning" ? "warning" : "error";
   const { included } = sourceFiles(directory, tsconfig, exclusions);
   const results: RuleResult[] = [];
   for (const file of included) {
@@ -998,7 +999,7 @@ export function architectureFindings(
         results.push({
           ruleId: "architecture.boundary",
           passed: false,
-          severity: "error",
+          severity,
           message: `Import crosses the declared architecture boundary: ${specifier}.`,
           remediation:
             "Move the dependency behind the owning boundary or record an explicitly reviewed exception.",
