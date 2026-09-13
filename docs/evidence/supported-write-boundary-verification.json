@@ -1,0 +1,26 @@
+{
+  "artifactVersion": "1.0",
+  "status": "verified",
+  "implementation": [
+    "packages/cli/src/host-boundaries.ts",
+    "packages/cli/src/runtime.ts"
+  ],
+  "supportedBoundaries": ["git-pre-commit", "explicit-mediated-write"],
+  "verification": {
+    "command": "pnpm --filter @lending-mind/lmp test",
+    "passedTests": 24,
+    "failedTests": 0,
+    "checks": [
+      "authorization denial",
+      "evaluator failure denial",
+      "workspace escape denial",
+      "symlink escape denial",
+      "atomic write",
+      "unsupported host reporting"
+    ]
+  },
+  "limitations": [
+    "This is not universal interception of every agent or editor write.",
+    "Hosts must route writes through a supported adapter or the Git boundary."
+  ]
+}
