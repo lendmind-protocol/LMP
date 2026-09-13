@@ -52,9 +52,9 @@ lmp release verify --profile local
 The broader LMP-on-LMP reality runner is retained separately and reports
 unsupported or failing scopes instead of widening this qualification silently.
 Its latest machine-readable output is `lmp-test-results/lmp-on-lmp-reality.json`;
-the run verifies the declared local toolchains and Docker gate, while retaining
-five partial Mind evaluations because their configured scopes expose unsupported
-or failing checks.
+the run verifies seven of eight Minds in their declared scopes; the remaining
+`monorepo-and-release-discipline` Mind is partial, and the overall decision is
+blocked by the separate release-candidate evidence gate.
 `ci` adds the Rust format and workspace-test gates. All four current production
 Mind packages now have gateway-verified immutable IPFS retrieval; the
 `release-candidate` remains `BLOCKED` until independent review and the separate
@@ -63,7 +63,7 @@ unbounded “production-ready” claim.
 
 ## Quality improvement evidence
 
-> The latest hosted benchmark run [34729060413](https://github.com/lendmind-protocol/LMP/actions/runs/34729060413) completed successfully for commit `f1f162002efcde777637bd0435d77d790d0982eb`. It verified 64/64 scenarios and transitions, 128/128 Docker gates, 128/128 ordinary compiler controls, and 15/15 provenance sources. The runner uses bounded command timeouts and a 20-minute job ceiling. This is a reproducible technical control result, not a causal quality study: it uses fixed candidate patches, does not execute repository-owned lint/test/CI commands, and has no independent reviewer annotations. LMP therefore has not demonstrated that it improves AI-generated code quality beyond a strong combination of instructions, skills, testing, CI, static analysis, and human review.
+> The latest hosted benchmark run [34729695684](https://github.com/lendmind-protocol/LMP/actions/runs/34729695684) completed successfully for commit `a1347056df686b9580f283026747d33343a26329`. It verified 64/64 scenarios and transitions, 128/128 Docker gates, 128/128 ordinary compiler controls, and 15/15 provenance sources. The runner uses bounded command timeouts and a 20-minute job ceiling. This is a reproducible technical control result, not a causal quality study: it uses fixed candidate patches, does not execute repository-owned lint/test/CI commands, and has no independent reviewer annotations. LMP therefore has not demonstrated that it improves AI-generated code quality beyond a strong combination of instructions, skills, testing, CI, static analysis, and human review.
 
 ## Final truth statement
 
