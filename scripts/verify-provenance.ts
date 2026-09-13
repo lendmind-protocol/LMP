@@ -20,6 +20,9 @@ async function findManifests(directory: string): Promise<string[]> {
   const entries = await readdir(directory, { withFileTypes: true });
   const manifests: string[] = [];
   for (const entry of entries) {
+    // Workspace snapshots are generated onboarding fixtures, not distributable profiles.
+    // They intentionally live beside the source profile tree but must not enter the
+    // public provenance inventory or inflate the source-backed profile count.
     if (entry.name.startsWith(".") || entry.name === "workspaces") continue;
     const path = join(directory, entry.name);
     if (entry.isDirectory()) manifests.push(...(await findManifests(path)));
