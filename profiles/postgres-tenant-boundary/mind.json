@@ -16,11 +16,11 @@
     "sources": [
       {
         "title": "LMP tenant boundary methodology",
-        "url": "https://github.com/lendmind-protocol/LMP",
+        "url": "https://raw.githubusercontent.com/lendmind-protocol/LMP/2d4cff00aed78f521ee4d2002519619e87e99ff9/README.md",
         "licenseNote": "Summary only; no copied proprietary text.",
         "sourceType": "repository",
         "accessMethod": "public-http",
-        "contentDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "contentDigest": "sha256:b91df3bf25aa995c1d76bd9bb43cf799f838cf121c44664e87d356eefa317f6f",
         "retentionPolicy": "metadata-only",
         "allowedUse": "summarize-public-guidance",
         "evidenceTier": "primary",
